@@ -990,13 +990,32 @@ main.app__main {
   background: #000;
 }
 
-.score-difference {
-  text-align: center;
-  color: var(--text-muted);
-  font-size: 0.95rem;
-  font-weight: 600;
-  padding: 8px 16px;
+.score-meta {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  padding: 10px 16px;
   margin: -8px 0 8px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+}
+.score-meta__diff {
+  color: var(--accent);
+  font-size: 0.95rem;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+}
+.score-meta__total {
+  color: var(--text-muted);
+  font-size: 0.85rem;
+  font-weight: 500;
+}
+.score-meta__total strong {
+  color: var(--text);
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
 }
 
 /* ===== Tabs ===== */
