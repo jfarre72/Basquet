@@ -1,3 +1,4 @@
+import { useEffect } from 'react';
 import { Header } from './components/Header';
 import { GameScreen } from './components/GameScreen';
 import { PlayerSelection } from './components/PlayerSelection';
@@ -6,6 +7,20 @@ import { useGame } from './state/GameContext';
 
 export default function App() {
   const { state } = useGame();
+
+  useEffect(() => {
+    if (state.stage === 'game' || (state.stage === 'finished' && state.plays.length > 0)) {
+      const handleBeforeUnload = (e: BeforeUnloadEvent) => {
+        e.preventDefault();
+        e.returnValue = '';
+        return '';
+      };
+
+      window.addEventListener('beforeunload', handleBeforeUnload);
+      return () => window.removeEventListener('beforeunload', handleBeforeUnload);
+    }
+  }, [state.stage, state.plays.length]);
+
   return (
     <div className="app">
       <Header stage={state.stage} />
