@@ -21,12 +21,22 @@ export function GameScreen() {
   const finished = state.stage === 'finished';
   const { winner, scoreA, scoreB } = getWinner(state);
 
+  const difference = Math.abs(scoreA - scoreB);
+  const leadingTeam = scoreA > scoreB ? 'A' : scoreB > scoreA ? 'B' : null;
+
   return (
     <>
       <Scoreboard
         liveClock={!finished}
         onPickPlayer={(team, shot) => setPicker({ team, shot })}
       />
+
+      {leadingTeam && (
+        <div className="score-difference">
+          Arriba {state.teams[leadingTeam].name} por {difference}{' '}
+          {difference === 1 ? 'punto' : 'puntos'}
+        </div>
+      )}
 
       {finished && (
         <section className="card">

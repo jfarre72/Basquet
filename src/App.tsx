@@ -17,7 +17,7 @@ export default function App() {
         )}
       </main>
       <footer className="footer-note">
-        Hecho para nuestros básquet de los miércoles 🏀
+        Hecho para nuestros básquet de los Martes 🏀
       </footer>
     </div>
   );
