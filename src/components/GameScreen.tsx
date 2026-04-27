@@ -23,6 +23,7 @@ export function GameScreen() {
 
   const difference = Math.abs(scoreA - scoreB);
   const leadingTeam = scoreA > scoreB ? 'A' : scoreB > scoreA ? 'B' : null;
+  const totalPoints = scoreA + scoreB;
 
   return (
     <>
@@ -31,12 +32,22 @@ export function GameScreen() {
         onPickPlayer={(team, shot) => setPicker({ team, shot })}
       />
 
-      {leadingTeam && (
-        <div className="score-difference">
-          Arriba {state.teams[leadingTeam].name} por {difference}{' '}
-          {difference === 1 ? 'punto' : 'puntos'}
+      <div className="score-meta">
+        {leadingTeam ? (
+          <div className="score-meta__diff">
+            Arriba {state.teams[leadingTeam].name} por {difference}{' '}
+            {difference === 1 ? 'punto' : 'puntos'}
+          </div>
+        ) : (
+          totalPoints > 0 && (
+            <div className="score-meta__diff">Empate</div>
+          )
+        )}
+        <div className="score-meta__total">
+          Total del partido: <strong>{totalPoints}</strong>{' '}
+          {totalPoints === 1 ? 'punto' : 'puntos'}
         </div>
-      )}
+      </div>
 
       {finished && (
         <section className="card">
