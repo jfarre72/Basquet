@@ -64,3 +64,14 @@ export function getWinner(state: GameState): {
   else if (scoreB > scoreA) winner = 'B';
   return { winner, scoreA, scoreB };
 }
+
+export type TeamOutcome = 'Gana' | 'Pierde' | 'Empate';
+
+export function getTeamOutcome(
+  state: GameState,
+  team: TeamId,
+): TeamOutcome {
+  const { winner } = getWinner(state);
+  if (winner === 'tie') return 'Empate';
+  return winner === team ? 'Gana' : 'Pierde';
+}

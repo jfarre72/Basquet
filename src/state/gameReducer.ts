@@ -4,8 +4,8 @@ export const INITIAL_STATE: GameState = {
   stage: 'selection',
   selectedPlayerIds: [],
   teams: {
-    A: { name: 'Equipo Naranja', playerIds: [] },
-    B: { name: 'Equipo Negro', playerIds: [] },
+    A: { name: 'Negro', playerIds: [] },
+    B: { name: 'Blanco', playerIds: [] },
   },
   startTime: null,
   endTime: null,
@@ -19,6 +19,8 @@ export type GameAction =
   | { type: 'BACK_TO_SELECTION' }
   | { type: 'ASSIGN_PLAYER_TO_TEAM'; playerId: number; team: TeamId }
   | { type: 'UNASSIGN_PLAYER'; playerId: number }
+  | { type: 'CLEAR_TEAMS' }
+  | { type: 'SHUFFLE_TEAMS' }
   | { type: 'SET_TEAM_NAME'; team: TeamId; name: string }
   | { type: 'START_GAME' }
   | {
@@ -133,6 +135,31 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
           },
         },
       };
+
+    case 'CLEAR_TEAMS':
+      return {
+        ...state,
+        teams: {
+          A: { ...state.teams.A, playerIds: [] },
+          B: { ...state.teams.B, playerIds: [] },
+        },
+      };
+
+    case 'SHUFFLE_TEAMS': {
+      const shuffled = [...state.selectedPlayerIds];
+      for (let i = shuffled.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+      }
+      const half = Math.ceil(shuffled.length / 2);
+      return {
+        ...state,
+        teams: {
+          A: { ...state.teams.A, playerIds: shuffled.slice(0, half) },
+          B: { ...state.teams.B, playerIds: shuffled.slice(half) },
+        },
+      };
+    }
 
     case 'SET_TEAM_NAME':
       return {

@@ -31,21 +31,37 @@ export function Scoreboard({ onPickPlayer, liveClock }: Props) {
 
   return (
     <section className="scoreboard" aria-label="Marcador">
-      <div className="scoreboard__clock" aria-label="Tiempo de partido">
-        ⏱ {formatClock(elapsedMs)}
+      <div className="scoreboard__bar">
+        <span className="scoreboard__live">
+          <span className="scoreboard__live-dot" aria-hidden />
+          {disabled ? 'Final' : 'En vivo'}
+        </span>
+        <span
+          className="scoreboard__clock"
+          aria-label="Tiempo de partido"
+        >
+          {formatClock(elapsedMs)}
+        </span>
+        <span className="scoreboard__period">Q1</span>
       </div>
+
       <div className="scoreboard__teams">
         <TeamPanel
           team="A"
           name={state.teams.A.name}
           score={scoreA}
+          opponentScore={scoreB}
           onPick={onPickPlayer}
           disabled={disabled}
         />
+        <div className="scoreboard__divider" aria-hidden>
+          VS
+        </div>
         <TeamPanel
           team="B"
           name={state.teams.B.name}
           score={scoreB}
+          opponentScore={scoreA}
           onPick={onPickPlayer}
           disabled={disabled}
         />
@@ -58,18 +74,29 @@ function TeamPanel({
   team,
   name,
   score,
+  opponentScore,
   onPick,
   disabled,
 }: {
   team: TeamId;
   name: string;
   score: number;
+  opponentScore: number;
   onPick: (team: TeamId, shot: ShotType) => void;
   disabled: boolean;
 }) {
+  const leading = score > opponentScore;
+
   return (
     <div className={`scoreboard__team scoreboard__team--${team}`}>
-      <div className="scoreboard__name">{name || `Equipo ${team}`}</div>
+      <div className="scoreboard__team-head">
+        <span className="scoreboard__team-name">
+          {name || `Equipo ${team}`}
+        </span>
+        {leading && score > 0 && (
+          <span className="scoreboard__team-flag">↑ Lead</span>
+        )}
+      </div>
       <div
         className="scoreboard__points"
         aria-label={`Puntos ${name}: ${score}`}
@@ -79,11 +106,12 @@ function TeamPanel({
       <div className="scoreboard__buttons">
         <button
           type="button"
-          className="score-btn"
+          className="score-btn score-btn--2"
           onClick={() => onPick(team, 'double')}
           disabled={disabled}
         >
-          +2
+          <span className="score-btn__sign">+</span>
+          <span className="score-btn__num">2</span>
         </button>
         <button
           type="button"
@@ -91,7 +119,8 @@ function TeamPanel({
           onClick={() => onPick(team, 'triple')}
           disabled={disabled}
         >
-          +3
+          <span className="score-btn__sign">+</span>
+          <span className="score-btn__num">3</span>
         </button>
       </div>
     </div>

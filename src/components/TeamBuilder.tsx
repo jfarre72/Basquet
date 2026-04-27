@@ -10,43 +10,66 @@ export function TeamBuilder() {
   const pool = selectedPlayerIds.filter((id) => !assigned.has(id));
 
   const canStart = teams.A.playerIds.length > 0 && teams.B.playerIds.length > 0;
+  const allAssigned = pool.length === 0;
 
   return (
     <>
-      <div>
-        <h1 className="section-title">Armá los equipos</h1>
-        <p className="section-subtitle">
-          Asigná cada jugador a un equipo. Podés moverlos cuando quieras y
-          editar el nombre del equipo.
-        </p>
+      <div className="page-head">
+        <div>
+          <h1 className="section-title">Armá los equipos</h1>
+          <p className="section-subtitle">
+            Tocá un jugador y mandalo a un equipo. También podés sortear o
+            limpiar para volver a empezar.
+          </p>
+        </div>
+        <div className="page-head__actions">
+          <button
+            type="button"
+            className="btn btn--ghost btn--sm"
+            onClick={() => dispatch({ type: 'SHUFFLE_TEAMS' })}
+            disabled={selectedPlayerIds.length < 2}
+            title="Repartir aleatoriamente"
+          >
+            🎲 Sortear
+          </button>
+          <button
+            type="button"
+            className="btn btn--ghost btn--sm"
+            onClick={() => dispatch({ type: 'CLEAR_TEAMS' })}
+            disabled={assigned.size === 0}
+          >
+            Limpiar
+          </button>
+        </div>
       </div>
 
-      <div className="team-builder">
+      <div className="team-grid">
         <TeamCard team="A" />
         <TeamCard team="B" />
+      </div>
 
-        <div className="team-builder__pool card">
-          <div className="team-card__head">
-            <strong>Sin asignar</strong>
-            <span className="team-card__count">
-              {pool.length} jugador{pool.length === 1 ? '' : 'es'}
-            </span>
+      <section className={`pool-section${allAssigned ? ' is-empty' : ''}`}>
+        <div className="pool-section__head">
+          <span className="pool-section__title">Sin asignar</span>
+          <span className="pool-section__count">
+            {pool.length} jugador{pool.length === 1 ? '' : 'es'}
+          </span>
+        </div>
+        {allAssigned ? (
+          <div className="pool-section__empty">
+            ✓ Todos los jugadores ya están en un equipo.
           </div>
-
-          {pool.length === 0 ? (
-            <div className="team-card__empty">
-              Todos los jugadores ya están en un equipo.
-            </div>
-          ) : (
-            <div className="pool__list">
-              {pool.map((id) => (
-                <div key={id} className="pool__row">
-                  <span className="pool__row-name">
-                    {PLAYERS_BY_ID[id]?.name}
-                  </span>
+        ) : (
+          <div className="pool-grid">
+            {pool.map((id) => (
+              <div key={id} className="pool-card">
+                <span className="pool-card__name">
+                  {PLAYERS_BY_ID[id]?.name}
+                </span>
+                <div className="pool-card__actions">
                   <button
                     type="button"
-                    className="btn btn--sm btn--primary"
+                    className="assign-btn assign-btn--A"
                     onClick={() =>
                       dispatch({
                         type: 'ASSIGN_PLAYER_TO_TEAM',
@@ -54,12 +77,13 @@ export function TeamBuilder() {
                         team: 'A',
                       })
                     }
+                    aria-label={`Asignar a ${state.teams.A.name}`}
                   >
-                    → A
+                    {state.teams.A.name}
                   </button>
                   <button
                     type="button"
-                    className="btn btn--sm"
+                    className="assign-btn assign-btn--B"
                     onClick={() =>
                       dispatch({
                         type: 'ASSIGN_PLAYER_TO_TEAM',
@@ -67,15 +91,16 @@ export function TeamBuilder() {
                         team: 'B',
                       })
                     }
+                    aria-label={`Asignar a ${state.teams.B.name}`}
                   >
-                    → B
+                    {state.teams.B.name}
                   </button>
                 </div>
-              ))}
-            </div>
-          )}
-        </div>
-      </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </section>
 
       {!canStart && (
         <div className="warning-banner">
@@ -108,10 +133,10 @@ function TeamCard({ team }: { team: TeamId }) {
   const { state, dispatch } = useGame();
   const data = state.teams[team];
   const otherTeam: TeamId = team === 'A' ? 'B' : 'A';
-  const otherLabel = state.teams[otherTeam].name;
+  const otherName = state.teams[otherTeam].name;
 
   return (
-    <div className={`card team-card team-card--${team}`}>
+    <div className={`team-card team-card--${team}`}>
       <div className="team-card__head">
         <span className="team-card__badge">Equipo {team}</span>
         <input
@@ -131,40 +156,42 @@ function TeamCard({ team }: { team: TeamId }) {
       </div>
 
       {data.playerIds.length === 0 ? (
-        <div className="team-card__empty">Todavía no hay jugadores.</div>
+        <div className="team-card__empty">
+          Sin jugadores. Asignalos desde abajo.
+        </div>
       ) : (
         <ul className="team-card__list">
           {data.playerIds.map((id) => (
-            <li key={id} className="team-card__row">
-              <span className="team-card__row-name">
+            <li key={id} className="team-pill">
+              <span className="team-pill__name">
                 {PLAYERS_BY_ID[id]?.name}
               </span>
-              <div className="team-card__row-actions">
-                <button
-                  type="button"
-                  className="btn btn--sm btn--ghost"
-                  onClick={() =>
-                    dispatch({
-                      type: 'ASSIGN_PLAYER_TO_TEAM',
-                      playerId: id,
-                      team: otherTeam,
-                    })
-                  }
-                  title={`Mover a ${otherLabel}`}
-                >
-                  → {otherTeam}
-                </button>
-                <button
-                  type="button"
-                  className="btn btn--sm btn--ghost"
-                  onClick={() =>
-                    dispatch({ type: 'UNASSIGN_PLAYER', playerId: id })
-                  }
-                  title="Sacar del equipo"
-                >
-                  ✕
-                </button>
-              </div>
+              <button
+                type="button"
+                className="team-pill__icon"
+                onClick={() =>
+                  dispatch({
+                    type: 'ASSIGN_PLAYER_TO_TEAM',
+                    playerId: id,
+                    team: otherTeam,
+                  })
+                }
+                title={`Mover a ${otherName}`}
+                aria-label={`Mover a ${otherName}`}
+              >
+                ↔
+              </button>
+              <button
+                type="button"
+                className="team-pill__icon team-pill__icon--danger"
+                onClick={() =>
+                  dispatch({ type: 'UNASSIGN_PLAYER', playerId: id })
+                }
+                title="Sacar del equipo"
+                aria-label="Sacar del equipo"
+              >
+                ✕
+              </button>
             </li>
           ))}
         </ul>
