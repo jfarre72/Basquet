@@ -990,6 +990,108 @@ main.app__main {
   background: #000;
 }
 
+.score-btn--goal {
+  background: #16a34a;
+  border-color: #16a34a;
+  color: #fafafa;
+  width: 100%;
+  flex-direction: row;
+  gap: 6px;
+  padding: 14px 16px;
+}
+.score-btn--goal:hover {
+  background: #15803d;
+  border-color: #15803d;
+}
+.score-btn__label {
+  font-size: 0.85rem;
+  font-weight: 800;
+  letter-spacing: 0.12em;
+  margin-left: 4px;
+}
+.scoreboard__team--A .score-btn--goal {
+  background: #18181b;
+  border-color: #3f3f46;
+}
+.scoreboard__team--A .score-btn--goal:hover {
+  background: #000;
+}
+.scoreboard__team--B .score-btn--goal {
+  background: #16a34a;
+  border-color: #16a34a;
+  color: #fafafa;
+}
+
+/* ===== Sport selection ===== */
+
+.sport-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 14px;
+}
+@media (min-width: 540px) {
+  .sport-grid {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+.sport-card {
+  appearance: none;
+  border: 1px solid var(--border);
+  background: var(--surface);
+  color: var(--text);
+  border-radius: var(--radius-lg);
+  padding: 32px 18px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+  transition: transform 0.15s ease, border-color 0.15s ease, background 0.15s ease;
+}
+.sport-card:hover {
+  transform: translateY(-2px);
+  border-color: var(--border-strong);
+}
+.sport-card__icon {
+  font-size: 3.4rem;
+  line-height: 1;
+}
+.sport-card__name {
+  font-size: 1.35rem;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+}
+.sport-card__meta {
+  color: var(--text-muted);
+  font-size: 0.9rem;
+}
+.sport-card--basquet:hover {
+  border-color: var(--accent);
+  background: rgba(249, 115, 22, 0.06);
+}
+.sport-card--futbol:hover {
+  border-color: #16a34a;
+  background: rgba(22, 163, 74, 0.08);
+}
+
+.brand__ball--futbol {
+  background:
+    radial-gradient(circle at 30% 30%, #fafafa 0%, #e4e4e7 50%, #71717a 100%);
+}
+.brand__ball--futbol::before {
+  background: none;
+}
+.brand__ball--futbol::after {
+  background:
+    radial-gradient(circle at 50% 50%, #18181b 0%, #18181b 22%, transparent 22%);
+}
+
+.stats-head.stats-head--futbol,
+.stats-row.stats-row--futbol {
+  grid-template-columns: 1fr 56px;
+}
+
 .score-meta {
   display: flex;
   flex-direction: column;

@@ -28,6 +28,7 @@ export function Scoreboard({ onPickPlayer, liveClock }: Props) {
   const scoreA = getScore(state.plays, 'A');
   const scoreB = getScore(state.plays, 'B');
   const disabled = state.stage === 'finished';
+  const isFutbol = state.sport === 'mundialito';
 
   return (
     <section className="scoreboard" aria-label="Marcador">
@@ -42,7 +43,7 @@ export function Scoreboard({ onPickPlayer, liveClock }: Props) {
         >
           {formatClock(elapsedMs)}
         </span>
-        <span className="scoreboard__period">Q1</span>
+        <span className="scoreboard__period">{isFutbol ? 'T1' : 'Q1'}</span>
       </div>
 
       <div className="scoreboard__teams">
@@ -53,6 +54,7 @@ export function Scoreboard({ onPickPlayer, liveClock }: Props) {
           opponentScore={scoreB}
           onPick={onPickPlayer}
           disabled={disabled}
+          isFutbol={isFutbol}
         />
         <div className="scoreboard__divider" aria-hidden>
           VS
@@ -64,6 +66,7 @@ export function Scoreboard({ onPickPlayer, liveClock }: Props) {
           opponentScore={scoreA}
           onPick={onPickPlayer}
           disabled={disabled}
+          isFutbol={isFutbol}
         />
       </div>
     </section>
@@ -77,6 +80,7 @@ function TeamPanel({
   opponentScore,
   onPick,
   disabled,
+  isFutbol,
 }: {
   team: TeamId;
   name: string;
@@ -84,6 +88,7 @@ function TeamPanel({
   opponentScore: number;
   onPick: (team: TeamId, shot: ShotType) => void;
   disabled: boolean;
+  isFutbol: boolean;
 }) {
   const leading = score > opponentScore;
 
@@ -104,24 +109,39 @@ function TeamPanel({
         {score}
       </div>
       <div className="scoreboard__buttons">
-        <button
-          type="button"
-          className="score-btn score-btn--2"
-          onClick={() => onPick(team, 'double')}
-          disabled={disabled}
-        >
-          <span className="score-btn__sign">+</span>
-          <span className="score-btn__num">2</span>
-        </button>
-        <button
-          type="button"
-          className="score-btn score-btn--3"
-          onClick={() => onPick(team, 'triple')}
-          disabled={disabled}
-        >
-          <span className="score-btn__sign">+</span>
-          <span className="score-btn__num">3</span>
-        </button>
+        {isFutbol ? (
+          <button
+            type="button"
+            className="score-btn score-btn--goal"
+            onClick={() => onPick(team, 'goal')}
+            disabled={disabled}
+          >
+            <span className="score-btn__sign">+</span>
+            <span className="score-btn__num">1</span>
+            <span className="score-btn__label">GOL</span>
+          </button>
+        ) : (
+          <>
+            <button
+              type="button"
+              className="score-btn score-btn--2"
+              onClick={() => onPick(team, 'double')}
+              disabled={disabled}
+            >
+              <span className="score-btn__sign">+</span>
+              <span className="score-btn__num">2</span>
+            </button>
+            <button
+              type="button"
+              className="score-btn score-btn--3"
+              onClick={() => onPick(team, 'triple')}
+              disabled={disabled}
+            >
+              <span className="score-btn__sign">+</span>
+              <span className="score-btn__num">3</span>
+            </button>
+          </>
+        )}
       </div>
     </div>
   );

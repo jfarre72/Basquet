@@ -9,6 +9,7 @@ export interface PlayerStat {
   totalPoints: number;
   doubles: number;
   triples: number;
+  goals: number;
 }
 
 export function getScore(plays: Play[], team: TeamId): number {
@@ -27,14 +28,16 @@ export function getPlayerStats(state: GameState): PlayerStat[] {
       );
       const doubles = plays.filter((p) => p.shotType === 'double').length;
       const triples = plays.filter((p) => p.shotType === 'triple').length;
+      const goals = plays.filter((p) => p.shotType === 'goal').length;
       out.push({
         playerId,
         playerName: PLAYERS_BY_ID[playerId]?.name ?? `Jugador #${playerId}`,
         team: teamId,
         teamName: team.name,
-        totalPoints: doubles * 2 + triples * 3,
+        totalPoints: doubles * 2 + triples * 3 + goals,
         doubles,
         triples,
+        goals,
       });
     });
   });

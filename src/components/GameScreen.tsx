@@ -24,6 +24,9 @@ export function GameScreen() {
   const difference = Math.abs(scoreA - scoreB);
   const leadingTeam = scoreA > scoreB ? 'A' : scoreB > scoreA ? 'B' : null;
   const totalPoints = scoreA + scoreB;
+  const isFutbol = state.sport === 'mundialito';
+  const unitSingular = isFutbol ? 'gol' : 'punto';
+  const unitPlural = isFutbol ? 'goles' : 'puntos';
 
   return (
     <>
@@ -36,7 +39,7 @@ export function GameScreen() {
         {leadingTeam ? (
           <div className="score-meta__diff">
             Arriba {state.teams[leadingTeam].name} por {difference}{' '}
-            {difference === 1 ? 'punto' : 'puntos'}
+            {difference === 1 ? unitSingular : unitPlural}
           </div>
         ) : (
           totalPoints > 0 && (
@@ -45,7 +48,7 @@ export function GameScreen() {
         )}
         <div className="score-meta__total">
           Total del partido: <strong>{totalPoints}</strong>{' '}
-          {totalPoints === 1 ? 'punto' : 'puntos'}
+          {totalPoints === 1 ? unitSingular : unitPlural}
         </div>
       </div>
 
@@ -98,7 +101,7 @@ export function GameScreen() {
             onClick={() => {
               if (
                 window.confirm(
-                  '¿Finalizar el partido? Vas a ver el podio de goleadores.',
+                  '¿Finalizar el partido? Vas a ver el podio de goleadores.\n\n¿Estás seguro?',
                 )
               ) {
                 dispatch({ type: 'FINISH_GAME' });

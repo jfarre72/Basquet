@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react';
-import { PLAYERS, PLAYERS_BY_ID } from '../data/players';
+import { PLAYERS_BY_ID, getPlayersForSport } from '../data/players';
 import { useGame } from '../state/GameContext';
 import { normalizeText } from '../utils/text';
 
@@ -7,11 +7,13 @@ export function PlayerSelection() {
   const { state, dispatch } = useGame();
   const [query, setQuery] = useState('');
 
+  const roster = useMemo(() => getPlayersForSport(state.sport), [state.sport]);
+
   const filtered = useMemo(() => {
     const q = normalizeText(query.trim());
-    if (!q) return PLAYERS;
-    return PLAYERS.filter((p) => normalizeText(p.name).includes(q));
-  }, [query]);
+    if (!q) return roster;
+    return roster.filter((p) => normalizeText(p.name).includes(q));
+  }, [query, roster]);
 
   const selectedCount = state.selectedPlayerIds.length;
   const canContinue = selectedCount >= 2;

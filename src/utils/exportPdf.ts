@@ -13,7 +13,20 @@ function fileTimestamp(ts: number | null): string {
   )}${pad(d.getMinutes())}`;
 }
 
+function shotLabel(shot: string): string {
+  if (shot === 'goal') return 'Gol';
+  return shot === 'triple' ? 'Triple' : 'Doble';
+}
+
 export function exportGameToPdf(state: GameState): void {
+  const isFutbol = state.sport === 'mundialito';
+  const filePrefix = isFutbol ? 'mundialito' : 'basquet';
+  const title = isFutbol
+    ? 'Mundialito · Resumen del partido'
+    : 'Basquet · Resumen del partido';
+  const podiumTitle = isFutbol ? 'Top goleadores' : 'Podio de goleadores';
+  const pointsLabel = isFutbol ? 'Goles' : 'Puntos';
+
   const doc = new jsPDF({ unit: 'pt', format: 'a4' });
   const pageWidth = doc.internal.pageSize.getWidth();
   const margin = 40;
@@ -36,7 +49,7 @@ export function exportGameToPdf(state: GameState): void {
   doc.setFont('helvetica', 'bold');
   doc.setFontSize(22);
   doc.setTextColor(...ink);
-  doc.text('Basquet · Resumen del partido', margin, y);
+  doc.text(title, margin, y);
   y += 8;
 
   doc.setDrawColor(...orange);
@@ -89,16 +102,16 @@ export function exportGameToPdf(state: GameState): void {
   if (podium.length > 0) {
     doc.setFontSize(13);
     doc.setTextColor(...ink);
-    doc.text('Podio de goleadores', margin, y);
+    doc.text(podiumTitle, margin, y);
     y += 6;
     autoTable(doc, {
       startY: y,
-      head: [['#', 'Jugador', 'Equipo', 'Puntos']],
+      head: [['#', 'Jugador', 'Equipo', pointsLabel]],
       body: podium.map((p, idx) => [
         `${idx + 1}`,
         p.playerName,
         p.teamName,
-        `${p.totalPoints}`,
+        `${isFutbol ? p.goals : p.totalPoints}`,
       ]),
       theme: 'grid',
       headStyles: { fillColor: orange, textColor: ink, fontStyle: 'bold' },
@@ -117,14 +130,20 @@ export function exportGameToPdf(state: GameState): void {
   y += 6;
   autoTable(doc, {
     startY: y,
-    head: [['Jugador', 'Equipo', '2pt', '3pt', 'Total']],
-    body: stats.map((s) => [
-      s.playerName,
-      s.teamName,
-      `${s.doubles}`,
-      `${s.triples}`,
-      `${s.totalPoints}`,
-    ]),
+    head: isFutbol
+      ? [['Jugador', 'Equipo', 'Goles']]
+      : [['Jugador', 'Equipo', '2pt', '3pt', 'Total']],
+    body: stats.map((s) =>
+      isFutbol
+        ? [s.playerName, s.teamName, `${s.goals}`]
+        : [
+            s.playerName,
+            s.teamName,
+            `${s.doubles}`,
+            `${s.triples}`,
+            `${s.totalPoints}`,
+          ],
+    ),
     theme: 'striped',
     headStyles: { fillColor: ink, textColor: 255, fontStyle: 'bold' },
     styles: { fontSize: 10, cellPadding: 6 },
@@ -139,21 +158,33 @@ export function exportGameToPdf(state: GameState): void {
       y = margin;
     }
     doc.setTextColor(...ink);
-    doc.text('Detalle de jugadas', margin, y);
+    doc.text(isFutbol ? 'Detalle de goles' : 'Detalle de jugadas', margin, y);
     y += 6;
     autoTable(doc, {
       startY: y,
-      head: [['Min', 'Hora', 'Equipo', 'Jugador', 'Tiro', 'Pts']],
+      head: isFutbol
+        ? [['Min', 'Hora', 'Equipo', 'Jugador', 'Goles']]
+        : [['Min', 'Hora', 'Equipo', 'Jugador', 'Tiro', 'Pts']],
       body: [...state.plays]
         .sort((a, b) => a.timestamp - b.timestamp)
-        .map((p) => [
-          `${p.minute}'`,
-          formatTime(p.timestamp),
-          state.teams[p.team].name,
-          PLAYERS_BY_ID[p.playerId]?.name ?? `#${p.playerId}`,
-          p.shotType === 'triple' ? 'Triple' : 'Doble',
-          `${p.points}`,
-        ]),
+        .map((p) =>
+          isFutbol
+            ? [
+                `${p.minute}'`,
+                formatTime(p.timestamp),
+                state.teams[p.team].name,
+                PLAYERS_BY_ID[p.playerId]?.name ?? `#${p.playerId}`,
+                `${p.points}`,
+              ]
+            : [
+                `${p.minute}'`,
+                formatTime(p.timestamp),
+                state.teams[p.team].name,
+                PLAYERS_BY_ID[p.playerId]?.name ?? `#${p.playerId}`,
+                shotLabel(p.shotType),
+                `${p.points}`,
+              ],
+        ),
       theme: 'grid',
       headStyles: { fillColor: ink, textColor: 255, fontStyle: 'bold' },
       styles: { fontSize: 9, cellPadding: 5 },
@@ -161,5 +192,5 @@ export function exportGameToPdf(state: GameState): void {
     });
   }
 
-  doc.save(`basquet-${fileTimestamp(state.startTime)}.pdf`);
+  doc.save(`${filePrefix}-${fileTimestamp(state.startTime)}.pdf`);
 }

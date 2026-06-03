@@ -7,16 +7,24 @@ import type { Play, ShotType } from '../types';
 export function PlaysList() {
   const { state, dispatch } = useGame();
   const [editing, setEditing] = useState<Play | null>(null);
+  const isFutbol = state.sport === 'mundialito';
 
   const sorted = [...state.plays].sort((a, b) => b.timestamp - a.timestamp);
 
   if (sorted.length === 0) {
     return (
       <div className="empty-state">
-        Todavía no hay jugadas registradas. Tocá +2 o +3 para sumar la primera.
+        {isFutbol
+          ? 'Todavía no hay goles registrados. Tocá +1 para sumar el primero.'
+          : 'Todavía no hay jugadas registradas. Tocá +2 o +3 para sumar la primera.'}
       </div>
     );
   }
+
+  const shotLabel = (shot: Play['shotType']): string => {
+    if (shot === 'goal') return 'Gol';
+    return shot === 'triple' ? 'Triple' : 'Doble';
+  };
 
   return (
     <>
@@ -33,7 +41,7 @@ export function PlaysList() {
                 </span>
                 <span className="play-row__meta">
                   {teamName} · {formatTime(play.timestamp)} ·{' '}
-                  {play.shotType === 'triple' ? 'Triple' : 'Doble'}
+                  {shotLabel(play.shotType)}
                 </span>
               </div>
               <span
@@ -99,13 +107,14 @@ function EditPlayModal({ play, onClose, onSave }: EditModalProps) {
   const teamPlayers = state.teams[play.team].playerIds;
   const [playerId, setPlayerId] = useState<number>(play.playerId);
   const [shotType, setShotType] = useState<ShotType>(play.shotType);
+  const isFutbol = state.sport === 'mundialito';
 
   return (
     <div className="modal-backdrop" role="dialog" aria-modal>
       <div className="modal">
         <div className="modal__head">
           <div className="modal__title">
-            Editar jugada
+            {isFutbol ? 'Editar gol' : 'Editar jugada'}
             <small>{state.teams[play.team].name}</small>
           </div>
           <button
@@ -133,27 +142,29 @@ function EditPlayModal({ play, onClose, onSave }: EditModalProps) {
             </select>
           </div>
 
-          <div className="modal__field">
-            <label>Tipo de tiro</label>
-            <div className="shot-toggle">
-              <button
-                type="button"
-                className={shotType === 'double' ? 'is-active' : ''}
-                onClick={() => setShotType('double')}
-              >
-                Doble (+2)
-              </button>
-              <button
-                type="button"
-                className={`shot-toggle--3 ${
-                  shotType === 'triple' ? 'is-active' : ''
-                }`}
-                onClick={() => setShotType('triple')}
-              >
-                Triple (+3)
-              </button>
+          {!isFutbol && (
+            <div className="modal__field">
+              <label>Tipo de tiro</label>
+              <div className="shot-toggle">
+                <button
+                  type="button"
+                  className={shotType === 'double' ? 'is-active' : ''}
+                  onClick={() => setShotType('double')}
+                >
+                  Doble (+2)
+                </button>
+                <button
+                  type="button"
+                  className={`shot-toggle--3 ${
+                    shotType === 'triple' ? 'is-active' : ''
+                  }`}
+                  onClick={() => setShotType('triple')}
+                >
+                  Triple (+3)
+                </button>
+              </div>
             </div>
-          </div>
+          )}
 
           <div className="actions-row">
             <button
