@@ -33,6 +33,8 @@ export function exportGameToPdf(state: GameState): void {
   let y = margin;
 
   const orange: [number, number, number] = [249, 115, 22];
+  const sky: [number, number, number] = [56, 189, 248];
+  const accent: [number, number, number] = isFutbol ? sky : orange;
   const ink: [number, number, number] = [15, 23, 42];
   const muted: [number, number, number] = [100, 116, 139];
 
@@ -52,7 +54,7 @@ export function exportGameToPdf(state: GameState): void {
   doc.text(title, margin, y);
   y += 8;
 
-  doc.setDrawColor(...orange);
+  doc.setDrawColor(...accent);
   doc.setLineWidth(3);
   doc.line(margin, y, margin + 80, y);
   y += 20;
@@ -79,7 +81,7 @@ export function exportGameToPdf(state: GameState): void {
     align: 'right',
   });
   doc.setFontSize(34);
-  doc.setTextColor(...orange);
+  doc.setTextColor(...accent);
   doc.text(`${scoreA}`, margin + 24, y + 58);
   doc.setTextColor(255, 255, 255);
   doc.text(`${scoreB}`, pageWidth - margin - 24, y + 58, { align: 'right' });
@@ -114,7 +116,7 @@ export function exportGameToPdf(state: GameState): void {
         `${isFutbol ? p.goals : p.totalPoints}`,
       ]),
       theme: 'grid',
-      headStyles: { fillColor: orange, textColor: ink, fontStyle: 'bold' },
+      headStyles: { fillColor: accent, textColor: ink, fontStyle: 'bold' },
       styles: { fontSize: 10, cellPadding: 6 },
       margin: { left: margin, right: margin },
     });

@@ -27,8 +27,15 @@ export default function App() {
       ? 'Hecho para nuestro Mundialito ⚽'
       : 'Hecho para nuestros básquet de los Martes 🏀';
 
+  const sportClass =
+    state.sport === 'mundialito'
+      ? ' app--futbol'
+      : state.sport === 'basquet'
+        ? ' app--basquet'
+        : '';
+
   return (
-    <div className="app">
+    <div className={`app${sportClass}`}>
       <Header stage={state.stage} sport={state.sport} />
       <main className="app__main">
         {state.stage === 'sport' && <SportSelection />}
