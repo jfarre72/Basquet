@@ -38,3 +38,13 @@ build/
 # Cache
 .eslintcache
 .cache/
+
+# TypeScript build info
+*.tsbuildinfo
+
+# Vite generated config artifacts
+vite.config.d.ts
+vite.config.js
+
+# npm (project does not commit lockfile)
+package-lock.json
