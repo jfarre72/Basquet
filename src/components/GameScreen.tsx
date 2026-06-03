@@ -21,12 +21,36 @@ export function GameScreen() {
   const finished = state.stage === 'finished';
   const { winner, scoreA, scoreB } = getWinner(state);
 
+  const difference = Math.abs(scoreA - scoreB);
+  const leadingTeam = scoreA > scoreB ? 'A' : scoreB > scoreA ? 'B' : null;
+  const totalPoints = scoreA + scoreB;
+  const isFutbol = state.sport === 'mundialito';
+  const unitSingular = isFutbol ? 'gol' : 'punto';
+  const unitPlural = isFutbol ? 'goles' : 'puntos';
+
   return (
     <>
       <Scoreboard
         liveClock={!finished}
         onPickPlayer={(team, shot) => setPicker({ team, shot })}
       />
+
+      <div className="score-meta">
+        {leadingTeam ? (
+          <div className="score-meta__diff">
+            Arriba {state.teams[leadingTeam].name} por {difference}{' '}
+            {difference === 1 ? unitSingular : unitPlural}
+          </div>
+        ) : (
+          totalPoints > 0 && (
+            <div className="score-meta__diff">Empate</div>
+          )
+        )}
+        <div className="score-meta__total">
+          Total del partido: <strong>{totalPoints}</strong>{' '}
+          {totalPoints === 1 ? unitSingular : unitPlural}
+        </div>
+      </div>
 
       {finished && (
         <section className="card">
@@ -77,7 +101,7 @@ export function GameScreen() {
             onClick={() => {
               if (
                 window.confirm(
-                  '¿Finalizar el partido? Vas a ver el podio de goleadores.',
+                  '¿Finalizar el partido? Vas a ver el podio de goleadores.\n\n¿Estás seguro?',
                 )
               ) {
                 dispatch({ type: 'FINISH_GAME' });

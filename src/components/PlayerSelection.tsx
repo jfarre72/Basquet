@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react';
-import { PLAYERS } from '../data/players';
+import { PLAYERS_BY_ID, getPlayersForSport } from '../data/players';
 import { useGame } from '../state/GameContext';
 import { normalizeText } from '../utils/text';
 
@@ -7,11 +7,13 @@ export function PlayerSelection() {
   const { state, dispatch } = useGame();
   const [query, setQuery] = useState('');
 
+  const roster = useMemo(() => getPlayersForSport(state.sport), [state.sport]);
+
   const filtered = useMemo(() => {
     const q = normalizeText(query.trim());
-    if (!q) return PLAYERS;
-    return PLAYERS.filter((p) => normalizeText(p.name).includes(q));
-  }, [query]);
+    if (!q) return roster;
+    return roster.filter((p) => normalizeText(p.name).includes(q));
+  }, [query, roster]);
 
   const selectedCount = state.selectedPlayerIds.length;
   const canContinue = selectedCount >= 2;
@@ -21,7 +23,8 @@ export function PlayerSelection() {
       <div>
         <h1 className="section-title">¿Quiénes juegan hoy?</h1>
         <p className="section-subtitle">
-          Tocá los nombres para sumarlos al partido. Después armás los equipos.
+          Tocá un nombre para sumarlo. Para sacarlo, tocalo de nuevo o usá la
+          ✕ del chip.
         </p>
       </div>
 
@@ -37,6 +40,41 @@ export function PlayerSelection() {
           aria-label="Buscar jugador"
         />
       </div>
+
+      {selectedCount > 0 && (
+        <section className="selected-panel">
+          <div className="selected-panel__head">
+            <span className="selected-panel__title">
+              Seleccionados ({selectedCount})
+            </span>
+            <button
+              type="button"
+              className="selected-panel__clear"
+              onClick={() => dispatch({ type: 'CLEAR_SELECTION' })}
+            >
+              Limpiar todo
+            </button>
+          </div>
+          <div className="selected-panel__chips">
+            {state.selectedPlayerIds.map((id) => (
+              <button
+                key={id}
+                type="button"
+                className="selected-chip"
+                onClick={() =>
+                  dispatch({ type: 'TOGGLE_PLAYER', playerId: id })
+                }
+                title="Quitar de la selección"
+              >
+                {PLAYERS_BY_ID[id]?.name}
+                <span className="selected-chip__x" aria-hidden>
+                  ×
+                </span>
+              </button>
+            ))}
+          </div>
+        </section>
+      )}
 
       <div className="players-grid" role="list">
         {filtered.map((player) => {
@@ -54,8 +92,12 @@ export function PlayerSelection() {
               }
               aria-pressed={isSelected}
             >
-              <span className="player-chip__num">#{player.id}</span>
-              <span>{player.name}</span>
+              <span className="player-chip__name">{player.name}</span>
+              {isSelected && (
+                <span className="player-chip__check" aria-hidden>
+                  ✓
+                </span>
+              )}
             </button>
           );
         })}
@@ -71,15 +113,6 @@ export function PlayerSelection() {
           {selectedCount}
           <small>seleccionado{selectedCount === 1 ? '' : 's'}</small>
         </div>
-        {selectedCount > 0 && (
-          <button
-            type="button"
-            className="btn btn--ghost btn--sm"
-            onClick={() => dispatch({ type: 'CLEAR_SELECTION' })}
-          >
-            Limpiar
-          </button>
-        )}
         <button
           type="button"
           className="btn btn--primary"

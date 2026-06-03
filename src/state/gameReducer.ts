@@ -1,24 +1,34 @@
-import type { GameState, Play, ShotType, TeamId } from '../types';
+import type { GameState, Play, ShotType, Sport, TeamId } from '../types';
 
 export const INITIAL_STATE: GameState = {
-  stage: 'selection',
+  sport: null,
+  stage: 'sport',
   selectedPlayerIds: [],
   teams: {
-    A: { name: 'Equipo Naranja', playerIds: [] },
-    B: { name: 'Equipo Negro', playerIds: [] },
+    A: { name: 'Negro', playerIds: [] },
+    B: { name: 'Blanco', playerIds: [] },
   },
   startTime: null,
   endTime: null,
   plays: [],
 };
 
+const DEFAULT_TEAM_NAMES: Record<Sport, { A: string; B: string }> = {
+  basquet: { A: 'Negro', B: 'Blanco' },
+  mundialito: { A: 'Equipo A', B: 'Equipo B' },
+};
+
 export type GameAction =
+  | { type: 'SELECT_SPORT'; sport: Sport }
+  | { type: 'BACK_TO_SPORT' }
   | { type: 'TOGGLE_PLAYER'; playerId: number }
   | { type: 'CLEAR_SELECTION' }
   | { type: 'GO_TO_TEAMS' }
   | { type: 'BACK_TO_SELECTION' }
   | { type: 'ASSIGN_PLAYER_TO_TEAM'; playerId: number; team: TeamId }
   | { type: 'UNASSIGN_PLAYER'; playerId: number }
+  | { type: 'CLEAR_TEAMS' }
+  | { type: 'SHUFFLE_TEAMS' }
   | { type: 'SET_TEAM_NAME'; team: TeamId; name: string }
   | { type: 'START_GAME' }
   | {
@@ -43,8 +53,10 @@ function makeId(): string {
   return `${Date.now()}-${Math.random().toString(36).slice(2, 10)}`;
 }
 
-function pointsFor(shot: ShotType): 2 | 3 {
-  return shot === 'triple' ? 3 : 2;
+function pointsFor(shot: ShotType): 1 | 2 | 3 {
+  if (shot === 'triple') return 3;
+  if (shot === 'goal') return 1;
+  return 2;
 }
 
 function minuteAt(startTime: number | null, timestamp: number): number {
@@ -58,6 +70,22 @@ function withoutPlayer(ids: number[], playerId: number): number[] {
 
 export function gameReducer(state: GameState, action: GameAction): GameState {
   switch (action.type) {
+    case 'SELECT_SPORT': {
+      const names = DEFAULT_TEAM_NAMES[action.sport];
+      return {
+        ...INITIAL_STATE,
+        sport: action.sport,
+        stage: 'selection',
+        teams: {
+          A: { name: names.A, playerIds: [] },
+          B: { name: names.B, playerIds: [] },
+        },
+      };
+    }
+
+    case 'BACK_TO_SPORT':
+      return { ...INITIAL_STATE };
+
     case 'TOGGLE_PLAYER': {
       const isSelected = state.selectedPlayerIds.includes(action.playerId);
       const selectedPlayerIds = isSelected
@@ -133,6 +161,31 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
           },
         },
       };
+
+    case 'CLEAR_TEAMS':
+      return {
+        ...state,
+        teams: {
+          A: { ...state.teams.A, playerIds: [] },
+          B: { ...state.teams.B, playerIds: [] },
+        },
+      };
+
+    case 'SHUFFLE_TEAMS': {
+      const shuffled = [...state.selectedPlayerIds];
+      for (let i = shuffled.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+      }
+      const half = Math.ceil(shuffled.length / 2);
+      return {
+        ...state,
+        teams: {
+          A: { ...state.teams.A, playerIds: shuffled.slice(0, half) },
+          B: { ...state.teams.B, playerIds: shuffled.slice(half) },
+        },
+      };
+    }
 
     case 'SET_TEAM_NAME':
       return {
