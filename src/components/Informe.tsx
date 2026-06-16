@@ -3,6 +3,8 @@ import { fetchSeasonData, type DbMatch, type DbMatchPlayer } from '../lib/querie
 import {
   computeMonthly,
   computeSeasonStats,
+  isMonthInTournament,
+  getMatchMonth,
   getMatchYear,
   listAvailableYears,
   sortSeasonStats,
@@ -10,7 +12,14 @@ import {
   type PlayerSeasonStat,
   type SortDir,
   type SortKey,
+  type Tournament,
 } from '../utils/seasonStats';
+
+const TOURNAMENTS: { key: Tournament; label: string }[] = [
+  { key: 'completo', label: 'Completo' },
+  { key: 'apertura', label: 'Apertura' },
+  { key: 'clausura', label: 'Clausura' },
+];
 
 interface ColumnDef {
   key: SortKey;
@@ -38,6 +47,7 @@ export function Informe() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [year, setYear] = useState<number | null>(null);
+  const [tournament, setTournament] = useState<Tournament>('completo');
   const [sort, setSort] = useState<SortKey>('puntaje');
   const [sortDir, setSortDir] = useState<SortDir>('desc');
 
@@ -77,8 +87,11 @@ export function Informe() {
   const years = useMemo(() => listAvailableYears(matches), [matches]);
 
   const baseStats = useMemo(
-    () => (year == null ? [] : computeSeasonStats(year, matches, matchPlayers)),
-    [year, matches, matchPlayers],
+    () =>
+      year == null
+        ? []
+        : computeSeasonStats(year, matches, matchPlayers, tournament),
+    [year, matches, matchPlayers, tournament],
   );
 
   const podium = useMemo(
@@ -92,22 +105,20 @@ export function Informe() {
   );
 
   const monthly = useMemo(
-    () => (year == null ? [] : computeMonthly(year, matches)),
-    [year, matches],
+    () => (year == null ? [] : computeMonthly(year, matches, tournament)),
+    [year, matches, tournament],
   );
 
   const totals = useMemo(() => {
-    if (year == null) return { TP: 0, jugadores: 0, faltantes: 0 };
-    const seasonMatches = matches.filter((m) => getMatchYear(m) === year);
-    const ids = new Set(seasonMatches.map((m) => m.id));
-    const mps = matchPlayers.filter((mp) => ids.has(mp.match_id));
+    if (year == null) return { jugados: 0, faltantes: 0 };
+    const seasonMatches = matches.filter(
+      (m) =>
+        getMatchYear(m) === year &&
+        isMonthInTournament(getMatchMonth(m), tournament),
+    );
     const faltantes = monthly.reduce((s, m) => s + m.pendientes, 0);
-    return {
-      TP: seasonMatches.length,
-      jugadores: new Set(mps.map((mp) => mp.player_id)).size,
-      faltantes,
-    };
-  }, [year, matches, matchPlayers, monthly]);
+    return { jugados: seasonMatches.length, faltantes };
+  }, [year, matches, monthly, tournament]);
 
   return (
     <div className="informe">
@@ -118,17 +129,17 @@ export function Informe() {
             Estadísticas por jugador. Martes de básquet.
           </p>
         </div>
+      </div>
+      <div className="filters">
         {years.length > 0 && (
-          <div className="year-select" role="tablist" aria-label="Año">
+          <div className="pill-group" role="tablist" aria-label="Año">
             {years.map((y) => (
               <button
                 key={y}
                 type="button"
                 role="tab"
                 aria-selected={y === year}
-                className={`year-select__btn${
-                  y === year ? ' year-select__btn--active' : ''
-                }`}
+                className={`pill${y === year ? ' pill--active' : ''}`}
                 onClick={() => setYear(y)}
               >
                 {y}
@@ -136,6 +147,20 @@ export function Informe() {
             ))}
           </div>
         )}
+        <div className="pill-group" role="tablist" aria-label="Torneo">
+          {TOURNAMENTS.map((t) => (
+            <button
+              key={t.key}
+              type="button"
+              role="tab"
+              aria-selected={t.key === tournament}
+              className={`pill${t.key === tournament ? ' pill--active' : ''}`}
+              onClick={() => setTournament(t.key)}
+            >
+              {t.label}
+            </button>
+          ))}
+        </div>
       </div>
 
       {error && (
@@ -152,17 +177,13 @@ export function Informe() {
         </div>
       ) : (
         <>
-          <div className="kpis">
+          <div className="kpis kpis--2">
             <div className="kpi">
-              <span className="kpi__label">Partidos</span>
-              <span className="kpi__value">{totals.TP}</span>
+              <span className="kpi__label">Partidos jugados</span>
+              <span className="kpi__value">{totals.jugados}</span>
             </div>
             <div className="kpi">
-              <span className="kpi__label">Jugadores</span>
-              <span className="kpi__value">{totals.jugadores}</span>
-            </div>
-            <div className="kpi">
-              <span className="kpi__label">Faltantes</span>
+              <span className="kpi__label">Partidos faltantes</span>
               <span className="kpi__value kpi__value--accent">
                 {totals.faltantes}
               </span>
@@ -221,10 +242,6 @@ function PodiumBlock({ podium }: { podium: PlayerSeasonStat[] }) {
 /* ---------- Gráfico mensual ---------- */
 
 function MonthlyChart({ data }: { data: ReturnType<typeof computeMonthly> }) {
-  const max = Math.max(
-    1,
-    ...data.map((d) => d.jugados + d.pendientes),
-  );
   return (
     <section className="block">
       <div className="block__head">
@@ -241,33 +258,27 @@ function MonthlyChart({ data }: { data: ReturnType<typeof computeMonthly> }) {
       <div className="month-chart">
         {data.map((d) => {
           const total = d.jugados + d.pendientes;
-          const fillPct = total > 0 ? (total / max) * 100 : 0;
           const playedPct = total > 0 ? (d.jugados / total) * 100 : 0;
           const pendingPct = total > 0 ? (d.pendientes / total) * 100 : 0;
           return (
             <div key={d.month} className="month-col">
-              <div className="month-col__labels">
-                <span className="month-col__num month-col__num--played">
-                  {d.jugados || ''}
-                </span>
-                <span className="month-col__num month-col__num--pending">
-                  {d.pendientes || ''}
-                </span>
-              </div>
-              <div className="month-col__bars" aria-hidden>
-                <div
-                  className="month-col__fill"
-                  style={{ height: `${fillPct}%` }}
-                >
+              <div className="month-col__bars">
+                {d.pendientes > 0 && (
                   <div
                     className="month-col__seg month-col__seg--pending"
                     style={{ height: `${pendingPct}%` }}
-                  />
+                  >
+                    <span className="month-col__inline">{d.pendientes}</span>
+                  </div>
+                )}
+                {d.jugados > 0 && (
                   <div
                     className="month-col__seg month-col__seg--played"
                     style={{ height: `${playedPct}%` }}
-                  />
-                </div>
+                  >
+                    <span className="month-col__inline">{d.jugados}</span>
+                  </div>
+                )}
               </div>
               <span className="month-col__total">{total || ''}</span>
               <span className="month-col__label">{d.label}</span>

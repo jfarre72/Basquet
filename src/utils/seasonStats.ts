@@ -60,6 +60,14 @@ const WIN_PTS = 3;
 const TIE_PTS = 2;
 const LOSS_PTS = 1;
 
+export type Tournament = 'completo' | 'apertura' | 'clausura';
+
+export function isMonthInTournament(month: number, t: Tournament): boolean {
+  if (t === 'apertura') return month >= 0 && month <= 5;
+  if (t === 'clausura') return month >= 6 && month <= 11;
+  return true;
+}
+
 export function getMatchYear(match: DbMatch): number {
   return new Date(match.played_at).getUTCFullYear();
 }
@@ -78,9 +86,14 @@ export function computeSeasonStats(
   year: number,
   allMatches: DbMatch[],
   allMatchPlayers: DbMatchPlayer[],
+  tournament: Tournament = 'completo',
 ): PlayerSeasonStat[] {
   const seasonMatches = allMatches
-    .filter((m) => getMatchYear(m) === year)
+    .filter(
+      (m) =>
+        getMatchYear(m) === year &&
+        isMonthInTournament(getMatchMonth(m), tournament),
+    )
     .sort((a, b) => a.played_at.localeCompare(b.played_at));
   const seasonMatchIds = new Set(seasonMatches.map((m) => m.id));
   const matchDateById = new Map(seasonMatches.map((m) => [m.id, m.played_at]));
@@ -207,6 +220,7 @@ function tuesdaysInMonth(year: number, month: number): number[] {
 export function computeMonthly(
   year: number,
   matches: DbMatch[],
+  tournament: Tournament = 'completo',
   now: number = Date.now(),
 ): MonthBucket[] {
   const jugadosByMonth = new Array(12).fill(0);
@@ -216,12 +230,15 @@ export function computeMonthly(
 
   const buckets: MonthBucket[] = [];
   for (let month = 0; month < 12; month++) {
+    if (!isMonthInTournament(month, tournament)) continue;
     const jugados = jugadosByMonth[month];
     const pendientes = tuesdaysInMonth(year, month).filter(
       (t) => t > now,
     ).length;
     buckets.push({ month, label: MONTH_LABELS[month], jugados, pendientes });
   }
+
+  if (tournament !== 'completo') return buckets;
 
   const first = buckets.findIndex((b) => b.jugados > 0 || b.pendientes > 0);
   let last = -1;
