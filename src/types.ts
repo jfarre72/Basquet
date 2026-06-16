@@ -1,10 +1,8 @@
 export type TeamId = 'A' | 'B';
 
-export type Sport = 'basquet' | 'mundialito';
+export type ShotType = 'double' | 'triple';
 
-export type ShotType = 'double' | 'triple' | 'goal';
-
-export type Stage = 'sport' | 'selection' | 'teams' | 'game' | 'finished';
+export type Stage = 'selection' | 'teams' | 'game' | 'finished';
 
 export interface Player {
   id: number;
@@ -20,7 +18,7 @@ export interface Play {
   team: TeamId;
   playerId: number;
   shotType: ShotType;
-  points: 1 | 2 | 3;
+  points: 2 | 3;
 }
 
 export interface TeamData {
@@ -29,7 +27,6 @@ export interface TeamData {
 }
 
 export interface GameState {
-  sport: Sport | null;
   stage: Stage;
   selectedPlayerIds: number[];
   teams: { A: TeamData; B: TeamData };

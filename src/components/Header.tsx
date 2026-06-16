@@ -1,34 +1,20 @@
-import type { Sport, Stage } from '../types';
+import type { Stage } from '../types';
 
 const STAGE_LABEL: Record<Stage, string> = {
-  sport: 'Elegí deporte',
   selection: 'Jugadores',
   teams: 'Equipos',
   game: 'En vivo',
   finished: 'Finalizado',
 };
 
-interface Props {
-  stage: Stage;
-  sport: Sport | null;
-}
-
-export function Header({ stage, sport }: Props) {
-  const isFutbol = sport === 'mundialito';
-  const brandLeft = isFutbol ? 'Mundi' : 'Bas';
-  const brandRight = isFutbol ? 'alito' : 'quet';
-
+export function Header({ stage }: { stage: Stage }) {
   return (
     <header className="app__header">
       <div className="app__brand">
-        <div
-          className={`brand__ball${isFutbol ? ' brand__ball--futbol' : ''}`}
-          aria-hidden
-        />
+        <div className="brand__ball" aria-hidden />
         <div>
           <div className="brand__name">
-            {brandLeft}
-            <span>{brandRight}</span>
+            Bas<span>quet</span>
           </div>
           <div className="stage-label">{STAGE_LABEL[stage]}</div>
         </div>

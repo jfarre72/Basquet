@@ -5,7 +5,6 @@ import type { TeamId } from '../types';
 export function PlayerStats() {
   const { state } = useGame();
   const stats = getPlayerStats(state);
-  const isFutbol = state.sport === 'mundialito';
 
   if (stats.length === 0) {
     return (
@@ -26,48 +25,24 @@ export function PlayerStats() {
           <div className="stats-team" key={team}>
             <div className="stats-team__head">
               <span>{state.teams[team].name}</span>
-              <span>
-                {totalForTeam(stats, team)} {isFutbol ? 'goles' : 'pts'}
-              </span>
+              <span>{totalForTeam(stats, team)} pts</span>
             </div>
-            {isFutbol ? (
-              <>
-                <div className="stats-head stats-head--futbol">
-                  <span>Jugador</span>
-                  <span>Goles</span>
-                </div>
-                {teamStats.map((s) => (
-                  <div
-                    className="stats-row stats-row--futbol"
-                    key={s.playerId}
-                  >
-                    <span className="stats-row__name">{s.playerName}</span>
-                    <span className="stats-row__cell stats-row__cell--total">
-                      {s.goals}
-                    </span>
-                  </div>
-                ))}
-              </>
-            ) : (
-              <>
-                <div className="stats-head">
-                  <span>Jugador</span>
-                  <span>2pt</span>
-                  <span>3pt</span>
-                  <span>Tot.</span>
-                </div>
-                {teamStats.map((s) => (
-                  <div className="stats-row" key={s.playerId}>
-                    <span className="stats-row__name">{s.playerName}</span>
-                    <span className="stats-row__cell">{s.doubles}</span>
-                    <span className="stats-row__cell">{s.triples}</span>
-                    <span className="stats-row__cell stats-row__cell--total">
-                      {s.totalPoints}
-                    </span>
-                  </div>
-                ))}
-              </>
-            )}
+            <div className="stats-head">
+              <span>Jugador</span>
+              <span>2pt</span>
+              <span>3pt</span>
+              <span>Tot.</span>
+            </div>
+            {teamStats.map((s) => (
+              <div className="stats-row" key={s.playerId}>
+                <span className="stats-row__name">{s.playerName}</span>
+                <span className="stats-row__cell">{s.doubles}</span>
+                <span className="stats-row__cell">{s.triples}</span>
+                <span className="stats-row__cell stats-row__cell--total">
+                  {s.totalPoints}
+                </span>
+              </div>
+            ))}
           </div>
         );
       })}

@@ -24,11 +24,6 @@
   --radius-sm: 10px;
   --shadow-sm: 0 2px 6px rgba(0, 0, 0, 0.4);
   --shadow: 0 8px 30px rgba(0, 0, 0, 0.55);
-  --futbol: #38bdf8;
-  --futbol-strong: #7dd3fc;
-  --futbol-dim: rgba(56, 189, 248, 0.14);
-  --futbol-line: rgba(56, 189, 248, 0.32);
-  --futbol-ink: #062235;
   font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto,
     'Helvetica Neue', Arial, sans-serif;
   color-scheme: dark;
@@ -82,14 +77,6 @@ textarea {
   max-width: 880px;
   margin: 0 auto;
   padding: 0 16px 120px;
-}
-
-.app--futbol {
-  --accent: var(--futbol);
-  --accent-strong: var(--futbol-strong);
-  --accent-dim: var(--futbol-dim);
-  --accent-line: var(--futbol-line);
-  --accent-ink: var(--futbol-ink);
 }
 
 .app__header {
@@ -919,13 +906,9 @@ main.app__main {
   padding: 3px 8px;
   flex: 0 0 auto;
 }
-.app--basquet .scoreboard__team--B .scoreboard__team-flag {
+.scoreboard__team--B .scoreboard__team-flag {
   background: rgba(249, 115, 22, 0.15);
   color: #c2410c;
-}
-.app--futbol .scoreboard__team--B .scoreboard__team-flag {
-  background: var(--futbol-dim);
-  color: var(--futbol);
 }
 .scoreboard__points {
   font-family: 'SF Mono', 'JetBrains Mono', ui-monospace, 'Courier New', monospace;
@@ -1007,114 +990,6 @@ main.app__main {
 }
 .scoreboard__team--B .score-btn--3:hover {
   background: #000;
-}
-
-.score-btn--goal {
-  background: var(--futbol);
-  border-color: var(--futbol);
-  color: var(--futbol-ink);
-  width: 100%;
-  flex-direction: row;
-  gap: 6px;
-  padding: 14px 16px;
-}
-.score-btn--goal:hover {
-  background: var(--futbol-strong);
-  border-color: var(--futbol-strong);
-}
-.score-btn__label {
-  font-size: 0.85rem;
-  font-weight: 800;
-  letter-spacing: 0.12em;
-  margin-left: 4px;
-}
-.scoreboard__team--A .score-btn--goal {
-  background: var(--futbol);
-  border-color: var(--futbol);
-  color: var(--futbol-ink);
-}
-.scoreboard__team--A .score-btn--goal:hover {
-  background: var(--futbol-strong);
-  border-color: var(--futbol-strong);
-}
-.scoreboard__team--B .score-btn--goal {
-  background: #fafafa;
-  border-color: var(--futbol);
-  color: var(--futbol-ink);
-}
-.scoreboard__team--B .score-btn--goal:hover {
-  background: var(--futbol-strong);
-  border-color: var(--futbol-strong);
-}
-
-/* ===== Sport selection ===== */
-
-.sport-grid {
-  display: grid;
-  grid-template-columns: 1fr;
-  gap: 14px;
-}
-@media (min-width: 540px) {
-  .sport-grid {
-    grid-template-columns: 1fr 1fr;
-  }
-}
-
-.sport-card {
-  appearance: none;
-  border: 1px solid var(--border);
-  background: var(--surface);
-  color: var(--text);
-  border-radius: var(--radius-lg);
-  padding: 32px 18px;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 8px;
-  cursor: pointer;
-  transition: transform 0.15s ease, border-color 0.15s ease, background 0.15s ease;
-}
-.sport-card:hover {
-  transform: translateY(-2px);
-  border-color: var(--border-strong);
-}
-.sport-card__icon {
-  font-size: 3.4rem;
-  line-height: 1;
-}
-.sport-card__name {
-  font-size: 1.35rem;
-  font-weight: 800;
-  letter-spacing: -0.02em;
-}
-.sport-card__meta {
-  color: var(--text-muted);
-  font-size: 0.9rem;
-}
-.sport-card--basquet:hover {
-  border-color: var(--accent);
-  background: rgba(249, 115, 22, 0.06);
-}
-.sport-card--futbol:hover {
-  border-color: var(--futbol);
-  background: var(--futbol-dim);
-}
-
-.brand__ball--futbol {
-  background:
-    radial-gradient(circle at 30% 30%, #fafafa 0%, #e0f2fe 50%, var(--futbol) 100%);
-}
-.brand__ball--futbol::before {
-  background: none;
-}
-.brand__ball--futbol::after {
-  background:
-    radial-gradient(circle at 50% 50%, var(--futbol-ink) 0%, var(--futbol-ink) 22%, transparent 22%);
-}
-
-.stats-head.stats-head--futbol,
-.stats-row.stats-row--futbol {
-  grid-template-columns: 1fr 56px;
 }
 
 .score-meta {

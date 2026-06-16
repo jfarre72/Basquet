@@ -8,21 +8,10 @@ interface Props {
   onClose: () => void;
 }
 
-function pointsForShot(shot: ShotType): 1 | 2 | 3 {
-  if (shot === 'triple') return 3;
-  if (shot === 'goal') return 1;
-  return 2;
-}
-
 export function PlayerPickerModal({ team, shot, onClose }: Props) {
   const { state, dispatch } = useGame();
   const teamData = state.teams[team];
-  const points = pointsForShot(shot);
-  const isFutbol = state.sport === 'mundialito';
-  const headline = isFutbol
-    ? `Gol para ${teamData.name}`
-    : `+${points} para ${teamData.name}`;
-  const subtitle = isFutbol ? '¿Quién la metió?' : '¿Quién anotó?';
+  const points = shot === 'triple' ? 3 : 2;
 
   const select = (playerId: number) => {
     dispatch({ type: 'ADD_PLAY', team, playerId, shotType: shot });
@@ -34,8 +23,8 @@ export function PlayerPickerModal({ team, shot, onClose }: Props) {
       <div className="modal" onClick={(e) => e.stopPropagation()}>
         <div className="modal__head">
           <div className="modal__title">
-            {headline}
-            <small>{subtitle}</small>
+            +{points} para {teamData.name}
+            <small>¿Quién anotó?</small>
           </div>
           <button
             type="button"

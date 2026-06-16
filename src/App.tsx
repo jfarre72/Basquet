@@ -2,7 +2,6 @@ import { useEffect } from 'react';
 import { Header } from './components/Header';
 import { GameScreen } from './components/GameScreen';
 import { PlayerSelection } from './components/PlayerSelection';
-import { SportSelection } from './components/SportSelection';
 import { TeamBuilder } from './components/TeamBuilder';
 import { useGame } from './state/GameContext';
 
@@ -22,30 +21,19 @@ export default function App() {
     }
   }, [state.stage, state.plays.length]);
 
-  const footerText =
-    state.sport === 'mundialito'
-      ? 'Hecho para nuestro Mundialito ⚽'
-      : 'Hecho para nuestros básquet de los Martes 🏀';
-
-  const sportClass =
-    state.sport === 'mundialito'
-      ? ' app--futbol'
-      : state.sport === 'basquet'
-        ? ' app--basquet'
-        : '';
-
   return (
-    <div className={`app${sportClass}`}>
-      <Header stage={state.stage} sport={state.sport} />
+    <div className="app">
+      <Header stage={state.stage} />
       <main className="app__main">
-        {state.stage === 'sport' && <SportSelection />}
         {state.stage === 'selection' && <PlayerSelection />}
         {state.stage === 'teams' && <TeamBuilder />}
         {(state.stage === 'game' || state.stage === 'finished') && (
           <GameScreen />
         )}
       </main>
-      <footer className="footer-note">{footerText}</footer>
+      <footer className="footer-note">
+        Hecho para nuestros básquet de los Martes 🏀
+      </footer>
     </div>
   );
 }

@@ -1,8 +1,7 @@
-import type { GameState, Play, ShotType, Sport, TeamId } from '../types';
+import type { GameState, Play, ShotType, TeamId } from '../types';
 
 export const INITIAL_STATE: GameState = {
-  sport: null,
-  stage: 'sport',
+  stage: 'selection',
   selectedPlayerIds: [],
   teams: {
     A: { name: 'Negro', playerIds: [] },
@@ -13,14 +12,7 @@ export const INITIAL_STATE: GameState = {
   plays: [],
 };
 
-const DEFAULT_TEAM_NAMES: Record<Sport, { A: string; B: string }> = {
-  basquet: { A: 'Negro', B: 'Blanco' },
-  mundialito: { A: 'Equipo A', B: 'Equipo B' },
-};
-
 export type GameAction =
-  | { type: 'SELECT_SPORT'; sport: Sport }
-  | { type: 'BACK_TO_SPORT' }
   | { type: 'TOGGLE_PLAYER'; playerId: number }
   | { type: 'CLEAR_SELECTION' }
   | { type: 'GO_TO_TEAMS' }
@@ -53,10 +45,8 @@ function makeId(): string {
   return `${Date.now()}-${Math.random().toString(36).slice(2, 10)}`;
 }
 
-function pointsFor(shot: ShotType): 1 | 2 | 3 {
-  if (shot === 'triple') return 3;
-  if (shot === 'goal') return 1;
-  return 2;
+function pointsFor(shot: ShotType): 2 | 3 {
+  return shot === 'triple' ? 3 : 2;
 }
 
 function minuteAt(startTime: number | null, timestamp: number): number {
@@ -70,22 +60,6 @@ function withoutPlayer(ids: number[], playerId: number): number[] {
 
 export function gameReducer(state: GameState, action: GameAction): GameState {
   switch (action.type) {
-    case 'SELECT_SPORT': {
-      const names = DEFAULT_TEAM_NAMES[action.sport];
-      return {
-        ...INITIAL_STATE,
-        sport: action.sport,
-        stage: 'selection',
-        teams: {
-          A: { name: names.A, playerIds: [] },
-          B: { name: names.B, playerIds: [] },
-        },
-      };
-    }
-
-    case 'BACK_TO_SPORT':
-      return { ...INITIAL_STATE };
-
     case 'TOGGLE_PLAYER': {
       const isSelected = state.selectedPlayerIds.includes(action.playerId);
       const selectedPlayerIds = isSelected
