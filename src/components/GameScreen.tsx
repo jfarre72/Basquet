@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useCallback, useState } from 'react';
 import { useGame } from '../state/GameContext';
 import { PlayerPickerModal } from './PlayerPickerModal';
 import { PlaysList } from './PlaysList';
@@ -8,7 +8,9 @@ import { Scoreboard } from './Scoreboard';
 import { exportGameToExcel } from '../utils/exportExcel';
 import { exportGameToPdf } from '../utils/exportPdf';
 import { getWinner } from '../utils/stats';
-import type { ShotType, TeamId } from '../types';
+import { saveGameToSupabase } from '../lib/saveGame';
+import { SUPABASE_CONFIGURED } from '../lib/supabase';
+import type { GameState, ShotType, TeamId } from '../types';
 
 type Tab = 'plays' | 'stats';
 
@@ -20,6 +22,19 @@ export function GameScreen() {
   const [tab, setTab] = useState<Tab>('plays');
   const finished = state.stage === 'finished';
   const { winner, scoreA, scoreB } = getWinner(state);
+
+  const saveGame = useCallback(
+    async (snapshot: GameState) => {
+      dispatch({ type: 'SAVE_START' });
+      try {
+        const matchId = await saveGameToSupabase(snapshot);
+        dispatch({ type: 'SAVE_SUCCESS', matchId });
+      } catch (e) {
+        dispatch({ type: 'SAVE_ERROR', message: (e as Error).message });
+      }
+    },
+    [dispatch],
+  );
 
   const difference = Math.abs(scoreA - scoreB);
   const leadingTeam = scoreA > scoreB ? 'A' : scoreB > scoreA ? 'B' : null;
@@ -61,6 +76,11 @@ export function GameScreen() {
             Resultado final: {state.teams.A.name} {scoreA} — {scoreB}{' '}
             {state.teams.B.name}
           </p>
+          <SaveStatusBanner
+            status={state.saveStatus}
+            error={state.saveError}
+            onRetry={() => void saveGame(state)}
+          />
           <Podium />
         </section>
       )}
@@ -101,7 +121,9 @@ export function GameScreen() {
                   '¿Finalizar el partido? Vas a ver el podio de goleadores.\n\n¿Estás seguro?',
                 )
               ) {
+                const snapshot = state;
                 dispatch({ type: 'FINISH_GAME' });
+                if (SUPABASE_CONFIGURED) void saveGame(snapshot);
               }
             }}
           >
@@ -162,4 +184,48 @@ export function GameScreen() {
       )}
     </>
   );
+}
+
+function SaveStatusBanner({
+  status,
+  error,
+  onRetry,
+}: {
+  status: GameState['saveStatus'];
+  error: string | null;
+  onRetry: () => void;
+}) {
+  if (!SUPABASE_CONFIGURED) {
+    return (
+      <div className="save-banner save-banner--idle">
+        Conectá Supabase para guardar el partido en la base.
+      </div>
+    );
+  }
+  if (status === 'saving') {
+    return (
+      <div className="save-banner save-banner--saving">
+        <span className="save-banner__spinner" aria-hidden /> Guardando partido
+        en la base...
+      </div>
+    );
+  }
+  if (status === 'saved') {
+    return (
+      <div className="save-banner save-banner--saved">
+        ✓ Partido guardado. Ya aparece en el Informe.
+      </div>
+    );
+  }
+  if (status === 'error') {
+    return (
+      <div className="save-banner save-banner--error">
+        <span>No se pudo guardar{error ? `: ${error}` : '.'}</span>
+        <button type="button" className="btn btn--sm btn--ghost" onClick={onRetry}>
+          Reintentar
+        </button>
+      </div>
+    );
+  }
+  return null;
 }

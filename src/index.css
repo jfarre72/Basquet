@@ -1530,6 +1530,54 @@ main.app__main {
   color: #1a0f06;
 }
 
+/* ===== Save banner ===== */
+
+.save-banner {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  padding: 10px 14px;
+  border-radius: var(--radius);
+  font-size: 0.88rem;
+  font-weight: 600;
+  margin: 12px 0;
+  border: 1px solid var(--border);
+}
+.save-banner--idle {
+  background: var(--surface-2);
+  color: var(--text-muted);
+}
+.save-banner--saving {
+  background: var(--surface-2);
+  color: var(--text-muted);
+}
+.save-banner--saved {
+  background: rgba(34, 197, 94, 0.12);
+  border-color: rgba(34, 197, 94, 0.35);
+  color: #4ade80;
+}
+.save-banner--error {
+  background: var(--danger-dim);
+  border-color: rgba(239, 68, 68, 0.4);
+  color: #fecaca;
+  justify-content: space-between;
+}
+.save-banner__spinner {
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  border: 2px solid var(--border-strong);
+  border-top-color: var(--accent);
+  animation: spin 0.7s linear infinite;
+  flex: 0 0 auto;
+}
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
 /* ===== Bottom nav ===== */
 
 .bottom-nav {

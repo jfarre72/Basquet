@@ -28,6 +28,8 @@ export interface TeamData {
   playerIds: number[];
 }
 
+export type SaveStatus = 'idle' | 'saving' | 'saved' | 'error';
+
 export interface GameState {
   stage: Stage;
   selectedPlayerIds: number[];
@@ -35,4 +37,7 @@ export interface GameState {
   startTime: number | null;
   endTime: number | null;
   plays: Play[];
+  saveStatus: SaveStatus;
+  saveError: string | null;
+  savedMatchId: string | null;
 }

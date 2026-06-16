@@ -10,6 +10,9 @@ export const INITIAL_STATE: GameState = {
   startTime: null,
   endTime: null,
   plays: [],
+  saveStatus: 'idle',
+  saveError: null,
+  savedMatchId: null,
 };
 
 export type GameAction =
@@ -36,6 +39,9 @@ export type GameAction =
     }
   | { type: 'DELETE_PLAY'; playId: string }
   | { type: 'FINISH_GAME' }
+  | { type: 'SAVE_START' }
+  | { type: 'SAVE_SUCCESS'; matchId: string }
+  | { type: 'SAVE_ERROR'; message: string }
   | { type: 'RESET_GAME' };
 
 function makeId(): string {
@@ -183,6 +189,9 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
         startTime: Date.now(),
         endTime: null,
         plays: [],
+        saveStatus: 'idle',
+        saveError: null,
+        savedMatchId: null,
       };
     }
 
@@ -224,6 +233,20 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
     case 'FINISH_GAME':
       return { ...state, stage: 'finished', endTime: Date.now() };
 
+    case 'SAVE_START':
+      return { ...state, saveStatus: 'saving', saveError: null };
+
+    case 'SAVE_SUCCESS':
+      return {
+        ...state,
+        saveStatus: 'saved',
+        saveError: null,
+        savedMatchId: action.matchId,
+      };
+
+    case 'SAVE_ERROR':
+      return { ...state, saveStatus: 'error', saveError: action.message };
+
     case 'RESET_GAME':
       return {
         ...state,
@@ -231,6 +254,9 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
         startTime: null,
         endTime: null,
         plays: [],
+        saveStatus: 'idle',
+        saveError: null,
+        savedMatchId: null,
       };
 
     default:
