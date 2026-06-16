@@ -1,6 +1,7 @@
 import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
 import App from './App';
+import { AuthProvider } from './state/AuthContext';
 import { GameProvider } from './state/GameContext';
 import './index.css';
 
@@ -9,8 +10,10 @@ if (!container) throw new Error('No #root element found in index.html');
 
 createRoot(container).render(
   <StrictMode>
-    <GameProvider>
-      <App />
-    </GameProvider>
+    <AuthProvider>
+      <GameProvider>
+        <App />
+      </GameProvider>
+    </AuthProvider>
   </StrictMode>,
 );
