@@ -8,16 +8,28 @@ import {
   sortSeasonStats,
   type Outcome,
   type PlayerSeasonStat,
+  type SortDir,
   type SortKey,
 } from '../utils/seasonStats';
 
-const SORT_OPTIONS: { key: SortKey; label: string }[] = [
-  { key: 'puntaje', label: 'Puntaje' },
-  { key: 'pj', label: 'PJ' },
-  { key: 'pg', label: 'PG' },
-  { key: 'presentismo', label: '% Pres.' },
-  { key: 'puntos', label: 'Puntos' },
-  { key: 'ptosPorPJ', label: 'Pts/PJ' },
+interface ColumnDef {
+  key: SortKey;
+  label: string;
+  title?: string;
+  hl?: boolean;
+}
+
+const COLUMNS: ColumnDef[] = [
+  { key: 'name', label: 'Jugador' },
+  { key: 'tp', label: 'TP', title: 'Total de partidos desde su debut' },
+  { key: 'pj', label: 'PJ', title: 'Partidos jugados' },
+  { key: 'pg', label: 'PG', title: 'Partidos ganados' },
+  { key: 'pe', label: 'PE', title: 'Partidos empatados' },
+  { key: 'pp', label: 'PP', title: 'Partidos perdidos' },
+  { key: 'puntaje', label: 'Pje', title: 'Puntaje', hl: true },
+  { key: 'presentismo', label: '%P', title: 'Presentismo' },
+  { key: 'puntos', label: 'Pts', title: 'Puntos totales' },
+  { key: 'ptosPorPJ', label: 'P/PJ', title: 'Puntos por partido jugado' },
 ];
 
 export function Informe() {
@@ -27,6 +39,16 @@ export function Informe() {
   const [error, setError] = useState<string | null>(null);
   const [year, setYear] = useState<number | null>(null);
   const [sort, setSort] = useState<SortKey>('puntaje');
+  const [sortDir, setSortDir] = useState<SortDir>('desc');
+
+  const handleSort = (key: SortKey) => {
+    if (sort === key) {
+      setSortDir((d) => (d === 'desc' ? 'asc' : 'desc'));
+    } else {
+      setSort(key);
+      setSortDir(key === 'name' ? 'asc' : 'desc');
+    }
+  };
 
   useEffect(() => {
     let cancelled = false;
@@ -60,13 +82,13 @@ export function Informe() {
   );
 
   const podium = useMemo(
-    () => sortSeasonStats(baseStats, 'puntaje').slice(0, 3),
+    () => sortSeasonStats(baseStats, 'puntaje', 'desc').slice(0, 3),
     [baseStats],
   );
 
   const tableStats = useMemo(
-    () => sortSeasonStats(baseStats, sort),
-    [baseStats, sort],
+    () => sortSeasonStats(baseStats, sort, sortDir),
+    [baseStats, sort, sortDir],
   );
 
   const monthly = useMemo(
@@ -153,7 +175,8 @@ export function Informe() {
           <StatsTable
             stats={tableStats}
             sort={sort}
-            onSort={setSort}
+            sortDir={sortDir}
+            onSort={handleSort}
           />
         </>
       )}
@@ -163,31 +186,32 @@ export function Informe() {
 
 /* ---------- Podio ---------- */
 
+const MEDAL = ['🥇', '🥈', '🥉'];
+const POS_LABEL = ['1°', '2°', '3°'];
+
 function PodiumBlock({ podium }: { podium: PlayerSeasonStat[] }) {
-  // Orden visual: 2º, 1º, 3º
-  const order = [podium[1], podium[0], podium[2]].filter(
-    Boolean,
-  ) as PlayerSeasonStat[];
-  const place = (s: PlayerSeasonStat) => podium.indexOf(s) + 1;
   return (
     <section className="block">
       <h3 className="block__title">🏆 Podio</h3>
-      <div className="podium-stage">
-        {order.map((s) => {
-          const pos = place(s);
-          return (
-            <div key={s.playerId} className={`podium-col podium-col--${pos}`}>
-              <div className="podium-col__name">{s.playerName}</div>
-              <div className="podium-col__pts">{s.puntaje}</div>
-              <div className="podium-col__bar">
-                <span className="podium-col__medal">
-                  {pos === 1 ? '🥇' : pos === 2 ? '🥈' : '🥉'}
-                </span>
-                <span className="podium-col__rank">{pos}º</span>
+      <div className="podium-list">
+        {podium.map((s, idx) => (
+          <article key={s.playerId} className={`podium-row podium-row--${idx + 1}`}>
+            <div className="podium-row__rank">
+              <span className="podium-row__medal">{MEDAL[idx]}</span>
+              <span className="podium-row__pos">{POS_LABEL[idx]}</span>
+            </div>
+            <div className="podium-row__main">
+              <div className="podium-row__name">{s.playerName}</div>
+              <div className="podium-row__meta">
+                {s.PG}G · {s.PE}E · {s.PP}P
               </div>
             </div>
-          );
-        })}
+            <div className="podium-row__pts">
+              <span className="podium-row__pts-num">{s.puntaje}</span>
+              <span className="podium-row__pts-label">pts</span>
+            </div>
+          </article>
+        ))}
       </div>
     </section>
   );
@@ -264,32 +288,19 @@ function FormDots({ form }: { form: Outcome[] }) {
 function StatsTable({
   stats,
   sort,
+  sortDir,
   onSort,
 }: {
   stats: PlayerSeasonStat[];
   sort: SortKey;
+  sortDir: SortDir;
   onSort: (k: SortKey) => void;
 }) {
   return (
     <section className="block">
       <div className="block__head">
         <h3 className="block__title">Tabla</h3>
-      </div>
-      <div className="sort-bar" role="tablist" aria-label="Ordenar por">
-        {SORT_OPTIONS.map((opt) => (
-          <button
-            key={opt.key}
-            type="button"
-            role="tab"
-            aria-selected={sort === opt.key}
-            className={`sort-pill${
-              sort === opt.key ? ' sort-pill--active' : ''
-            }`}
-            onClick={() => onSort(opt.key)}
-          >
-            {opt.label}
-          </button>
-        ))}
+        <span className="block__hint">Tocá una columna para ordenar</span>
       </div>
 
       {stats.length === 0 ? (
@@ -299,19 +310,45 @@ function StatsTable({
           <table className="stats-grid">
             <thead>
               <tr>
-                <th className="stats-grid__sticky stats-grid__th-name">
-                  Jugador
-                </th>
+                {COLUMNS.map((col) => {
+                  const active = sort === col.key;
+                  const isName = col.key === 'name';
+                  return (
+                    <th
+                      key={col.key}
+                      title={col.title}
+                      className={[
+                        isName ? 'stats-grid__sticky stats-grid__th-name' : '',
+                        col.hl ? 'stats-grid__hl' : '',
+                        active ? 'stats-grid__th--active' : '',
+                      ]
+                        .filter(Boolean)
+                        .join(' ')}
+                      aria-sort={
+                        active
+                          ? sortDir === 'asc'
+                            ? 'ascending'
+                            : 'descending'
+                          : 'none'
+                      }
+                    >
+                      <button
+                        type="button"
+                        className="stats-grid__sort"
+                        onClick={() => onSort(col.key)}
+                      >
+                        <span>{col.label}</span>
+                        <span
+                          className="stats-grid__arrow"
+                          aria-hidden
+                        >
+                          {active ? (sortDir === 'asc' ? '▲' : '▼') : '·'}
+                        </span>
+                      </button>
+                    </th>
+                  );
+                })}
                 <th>Últimos 7</th>
-                <th title="Total de partidos desde su debut">TP</th>
-                <th>PJ</th>
-                <th>PG</th>
-                <th>PE</th>
-                <th>PP</th>
-                <th className="stats-grid__hl">Pje</th>
-                <th title="Presentismo">%P</th>
-                <th>Pts</th>
-                <th title="Puntos por partido jugado">P/PJ</th>
               </tr>
             </thead>
             <tbody>
@@ -320,9 +357,6 @@ function StatsTable({
                   <td className="stats-grid__sticky stats-grid__name">
                     <span className="stats-grid__rank">{idx + 1}</span>
                     {s.playerName}
-                  </td>
-                  <td>
-                    <FormDots form={s.form} />
                   </td>
                   <td className="stats-grid__muted">{s.TP}</td>
                   <td>{s.PJ}</td>
@@ -334,6 +368,9 @@ function StatsTable({
                   <td>{s.puntos}</td>
                   <td className="stats-grid__muted">
                     {s.ptosPorPJ == null ? '—' : s.ptosPorPJ.toFixed(1)}
+                  </td>
+                  <td>
+                    <FormDots form={s.form} />
                   </td>
                 </tr>
               ))}

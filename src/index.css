@@ -1736,80 +1736,109 @@ main.app__main {
   letter-spacing: 0.01em;
   margin: 0;
 }
+.block__hint {
+  font-size: 0.7rem;
+  color: var(--text-subtle);
+  font-weight: 600;
+  letter-spacing: 0.02em;
+}
 
 /* ===== Podio ===== */
 
-.podium-stage {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 8px;
-  align-items: end;
-}
-.podium-col {
+.podium-list {
   display: flex;
   flex-direction: column;
+  gap: 8px;
+}
+.podium-row {
+  display: grid;
+  grid-template-columns: 56px 1fr auto;
   align-items: center;
-  gap: 6px;
+  gap: 12px;
   background: var(--surface);
   border: 1px solid var(--border);
   border-radius: var(--radius);
-  padding: 12px 8px 0;
-  overflow: hidden;
+  padding: 12px 14px;
 }
-.podium-col__name {
-  font-weight: 700;
-  font-size: 0.88rem;
-  text-align: center;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  max-width: 100%;
-}
-.podium-col__pts {
-  font-weight: 900;
-  font-size: 1.35rem;
-  letter-spacing: -0.02em;
-  font-variant-numeric: tabular-nums;
-  color: var(--accent-strong);
-}
-.podium-col__bar {
-  width: 100%;
+.podium-row__rank {
   display: flex;
   flex-direction: column;
   align-items: center;
-  justify-content: flex-start;
   gap: 2px;
-  padding-top: 8px;
-  border-top-left-radius: 8px;
-  border-top-right-radius: 8px;
+  flex: 0 0 auto;
 }
-.podium-col__medal {
-  font-size: 1.2rem;
+.podium-row__medal {
+  font-size: 1.6rem;
+  line-height: 1;
 }
-.podium-col__rank {
+.podium-row__pos {
   font-weight: 800;
+  font-size: 0.7rem;
+  color: var(--text-muted);
+  letter-spacing: 0.04em;
+}
+.podium-row__main {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.podium-row__name {
+  font-weight: 800;
+  font-size: 1rem;
+  letter-spacing: -0.01em;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.podium-row__meta {
   font-size: 0.72rem;
+  color: var(--text-muted);
+  font-variant-numeric: tabular-nums;
 }
-.podium-col--1 .podium-col__bar {
-  height: 78px;
-  background: linear-gradient(180deg, rgba(250, 204, 21, 0.25), rgba(250, 204, 21, 0.08));
+.podium-row__pts {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 0;
+  flex: 0 0 auto;
 }
-.podium-col--1 {
+.podium-row__pts-num {
+  font-weight: 900;
+  font-size: 1.5rem;
+  letter-spacing: -0.02em;
+  color: var(--accent-strong);
+  font-variant-numeric: tabular-nums;
+  line-height: 1;
+}
+.podium-row__pts-label {
+  font-size: 0.62rem;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--text-subtle);
+  margin-top: 2px;
+}
+.podium-row--1 {
   border-color: var(--gold);
+  background:
+    linear-gradient(120deg, rgba(250, 204, 21, 0.14), transparent 60%),
+    var(--surface);
 }
-.podium-col--2 .podium-col__bar {
-  height: 58px;
-  background: linear-gradient(180deg, rgba(203, 213, 225, 0.2), rgba(203, 213, 225, 0.05));
+.podium-row--1 .podium-row__pos {
+  color: var(--gold);
 }
-.podium-col--2 {
-  border-color: var(--silver);
+.podium-row--2 {
+  border-color: rgba(203, 213, 225, 0.5);
 }
-.podium-col--3 .podium-col__bar {
-  height: 44px;
-  background: linear-gradient(180deg, rgba(217, 119, 6, 0.25), rgba(217, 119, 6, 0.06));
+.podium-row--2 .podium-row__pos {
+  color: var(--silver);
 }
-.podium-col--3 {
-  border-color: var(--bronze);
+.podium-row--3 {
+  border-color: rgba(217, 119, 6, 0.55);
+}
+.podium-row--3 .podium-row__pos {
+  color: var(--bronze);
 }
 
 /* ===== Gráfico mensual ===== */
@@ -1952,6 +1981,41 @@ main.app__main {
   border-bottom: 1px solid var(--border);
   position: sticky;
   top: 0;
+  padding: 0;
+}
+.stats-grid__sort {
+  appearance: none;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  letter-spacing: inherit;
+  text-transform: inherit;
+  padding: 10px 8px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  cursor: pointer;
+  width: 100%;
+  white-space: nowrap;
+}
+.stats-grid__th-name .stats-grid__sort {
+  justify-content: flex-start;
+}
+.stats-grid__sort:hover {
+  color: var(--text);
+}
+.stats-grid__arrow {
+  font-size: 0.62rem;
+  opacity: 0.55;
+}
+.stats-grid__th--active {
+  color: var(--text) !important;
+}
+.stats-grid__th--active .stats-grid__arrow {
+  opacity: 1;
+  color: var(--accent-strong);
 }
 .stats-grid tbody tr:nth-child(even) {
   background: var(--surface);

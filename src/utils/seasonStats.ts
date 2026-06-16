@@ -43,15 +43,21 @@ const MONTH_LABELS = [
 ];
 
 export type SortKey =
+  | 'name'
   | 'puntaje'
   | 'pj'
   | 'pg'
+  | 'pe'
+  | 'pp'
+  | 'tp'
   | 'presentismo'
   | 'puntos'
   | 'ptosPorPJ';
 
+export type SortDir = 'asc' | 'desc';
+
 const WIN_PTS = 3;
-const TIE_PTS = 1;
+const TIE_PTS = 2;
 const LOSS_PTS = 1;
 
 export function getMatchYear(match: DbMatch): number {
@@ -140,12 +146,16 @@ export function computeSeasonStats(
 export function sortSeasonStats(
   stats: PlayerSeasonStat[],
   key: SortKey,
+  dir: SortDir = 'desc',
 ): PlayerSeasonStat[] {
   const copy = [...stats];
+  const mult = dir === 'asc' ? 1 : -1;
   copy.sort((a, b) => {
-    const av = sortValue(a, key);
-    const bv = sortValue(b, key);
-    if (bv !== av) return bv - av;
+    if (key === 'name') {
+      return a.playerName.localeCompare(b.playerName) * mult;
+    }
+    const diff = (sortValue(b, key) - sortValue(a, key)) * (mult === 1 ? -1 : 1);
+    if (diff !== 0) return diff;
     if (b.puntaje !== a.puntaje) return b.puntaje - a.puntaje;
     return a.playerName.localeCompare(b.playerName);
   });
@@ -160,12 +170,20 @@ function sortValue(s: PlayerSeasonStat, key: SortKey): number {
       return s.PJ;
     case 'pg':
       return s.PG;
+    case 'pe':
+      return s.PE;
+    case 'pp':
+      return s.PP;
+    case 'tp':
+      return s.TP;
     case 'presentismo':
       return s.presentismo;
     case 'puntos':
       return s.puntos;
     case 'ptosPorPJ':
       return s.ptosPorPJ ?? -1;
+    case 'name':
+      return 0;
   }
 }
 
