@@ -1,6 +1,8 @@
 import { PLAYERS_BY_ID } from '../data/players';
 import type { DbMatch, DbMatchPlayer } from '../lib/queries';
 
+export type Outcome = 'Gana' | 'Pierde' | 'Empate';
+
 export interface PlayerSeasonStat {
   playerId: number;
   playerName: string;
@@ -13,7 +15,32 @@ export interface PlayerSeasonStat {
   presentismo: number;
   puntos: number;
   ptosPorPJ: number | null;
+  /** Últimos partidos (más viejo → más reciente), hasta 7. */
+  form: Outcome[];
 }
+
+export interface MonthBucket {
+  /** 0-11 */
+  month: number;
+  label: string;
+  jugados: number;
+  pendientes: number;
+}
+
+const MONTH_LABELS = [
+  'Ene',
+  'Feb',
+  'Mar',
+  'Abr',
+  'May',
+  'Jun',
+  'Jul',
+  'Ago',
+  'Sep',
+  'Oct',
+  'Nov',
+  'Dic',
+];
 
 export type SortKey =
   | 'puntaje'
@@ -29,6 +56,10 @@ const LOSS_PTS = 1;
 
 export function getMatchYear(match: DbMatch): number {
   return new Date(match.played_at).getUTCFullYear();
+}
+
+export function getMatchMonth(match: DbMatch): number {
+  return new Date(match.played_at).getUTCMonth();
 }
 
 export function listAvailableYears(matches: DbMatch[]): number[] {
@@ -78,6 +109,15 @@ export function computeSeasonStats(
     const matchesWithPoints = mps.filter((mp) => mp.points != null).length;
     const ptosPorPJ =
       matchesWithPoints > 0 ? puntos / matchesWithPoints : null;
+    const form = [...mps]
+      .filter((mp) => mp.outcome != null)
+      .sort((a, b) =>
+        (matchDateById.get(a.match_id) ?? '').localeCompare(
+          matchDateById.get(b.match_id) ?? '',
+        ),
+      )
+      .slice(-7)
+      .map((mp) => mp.outcome as Outcome);
     out.push({
       playerId,
       playerName: PLAYERS_BY_ID[playerId]?.name ?? `Jugador #${playerId}`,
@@ -90,6 +130,7 @@ export function computeSeasonStats(
       presentismo,
       puntos,
       ptosPorPJ,
+      form,
     });
   }
 
@@ -126,4 +167,49 @@ function sortValue(s: PlayerSeasonStat, key: SortKey): number {
     case 'ptosPorPJ':
       return s.ptosPorPJ ?? -1;
   }
+}
+
+/** Martes (días) de un mes dado, como timestamps en ms. */
+function tuesdaysInMonth(year: number, month: number): number[] {
+  const out: number[] = [];
+  const d = new Date(Date.UTC(year, month, 1));
+  while (d.getUTCMonth() === month) {
+    if (d.getUTCDay() === 2) out.push(d.getTime());
+    d.setUTCDate(d.getUTCDate() + 1);
+  }
+  return out;
+}
+
+/**
+ * Partidos jugados vs. pendientes por mes del año filtrado.
+ * - jugados: partidos efectivamente registrados ese mes.
+ * - pendientes: martes futuros (posteriores a hoy) todavía sin jugar.
+ * Devuelve sólo el rango de meses con actividad o pendientes.
+ */
+export function computeMonthly(
+  year: number,
+  matches: DbMatch[],
+  now: number = Date.now(),
+): MonthBucket[] {
+  const jugadosByMonth = new Array(12).fill(0);
+  for (const m of matches) {
+    if (getMatchYear(m) === year) jugadosByMonth[getMatchMonth(m)] += 1;
+  }
+
+  const buckets: MonthBucket[] = [];
+  for (let month = 0; month < 12; month++) {
+    const jugados = jugadosByMonth[month];
+    const pendientes = tuesdaysInMonth(year, month).filter(
+      (t) => t > now,
+    ).length;
+    buckets.push({ month, label: MONTH_LABELS[month], jugados, pendientes });
+  }
+
+  const first = buckets.findIndex((b) => b.jugados > 0 || b.pendientes > 0);
+  let last = -1;
+  buckets.forEach((b, i) => {
+    if (b.jugados > 0 || b.pendientes > 0) last = i;
+  });
+  if (first === -1) return [];
+  return buckets.slice(first, last + 1);
 }
