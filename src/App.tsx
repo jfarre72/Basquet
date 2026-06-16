@@ -1,15 +1,20 @@
-import { useEffect } from 'react';
-import { Header } from './components/Header';
+import { useEffect, useState } from 'react';
+import { BottomNav } from './components/BottomNav';
+import { Galeria } from './components/Galeria';
 import { GameScreen } from './components/GameScreen';
+import { Header } from './components/Header';
+import { Informe } from './components/Informe';
 import { LoginScreen } from './components/LoginScreen';
 import { PlayerSelection } from './components/PlayerSelection';
 import { TeamBuilder } from './components/TeamBuilder';
 import { useAuth } from './state/AuthContext';
 import { useGame } from './state/GameContext';
+import type { Section } from './types';
 
 export default function App() {
   const { status } = useAuth();
   const { state } = useGame();
+  const [section, setSection] = useState<Section>('informe');
 
   useEffect(() => {
     if (state.stage === 'game' || (state.stage === 'finished' && state.plays.length > 0)) {
@@ -40,17 +45,24 @@ export default function App() {
 
   return (
     <div className="app">
-      <Header stage={state.stage} />
+      <Header />
       <main className="app__main">
-        {state.stage === 'selection' && <PlayerSelection />}
-        {state.stage === 'teams' && <TeamBuilder />}
-        {(state.stage === 'game' || state.stage === 'finished') && (
-          <GameScreen />
-        )}
+        {section === 'informe' && <Informe />}
+        {section === 'contador' && <ContadorRouter />}
+        {section === 'galeria' && <Galeria />}
       </main>
-      <footer className="footer-note">
-        Hecho para nuestros básquet de los Martes 🏀
-      </footer>
+      <BottomNav section={section} onChange={setSection} />
     </div>
+  );
+}
+
+function ContadorRouter() {
+  const { state } = useGame();
+  return (
+    <>
+      {state.stage === 'selection' && <PlayerSelection />}
+      {state.stage === 'teams' && <TeamBuilder />}
+      {(state.stage === 'game' || state.stage === 'finished') && <GameScreen />}
+    </>
   );
 }
