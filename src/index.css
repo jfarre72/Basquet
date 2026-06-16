@@ -1885,7 +1885,26 @@ main.app__main {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 5px;
+  gap: 4px;
+}
+.month-col__labels {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0;
+  min-height: 1.4em;
+}
+.month-col__num {
+  font-size: 0.7rem;
+  font-weight: 800;
+  line-height: 1.1;
+  font-variant-numeric: tabular-nums;
+}
+.month-col__num--played {
+  color: var(--accent-strong);
+}
+.month-col__num--pending {
+  color: var(--text-subtle);
 }
 .month-col__bars {
   display: flex;
@@ -1896,6 +1915,12 @@ main.app__main {
   background: var(--surface-2);
   border-radius: 6px;
   overflow: hidden;
+}
+.month-col__fill {
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  width: 100%;
 }
 .month-col__seg--played {
   background: var(--accent);
@@ -2077,6 +2102,18 @@ main.app__main {
 .stats-grid__hl {
   color: var(--accent-strong) !important;
   font-weight: 900 !important;
+}
+.stats-grid__attend {
+  font-weight: 800 !important;
+}
+.stats-grid__attend--good {
+  color: #4ade80 !important;
+}
+.stats-grid__attend--mid {
+  color: #facc15 !important;
+}
+.stats-grid__attend--bad {
+  color: #f87171 !important;
 }
 
 .lb-empty {

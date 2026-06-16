@@ -97,16 +97,17 @@ export function Informe() {
   );
 
   const totals = useMemo(() => {
-    if (year == null) return { TP: 0, jugadores: 0, puntos: 0 };
+    if (year == null) return { TP: 0, jugadores: 0, faltantes: 0 };
     const seasonMatches = matches.filter((m) => getMatchYear(m) === year);
     const ids = new Set(seasonMatches.map((m) => m.id));
     const mps = matchPlayers.filter((mp) => ids.has(mp.match_id));
+    const faltantes = monthly.reduce((s, m) => s + m.pendientes, 0);
     return {
       TP: seasonMatches.length,
       jugadores: new Set(mps.map((mp) => mp.player_id)).size,
-      puntos: mps.reduce((sum, mp) => sum + (mp.points ?? 0), 0),
+      faltantes,
     };
-  }, [year, matches, matchPlayers]);
+  }, [year, matches, matchPlayers, monthly]);
 
   return (
     <div className="informe">
@@ -161,9 +162,9 @@ export function Informe() {
               <span className="kpi__value">{totals.jugadores}</span>
             </div>
             <div className="kpi">
-              <span className="kpi__label">Puntos</span>
+              <span className="kpi__label">Faltantes</span>
               <span className="kpi__value kpi__value--accent">
-                {totals.puntos}
+                {totals.faltantes}
               </span>
             </div>
           </div>
@@ -240,17 +241,33 @@ function MonthlyChart({ data }: { data: ReturnType<typeof computeMonthly> }) {
       <div className="month-chart">
         {data.map((d) => {
           const total = d.jugados + d.pendientes;
+          const fillPct = total > 0 ? (total / max) * 100 : 0;
+          const playedPct = total > 0 ? (d.jugados / total) * 100 : 0;
+          const pendingPct = total > 0 ? (d.pendientes / total) * 100 : 0;
           return (
             <div key={d.month} className="month-col">
+              <div className="month-col__labels">
+                <span className="month-col__num month-col__num--played">
+                  {d.jugados || ''}
+                </span>
+                <span className="month-col__num month-col__num--pending">
+                  {d.pendientes || ''}
+                </span>
+              </div>
               <div className="month-col__bars" aria-hidden>
                 <div
-                  className="month-col__seg month-col__seg--pending"
-                  style={{ height: `${(d.pendientes / max) * 100}%` }}
-                />
-                <div
-                  className="month-col__seg month-col__seg--played"
-                  style={{ height: `${(d.jugados / max) * 100}%` }}
-                />
+                  className="month-col__fill"
+                  style={{ height: `${fillPct}%` }}
+                >
+                  <div
+                    className="month-col__seg month-col__seg--pending"
+                    style={{ height: `${pendingPct}%` }}
+                  />
+                  <div
+                    className="month-col__seg month-col__seg--played"
+                    style={{ height: `${playedPct}%` }}
+                  />
+                </div>
               </div>
               <span className="month-col__total">{total || ''}</span>
               <span className="month-col__label">{d.label}</span>
@@ -364,7 +381,9 @@ function StatsTable({
                   <td>{s.PE}</td>
                   <td className="stats-grid__loss">{s.PP}</td>
                   <td className="stats-grid__hl">{s.puntaje}</td>
-                  <td>{Math.round(s.presentismo * 100)}%</td>
+                  <td className={attendanceClass(s.presentismo)}>
+                    {Math.round(s.presentismo * 100)}%
+                  </td>
                   <td>{s.puntos}</td>
                   <td className="stats-grid__muted">
                     {s.ptosPorPJ == null ? '—' : s.ptosPorPJ.toFixed(1)}
@@ -380,4 +399,10 @@ function StatsTable({
       )}
     </section>
   );
+}
+
+function attendanceClass(p: number): string {
+  if (p >= 0.75) return 'stats-grid__attend stats-grid__attend--good';
+  if (p >= 0.5) return 'stats-grid__attend stats-grid__attend--mid';
+  return 'stats-grid__attend stats-grid__attend--bad';
 }
