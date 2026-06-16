@@ -134,7 +134,7 @@ insert into public.matches (played_at, finished_at, score_a, score_b, winner, pa
 -- Match players (766 filas)
 -- =============================================================
 insert into public.match_players (match_id, player_id, team, outcome, points, doubles, triples)
-select m.id, v.player_id, v.team, v.outcome, v.points, v.doubles, v.triples
+select m.id, v.player_id, v.team::text, v.outcome::text, v.points, v.doubles, v.triples
 from (values
 ('2024-07-25'::date, 8, null, 'Gana', null, null, null),
 ('2024-07-25'::date, 3, null, 'Pierde', null, null, null),
@@ -910,7 +910,7 @@ join public.matches m
 -- Plays (259 jugadas)
 -- =============================================================
 insert into public.plays (match_id, ts, minute, team, player_id, shot_type, points)
-select m.id, v.ts, v.minute, v.team, v.player_id, v.shot_type, v.points
+select m.id, v.ts::timestamptz, v.minute, v.team::text, v.player_id, v.shot_type::text, v.points
 from (values
 ('2026-04-28'::date, '2026-04-28T20:10:00-03:00', 0, 'A', 35, 'double', 2),
 ('2026-04-28'::date, '2026-04-28T20:11:00-03:00', 1, 'A', 46, 'double', 2),
