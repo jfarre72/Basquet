@@ -11,25 +11,46 @@ create table if not exists public.players (
 );
 
 -- Matches: un row por partido.
+-- `partial = true` indica que el partido viene del histórico viejo y no tiene
+-- info de equipo ni scores; solo resultado por jugador.
 create table if not exists public.matches (
     id            uuid primary key default gen_random_uuid(),
     played_at     timestamptz not null default now(),
     finished_at   timestamptz,
     team_a_name   text not null default 'Negro',
     team_b_name   text not null default 'Blanco',
-    score_a       integer not null default 0,
-    score_b       integer not null default 0,
+    score_a       integer,
+    score_b       integer,
     winner        text check (winner in ('A','B','tie')),
+    partial       boolean not null default false,
     created_at    timestamptz not null default now()
 );
+-- Compat: si la tabla ya existía sin la columna `partial`, agregarla.
+alter table public.matches
+    add column if not exists partial boolean not null default false;
+-- Compat: si score_a/score_b eran NOT NULL, ahora deben permitir null.
+alter table public.matches alter column score_a drop not null;
+alter table public.matches alter column score_b drop not null;
 
--- Match players: qué jugadores estuvieron en cada equipo.
+-- Match players: qué jugadores estuvieron en cada equipo. `team` puede ser
+-- null para partidos parciales históricos donde no sabemos el equipo.
 create table if not exists public.match_players (
     match_id  uuid    not null references public.matches(id) on delete cascade,
     player_id integer not null references public.players(id),
-    team      text    not null check (team in ('A','B')),
+    team      text    check (team in ('A','B')),
+    outcome   text    check (outcome in ('Gana','Pierde','Empate')),
+    points    integer,
+    doubles   integer,
+    triples   integer,
     primary key (match_id, player_id)
 );
+-- Compat con tabla previa
+alter table public.match_players alter column team drop not null;
+alter table public.match_players
+    add column if not exists outcome text check (outcome in ('Gana','Pierde','Empate')),
+    add column if not exists points integer,
+    add column if not exists doubles integer,
+    add column if not exists triples integer;
 
 -- Plays: jugada a jugada.
 create table if not exists public.plays (
@@ -132,5 +153,6 @@ insert into public.players (id, name) values
     (43, 'Adrian'),
     (44, 'Jorge'),
     (45, 'Gero'),
-    (46, 'Facu M')
+    (46, 'Facu M'),
+    (47, 'Bauti')
 on conflict (id) do update set name = excluded.name;

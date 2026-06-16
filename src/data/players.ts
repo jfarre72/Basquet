@@ -51,6 +51,7 @@ export const PLAYERS: Player[] = [
   { id: 44, name: 'Jorge' },
   { id: 45, name: 'Gero' },
   { id: 46, name: 'Facu M' },
+  { id: 47, name: 'Bauti' },
 ];
 
 export const PLAYERS_BY_ID: Record<number, Player> = Object.fromEntries(
