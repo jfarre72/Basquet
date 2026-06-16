@@ -10,6 +10,26 @@
 
 begin;
 
+-- =============================================================
+-- Migraciones defensivas: asegurar que las columnas que el import
+-- usa existan, sin importar qué versión del schema tengas corrido.
+-- =============================================================
+alter table public.matches
+    add column if not exists partial boolean not null default false;
+alter table public.matches alter column score_a drop not null;
+alter table public.matches alter column score_b drop not null;
+
+alter table public.match_players alter column team drop not null;
+alter table public.match_players
+    add column if not exists outcome text check (outcome in ('Gana','Pierde','Empate')),
+    add column if not exists points  integer,
+    add column if not exists doubles integer,
+    add column if not exists triples integer;
+
+-- Asegurar que Bauti (id 47) exista para no romper el FK de plays.
+insert into public.players (id, name) values (47, 'Bauti')
+on conflict (id) do update set name = excluded.name;
+
 -- Limpieza por si se corre más de una vez (cascade borra match_players y plays)
 truncate public.plays, public.match_players, public.matches restart identity cascade;
 
