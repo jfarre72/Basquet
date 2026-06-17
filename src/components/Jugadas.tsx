@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import { PLAYERS_BY_ID } from '../data/players';
+import { PLAYERS_BY_ID, PLAYERS_SORTED } from '../data/players';
 import { fetchAllPlays, type DbMatch, type DbPlay } from '../lib/queries';
 import {
   exportJugadasToExcel,
@@ -12,6 +12,7 @@ export function Jugadas() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [matchFilter, setMatchFilter] = useState<string>('all');
+  const [playerFilter, setPlayerFilter] = useState<number | 'all'>('all');
 
   useEffect(() => {
     let cancelled = false;
@@ -47,11 +48,17 @@ export function Jugadas() {
       .sort((a, b) => b.played_at.localeCompare(a.played_at));
   }, [plays, matchById]);
 
+  const playersWithPlays = useMemo(() => {
+    const ids = new Set(plays.map((p) => p.player_id));
+    return PLAYERS_SORTED.filter((p) => ids.has(p.id));
+  }, [plays]);
+
   const rows: JugadaRow[] = useMemo(() => {
-    const filtered =
-      matchFilter === 'all'
-        ? plays
-        : plays.filter((p) => p.match_id === matchFilter);
+    const filtered = plays.filter((p) => {
+      if (matchFilter !== 'all' && p.match_id !== matchFilter) return false;
+      if (playerFilter !== 'all' && p.player_id !== playerFilter) return false;
+      return true;
+    });
     return filtered
       .slice()
       .sort((a, b) => {
@@ -81,7 +88,19 @@ export function Jugadas() {
           puntos: p.points,
         };
       });
-  }, [plays, matchById, matchFilter]);
+  }, [plays, matchById, matchFilter, playerFilter]);
+
+  const totals = useMemo(() => {
+    let puntos = 0;
+    let dobles = 0;
+    let triples = 0;
+    for (const r of rows) {
+      puntos += r.puntos;
+      if (r.tipo === 'Triple') triples += 1;
+      else dobles += 1;
+    }
+    return { puntos, dobles, triples };
+  }, [rows]);
 
   return (
     <div className="informe">
@@ -132,6 +151,40 @@ export function Jugadas() {
                 );
               })}
             </select>
+            <select
+              className="player-select"
+              value={playerFilter}
+              onChange={(e) =>
+                setPlayerFilter(
+                  e.target.value === 'all' ? 'all' : Number(e.target.value),
+                )
+              }
+              aria-label="Filtrar por jugador"
+            >
+              <option value="all">Todos los jugadores</option>
+              {playersWithPlays.map((p) => (
+                <option key={p.id} value={p.id}>
+                  {p.name} (#{p.id})
+                </option>
+              ))}
+            </select>
+          </div>
+
+          <div className="kpis">
+            <div className="kpi">
+              <span className="kpi__label">Puntos</span>
+              <span className="kpi__value kpi__value--accent">
+                {totals.puntos}
+              </span>
+            </div>
+            <div className="kpi">
+              <span className="kpi__label">Dobles</span>
+              <span className="kpi__value">{totals.dobles}</span>
+            </div>
+            <div className="kpi">
+              <span className="kpi__label">Triples</span>
+              <span className="kpi__value">{totals.triples}</span>
+            </div>
           </div>
 
           {rows.length === 0 ? (
