@@ -4,8 +4,10 @@ import {
   createDraft,
   deleteDraft,
   fetchDrafts,
+  fetchHistoricos,
   updateDraft,
   type DbDraft,
+  type DbHistoric,
   type DraftInput,
 } from '../lib/queries';
 import { SUPABASE_CONFIGURED } from '../lib/supabase';
@@ -13,14 +15,17 @@ import { useGame } from '../state/GameContext';
 import { normalizeText } from '../utils/text';
 
 type View = 'list' | 'edit';
+type Tab = 'pendientes' | 'historicos';
 type TeamSide = 'A' | 'B' | null;
 
 export function Armado({ onStartMatch }: { onStartMatch: () => void }) {
   const { dispatch } = useGame();
   const [drafts, setDrafts] = useState<DbDraft[]>([]);
+  const [historicos, setHistoricos] = useState<DbHistoric[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [view, setView] = useState<View>('list');
+  const [tab, setTab] = useState<Tab>('pendientes');
   const [editing, setEditing] = useState<DbDraft | null>(null);
 
   useEffect(() => {
@@ -29,9 +34,11 @@ export function Armado({ onStartMatch }: { onStartMatch: () => void }) {
       return;
     }
     let cancelled = false;
-    fetchDrafts()
-      .then((d) => {
-        if (!cancelled) setDrafts(d);
+    Promise.all([fetchDrafts(), fetchHistoricos()])
+      .then(([d, h]) => {
+        if (cancelled) return;
+        setDrafts(d);
+        setHistoricos(h);
       })
       .catch((e: Error) => {
         if (!cancelled) setError(e.message);
@@ -77,55 +84,82 @@ export function Armado({ onStartMatch }: { onStartMatch: () => void }) {
     <div className="armado">
       <div className="section-head">
         <div>
-          <h2 className="section-head__title">Armado</h2>
+          <h2 className="section-head__title">Crear partido</h2>
           <p className="section-head__subtitle">
-            Prepará los equipos con anticipación y arrancá el partido en un toque.
+            Armá los equipos antes del partido y revisá lo jugado después.
           </p>
         </div>
       </div>
 
       {!SUPABASE_CONFIGURED && (
         <div className="warning-banner">
-          Conectá Supabase para guardar armados.
+          Conectá Supabase para guardar partidos.
         </div>
       )}
       {error && <div className="warning-banner">No se pudo: {error}</div>}
 
       {view === 'list' ? (
         <>
-          <button
-            type="button"
-            className="btn btn--primary btn--block"
-            onClick={() => {
-              setEditing(null);
-              setView('edit');
-            }}
-            disabled={!SUPABASE_CONFIGURED}
-          >
-            + Nuevo armado
-          </button>
+          <div className="pill-group" role="tablist" aria-label="Vista">
+            <button
+              type="button"
+              role="tab"
+              aria-selected={tab === 'pendientes'}
+              className={`pill${tab === 'pendientes' ? ' pill--active' : ''}`}
+              onClick={() => setTab('pendientes')}
+            >
+              Pendientes ({drafts.length})
+            </button>
+            <button
+              type="button"
+              role="tab"
+              aria-selected={tab === 'historicos'}
+              className={`pill${tab === 'historicos' ? ' pill--active' : ''}`}
+              onClick={() => setTab('historicos')}
+            >
+              Históricos ({historicos.length})
+            </button>
+          </div>
 
-          {loading ? (
-            <div className="lb-loading">Cargando armados...</div>
-          ) : drafts.length === 0 ? (
-            <div className="lb-empty">
-              Todavía no hay armados guardados. Tocá "Nuevo armado" para crear el primero.
-            </div>
+          {tab === 'pendientes' ? (
+            <>
+              <button
+                type="button"
+                className="btn btn--primary btn--block"
+                onClick={() => {
+                  setEditing(null);
+                  setView('edit');
+                }}
+                disabled={!SUPABASE_CONFIGURED}
+              >
+                + Crear partido nuevo
+              </button>
+
+              {loading ? (
+                <div className="lb-loading">Cargando...</div>
+              ) : drafts.length === 0 ? (
+                <div className="lb-empty">
+                  No tenés partidos pendientes. Creá uno para arrancar.
+                </div>
+              ) : (
+                <div className="drafts">
+                  {drafts.map((d) => (
+                    <DraftCard
+                      key={d.id}
+                      draft={d}
+                      onStart={() => startMatch(d)}
+                      onEdit={() => {
+                        setEditing(d);
+                        setView('edit');
+                      }}
+                      onDelete={() => void handleDelete(d)}
+                    />
+                  ))}
+                </div>
+              )}
+            </>
           ) : (
-            <div className="drafts">
-              {drafts.map((d) => (
-                <DraftCard
-                  key={d.id}
-                  draft={d}
-                  onStart={() => startMatch(d)}
-                  onEdit={() => {
-                    setEditing(d);
-                    setView('edit');
-                  }}
-                  onDelete={() => void handleDelete(d)}
-                />
-              ))}
-            </div>
+            <HistoricosList loading={loading} matches={historicos} />
           )}
         </>
       ) : (
@@ -419,6 +453,73 @@ function TeamHeader({
   );
 }
 
+/* ---------- Históricos ---------- */
+
+function HistoricosList({
+  loading,
+  matches,
+}: {
+  loading: boolean;
+  matches: DbHistoric[];
+}) {
+  if (loading) return <div className="lb-loading">Cargando históricos...</div>;
+  if (matches.length === 0) {
+    return (
+      <div className="lb-empty">
+        Cuando termines un partido en el Contador, va a aparecer acá.
+      </div>
+    );
+  }
+  return (
+    <div className="historicos">
+      {matches.map((m) => (
+        <HistoricCard key={m.id} match={m} />
+      ))}
+    </div>
+  );
+}
+
+function HistoricCard({ match }: { match: DbHistoric }) {
+  const hasScore = match.score_a != null && match.score_b != null;
+  const aWon = match.winner === 'A';
+  const bWon = match.winner === 'B';
+  const isTie = match.winner === 'tie';
+  return (
+    <article className="historic-card">
+      <header className="historic-card__head">
+        <div className="historic-card__date">{formatHistoricDate(match.played_at)}</div>
+        {match.partial ? (
+          <span className="historic-card__tag historic-card__tag--partial">Histórico</span>
+        ) : (
+          <span className="historic-card__tag">Completo</span>
+        )}
+      </header>
+      <div className="historic-card__body">
+        <div className={`historic-team${aWon ? ' historic-team--won' : ''}`}>
+          <span className="historic-team__name">{match.team_a_name}</span>
+          <span className="historic-team__score">
+            {hasScore ? match.score_a : '—'}
+          </span>
+        </div>
+        <div className="historic-card__vs">vs</div>
+        <div className={`historic-team${bWon ? ' historic-team--won' : ''}`}>
+          <span className="historic-team__score">
+            {hasScore ? match.score_b : '—'}
+          </span>
+          <span className="historic-team__name">{match.team_b_name}</span>
+        </div>
+      </div>
+      {match.winner && (
+        <footer className="historic-card__foot">
+          {isTie
+            ? '🤝 Empate'
+            : `🏆 Ganó ${aWon ? match.team_a_name : match.team_b_name}`}
+        </footer>
+      )}
+    </article>
+  );
+}
+
 /* ---------- helpers ---------- */
 
 function draftLabel(d: DbDraft): string {
@@ -436,5 +537,15 @@ function formatDraftDate(iso: string): string {
     day: '2-digit',
     month: '2-digit',
     year: '2-digit',
+  });
+}
+
+function formatHistoricDate(iso: string): string {
+  const d = new Date(iso);
+  return d.toLocaleDateString('es-AR', {
+    weekday: 'long',
+    day: '2-digit',
+    month: 'long',
+    year: 'numeric',
   });
 }

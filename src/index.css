@@ -2383,6 +2383,109 @@ main.app__main {
   color: #f1f5f9;
 }
 
+/* ===== Históricos ===== */
+
+.historicos {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.historic-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: 12px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.historic-card__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+.historic-card__date {
+  font-size: 0.78rem;
+  color: var(--text-muted);
+  font-weight: 700;
+  text-transform: capitalize;
+}
+.historic-card__tag {
+  font-size: 0.62rem;
+  font-weight: 800;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  padding: 3px 8px;
+  border-radius: 999px;
+  background: rgba(34, 197, 94, 0.15);
+  color: #4ade80;
+}
+.historic-card__tag--partial {
+  background: var(--surface-3);
+  color: var(--text-muted);
+}
+.historic-card__body {
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  align-items: center;
+  gap: 10px;
+}
+.historic-team {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+  padding: 6px 10px;
+  border-radius: var(--radius);
+  border: 1px solid var(--border);
+  background: var(--surface-2);
+}
+.historic-team:last-child {
+  justify-content: flex-end;
+}
+.historic-team__name {
+  font-weight: 700;
+  font-size: 0.92rem;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.historic-team__score {
+  font-weight: 900;
+  font-size: 1.4rem;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.02em;
+  margin-left: auto;
+}
+.historic-team:last-child .historic-team__score {
+  margin-left: 0;
+  margin-right: auto;
+}
+.historic-team--won {
+  border-color: var(--accent-line);
+  background:
+    linear-gradient(160deg, rgba(249, 115, 22, 0.1), transparent 70%),
+    var(--surface-2);
+}
+.historic-team--won .historic-team__score {
+  color: var(--accent-strong);
+}
+.historic-card__vs {
+  font-size: 0.7rem;
+  font-weight: 800;
+  letter-spacing: 0.16em;
+  color: var(--text-subtle);
+  text-transform: uppercase;
+}
+.historic-card__foot {
+  font-size: 0.82rem;
+  font-weight: 700;
+  color: var(--accent-strong);
+  border-top: 1px solid var(--border);
+  padding-top: 8px;
+}
+
 /* ===== Indicadores ===== */
 
 .battle-card {

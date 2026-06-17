@@ -110,6 +110,30 @@ export async function deleteDraft(id: string): Promise<void> {
   if (error) throw error;
 }
 
+export interface DbHistoric {
+  id: string;
+  played_at: string;
+  finished_at: string | null;
+  team_a_name: string;
+  team_b_name: string;
+  score_a: number | null;
+  score_b: number | null;
+  winner: 'A' | 'B' | 'tie' | null;
+  partial: boolean;
+}
+
+export async function fetchHistoricos(): Promise<DbHistoric[]> {
+  if (!supabase) return [];
+  const { data, error } = await supabase
+    .from('matches')
+    .select(
+      'id, played_at, finished_at, team_a_name, team_b_name, score_a, score_b, winner, partial',
+    )
+    .order('played_at', { ascending: false });
+  if (error) throw error;
+  return (data ?? []) as DbHistoric[];
+}
+
 export async function fetchIndicadoresData(): Promise<{
   matches: DbMatch[];
   matchPlayers: DbMatchPlayer[];

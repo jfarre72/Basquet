@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Armado } from './components/Armado';
 import { BottomNav } from './components/BottomNav';
+import { ContadorEntry } from './components/ContadorEntry';
 import { Galeria } from './components/Galeria';
 import { GameScreen } from './components/GameScreen';
 import { Header } from './components/Header';
@@ -54,7 +55,9 @@ export default function App() {
         {section === 'armado' && (
           <Armado onStartMatch={() => setSection('contador')} />
         )}
-        {section === 'contador' && <ContadorRouter />}
+        {section === 'contador' && (
+          <ContadorRouter onGoToArmado={() => setSection('armado')} />
+        )}
         {section === 'galeria' && <Galeria />}
       </main>
       <BottomNav section={section} onChange={setSection} />
@@ -62,8 +65,20 @@ export default function App() {
   );
 }
 
-function ContadorRouter() {
+function ContadorRouter({ onGoToArmado }: { onGoToArmado: () => void }) {
   const { state } = useGame();
+  const [manual, setManual] = useState(false);
+  const isFreshSelection =
+    state.stage === 'selection' && state.selectedPlayerIds.length === 0;
+
+  if (isFreshSelection && !manual) {
+    return (
+      <ContadorEntry
+        onManual={() => setManual(true)}
+        onCreateNew={onGoToArmado}
+      />
+    );
+  }
   return (
     <>
       {state.stage === 'selection' && <PlayerSelection />}
