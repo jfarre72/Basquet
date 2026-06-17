@@ -2626,6 +2626,139 @@ main.app__main {
   }
 }
 
+/* Carousel */
+
+.carousel {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.carousel__stage {
+  position: relative;
+  background: #000;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+  aspect-ratio: 4 / 3;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  user-select: none;
+  touch-action: pan-y;
+}
+.carousel__img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  display: block;
+  animation: carouselFadeIn 0.2s ease;
+}
+@keyframes carouselFadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+.carousel__nav {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  appearance: none;
+  border: 0;
+  background: rgba(0, 0, 0, 0.55);
+  color: #fff;
+  width: 42px;
+  height: 42px;
+  border-radius: 999px;
+  font-size: 1.6rem;
+  font-weight: 800;
+  line-height: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  backdrop-filter: blur(4px);
+  transition: background 0.15s ease, opacity 0.15s ease;
+}
+.carousel__nav:hover {
+  background: rgba(0, 0, 0, 0.75);
+}
+.carousel__nav:disabled {
+  opacity: 0.25;
+}
+.carousel__nav--prev {
+  left: 10px;
+}
+.carousel__nav--next {
+  right: 10px;
+}
+.carousel__delete {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  appearance: none;
+  border: 0;
+  background: rgba(0, 0, 0, 0.6);
+  color: #fff;
+  width: 32px;
+  height: 32px;
+  border-radius: 999px;
+  font-size: 1.1rem;
+  line-height: 1;
+  font-weight: 800;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  backdrop-filter: blur(4px);
+}
+.carousel__delete:hover {
+  background: rgba(239, 68, 68, 0.85);
+}
+.carousel__counter {
+  position: absolute;
+  bottom: 10px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: rgba(0, 0, 0, 0.6);
+  color: #fff;
+  font-size: 0.78rem;
+  font-weight: 700;
+  padding: 4px 10px;
+  border-radius: 999px;
+  font-variant-numeric: tabular-nums;
+  backdrop-filter: blur(4px);
+}
+
+.carousel__thumbs {
+  display: flex;
+  gap: 6px;
+  overflow-x: auto;
+  scrollbar-width: none;
+  padding: 2px;
+  scroll-behavior: smooth;
+}
+.carousel__thumbs::-webkit-scrollbar { display: none; }
+.carousel-thumb {
+  appearance: none;
+  border: 2px solid transparent;
+  background: var(--surface-2);
+  padding: 0;
+  border-radius: 8px;
+  overflow: hidden;
+  width: 64px;
+  height: 64px;
+  flex: 0 0 auto;
+  transition: border-color 0.15s ease, opacity 0.15s ease;
+  opacity: 0.6;
+}
+.carousel-thumb img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+.carousel-thumb--active {
+  border-color: var(--accent);
+  opacity: 1;
+}
+
 .photo-card {
   position: relative;
   display: block;

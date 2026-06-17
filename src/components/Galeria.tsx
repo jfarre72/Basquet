@@ -16,14 +16,18 @@ export function Galeria() {
     null,
   );
   const [error, setError] = useState<string | null>(null);
+  const [index, setIndex] = useState(0);
   const pickerRef = useRef<HTMLInputElement>(null);
   const cameraRef = useRef<HTMLInputElement>(null);
+  const touchStartX = useRef<number | null>(null);
+  const thumbsRef = useRef<HTMLDivElement>(null);
 
   const refresh = async () => {
     try {
       setError(null);
       const data = await listPhotos();
       setPhotos(data);
+      setIndex(0);
     } catch (e) {
       setError((e as Error).message);
     } finally {
@@ -38,6 +42,24 @@ export function Galeria() {
     }
     void refresh();
   }, []);
+
+  useEffect(() => {
+    const active = thumbsRef.current?.querySelector<HTMLElement>(
+      '.carousel-thumb--active',
+    );
+    active?.scrollIntoView({ behavior: 'smooth', inline: 'center', block: 'nearest' });
+  }, [index]);
+
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if (photos.length === 0) return;
+      if (e.key === 'ArrowLeft') setIndex((i) => Math.max(0, i - 1));
+      if (e.key === 'ArrowRight')
+        setIndex((i) => Math.min(photos.length - 1, i + 1));
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [photos.length]);
 
   const handleFiles = async (files: FileList | null) => {
     if (!files || files.length === 0) return;
@@ -65,10 +87,28 @@ export function Galeria() {
     if (!window.confirm('¿Borrar esta foto?')) return;
     try {
       await deletePhoto(p);
-      setPhotos((prev) => prev.filter((x) => x.id !== p.id));
+      setPhotos((prev) => {
+        const next = prev.filter((x) => x.id !== p.id);
+        setIndex((i) => Math.min(i, Math.max(0, next.length - 1)));
+        return next;
+      });
     } catch (e) {
       setError((e as Error).message);
     }
+  };
+
+  const current = photos[index];
+
+  const onTouchStart = (e: React.TouchEvent) => {
+    touchStartX.current = e.touches[0].clientX;
+  };
+  const onTouchEnd = (e: React.TouchEvent) => {
+    if (touchStartX.current == null) return;
+    const dx = e.changedTouches[0].clientX - touchStartX.current;
+    touchStartX.current = null;
+    if (Math.abs(dx) < 40) return;
+    if (dx > 0) setIndex((i) => Math.max(0, i - 1));
+    else setIndex((i) => Math.min(photos.length - 1, i + 1));
   };
 
   return (
@@ -86,9 +126,7 @@ export function Galeria() {
         </div>
       )}
 
-      {error && (
-        <div className="warning-banner">No se pudo: {error}</div>
-      )}
+      {error && <div className="warning-banner">No se pudo: {error}</div>}
 
       <div className="upload-row">
         <input
@@ -142,34 +180,80 @@ export function Galeria() {
           </div>
         </div>
       ) : (
-        <div className="photos-grid">
-          {photos.map((p) => (
-            <a
-              key={p.id}
-              className="photo-card"
-              href={getPhotoUrl(p.storage_path)}
-              target="_blank"
-              rel="noreferrer"
-            >
+        <div className="carousel">
+          <div
+            className="carousel__stage"
+            onTouchStart={onTouchStart}
+            onTouchEnd={onTouchEnd}
+          >
+            {current && (
               <img
-                src={getPhotoUrl(p.storage_path)}
-                alt={p.caption ?? 'Foto'}
-                loading="lazy"
+                key={current.id}
+                src={getPhotoUrl(current.storage_path)}
+                alt={current.caption ?? 'Foto'}
+                className="carousel__img"
               />
+            )}
+            {photos.length > 1 && (
+              <>
+                <button
+                  type="button"
+                  className="carousel__nav carousel__nav--prev"
+                  onClick={() => setIndex((i) => Math.max(0, i - 1))}
+                  disabled={index === 0}
+                  aria-label="Anterior"
+                >
+                  ‹
+                </button>
+                <button
+                  type="button"
+                  className="carousel__nav carousel__nav--next"
+                  onClick={() =>
+                    setIndex((i) => Math.min(photos.length - 1, i + 1))
+                  }
+                  disabled={index === photos.length - 1}
+                  aria-label="Siguiente"
+                >
+                  ›
+                </button>
+              </>
+            )}
+            {current && (
               <button
                 type="button"
-                className="photo-card__delete"
+                className="carousel__delete"
                 aria-label="Borrar foto"
-                onClick={(e) => {
-                  e.preventDefault();
-                  e.stopPropagation();
-                  void handleDelete(p);
-                }}
+                onClick={() => void handleDelete(current)}
               >
                 ×
               </button>
-            </a>
-          ))}
+            )}
+            <div className="carousel__counter">
+              {index + 1} / {photos.length}
+            </div>
+          </div>
+
+          {photos.length > 1 && (
+            <div className="carousel__thumbs" ref={thumbsRef}>
+              {photos.map((p, i) => (
+                <button
+                  key={p.id}
+                  type="button"
+                  className={`carousel-thumb${
+                    i === index ? ' carousel-thumb--active' : ''
+                  }`}
+                  onClick={() => setIndex(i)}
+                  aria-label={`Foto ${i + 1}`}
+                >
+                  <img
+                    src={getPhotoUrl(p.storage_path)}
+                    alt=""
+                    loading="lazy"
+                  />
+                </button>
+              ))}
+            </div>
+          )}
         </div>
       )}
     </div>
