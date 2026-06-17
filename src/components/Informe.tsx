@@ -1,6 +1,6 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { fetchSeasonData, type DbMatch, type DbMatchPlayer } from '../lib/queries';
-import { exportInformeToPdf } from '../utils/exportInformePdf';
+import { exportElementToPdf } from '../utils/exportElementPdf';
 import {
   computeMonthly,
   computeSeasonStats,
@@ -39,6 +39,8 @@ const COLUMNS: ColumnDef[] = [
   { key: 'puntaje', label: 'Pje', title: 'Puntaje', hl: true },
   { key: 'presentismo', label: '%P', title: 'Presentismo' },
   { key: 'puntos', label: 'Pts', title: 'Puntos totales' },
+  { key: 'dobles', label: '2pt', title: 'Dobles convertidos' },
+  { key: 'triples', label: '3pt', title: 'Triples convertidos' },
   { key: 'ptosPorPJ', label: 'P/PJ', title: 'Puntos por partido jugado' },
 ];
 
@@ -121,8 +123,24 @@ export function Informe() {
     return { jugados: seasonMatches.length, faltantes };
   }, [year, matches, monthly, tournament]);
 
+  const captureRef = useRef<HTMLDivElement>(null);
+  const [exporting, setExporting] = useState(false);
+
+  const handleExportPdf = async () => {
+    if (!captureRef.current || year == null) return;
+    setExporting(true);
+    try {
+      await exportElementToPdf(
+        captureRef.current,
+        `informe-basquet-${year}-${tournament}.pdf`,
+      );
+    } finally {
+      setExporting(false);
+    }
+  };
+
   return (
-    <div className="informe">
+    <div className="informe" ref={captureRef}>
       <div className="section-head">
         <div>
           <h2 className="section-head__title">Informe</h2>
@@ -132,22 +150,11 @@ export function Informe() {
         </div>
         <button
           type="button"
-          className="btn btn--ghost btn--sm"
-          onClick={() => {
-            if (year == null) return;
-            exportInformeToPdf({
-              year,
-              tournament,
-              jugados: totals.jugados,
-              faltantes: totals.faltantes,
-              podium,
-              monthly,
-              stats: tableStats,
-            });
-          }}
-          disabled={year == null || tableStats.length === 0}
+          className="btn btn--ghost btn--sm pdf-button"
+          onClick={() => void handleExportPdf()}
+          disabled={year == null || tableStats.length === 0 || exporting}
         >
-          📄 PDF
+          {exporting ? 'Generando…' : '📄 PDF'}
         </button>
       </div>
       <div className="filters">
@@ -312,21 +319,31 @@ function MonthlyChart({ data }: { data: ReturnType<typeof computeMonthly> }) {
 
 /* ---------- Racha últimos 7 ---------- */
 
-function FormDots({ form }: { form: Outcome[] }) {
+function FormDots({ form }: { form: (Outcome | null)[] }) {
   if (form.length === 0) return <span className="form-dots__empty">—</span>;
   return (
-    <span className="form-dots" title="Últimos partidos (izq → der)">
-      {form.map((o, i) => (
-        <span
-          key={i}
-          className={`form-dot form-dot--${
-            o === 'Gana' ? 'win' : o === 'Pierde' ? 'loss' : 'tie'
-          }`}
-          title={o}
-        >
-          {o === 'Gana' ? '✓' : o === 'Pierde' ? '✕' : '–'}
-        </span>
-      ))}
+    <span className="form-dots" title="Últimos 7 partidos (izq → der)">
+      {form.map((o, i) => {
+        const cls =
+          o === 'Gana'
+            ? 'win'
+            : o === 'Pierde'
+              ? 'loss'
+              : o === 'Empate'
+                ? 'tie'
+                : 'none';
+        const txt =
+          o === 'Gana' ? '✓' : o === 'Pierde' ? '✕' : o === 'Empate' ? '–' : '';
+        return (
+          <span
+            key={i}
+            className={`form-dot form-dot--${cls}`}
+            title={o ?? 'No jugó'}
+          >
+            {txt}
+          </span>
+        );
+      })}
     </span>
   );
 }
@@ -416,6 +433,8 @@ function StatsTable({
                     {Math.round(s.presentismo * 100)}%
                   </td>
                   <td>{s.puntos}</td>
+                  <td>{s.dobles}</td>
+                  <td className="stats-grid__hl">{s.triples}</td>
                   <td className="stats-grid__muted">
                     {s.ptosPorPJ == null ? '—' : s.ptosPorPJ.toFixed(1)}
                   </td>

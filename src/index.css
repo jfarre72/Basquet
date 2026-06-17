@@ -1875,6 +1875,9 @@ main.app__main {
 .legend__dot--pending {
   background: var(--border-strong);
 }
+.legend__dot--triple {
+  background: #fbbf24;
+}
 
 .month-chart {
   display: flex;
@@ -1974,6 +1977,11 @@ main.app__main {
 .form-dot--tie {
   background: var(--surface-3);
   color: var(--text-muted);
+}
+.form-dot--none {
+  background: transparent;
+  border: 1px dashed var(--border-strong);
+  color: transparent;
 }
 
 /* ===== Tabla en columnas ===== */
@@ -2591,6 +2599,140 @@ main.app__main {
   width: 100%;
   height: auto;
   display: block;
+}
+
+/* Quarter chart */
+
+.quarter-chart {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 8px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 16px 12px 12px;
+}
+.quarter-col {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+}
+.quarter-col__num {
+  font-size: 1rem;
+  font-weight: 900;
+  color: var(--accent-strong);
+  font-variant-numeric: tabular-nums;
+  min-height: 1.2em;
+}
+.quarter-col__bar-wrap {
+  width: 100%;
+  height: 130px;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+}
+.quarter-col__bar {
+  width: 70%;
+  max-width: 36px;
+  background: linear-gradient(180deg, var(--accent) 0%, #c2410c 100%);
+  border-radius: 6px 6px 0 0;
+  min-height: 4px;
+  transition: height 0.3s ease;
+}
+.quarter-col__label {
+  font-size: 0.8rem;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+}
+.quarter-col__range {
+  font-size: 0.66rem;
+  color: var(--text-subtle);
+  font-weight: 600;
+}
+
+/* Bar chart (puntos por fecha + diferencia) */
+
+.bar-chart {
+  display: flex;
+  align-items: flex-end;
+  gap: 4px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 14px 12px 10px;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+.bar-chart::-webkit-scrollbar { display: none; }
+.bar-col {
+  flex: 1 0 36px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  min-width: 36px;
+}
+.bar-col__total {
+  font-size: 0.7rem;
+  font-weight: 800;
+  color: var(--text-muted);
+  font-variant-numeric: tabular-nums;
+  min-height: 0.9em;
+}
+.bar-col__bar-wrap {
+  height: 110px;
+  width: 100%;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+}
+.bar-col__stack {
+  width: 70%;
+  max-width: 28px;
+  display: flex;
+  flex-direction: column;
+  border-radius: 6px;
+  overflow: hidden;
+  min-height: 4px;
+}
+.bar-col__stack--diff {
+  background: linear-gradient(180deg, var(--accent) 0%, #c2410c 100%);
+}
+.bar-col__seg {
+  width: 100%;
+}
+.bar-col__seg--double {
+  background: var(--accent);
+}
+.bar-col__seg--triple {
+  background: #fbbf24;
+}
+.bar-col__label {
+  font-size: 0.62rem;
+  font-weight: 700;
+  color: var(--text-subtle);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+/* Podio simple (sin labels ni posición) */
+
+.podium-row__rank--simple {
+  flex-direction: row;
+  gap: 0;
+}
+.podium-row__rank--simple .podium-row__medal {
+  font-size: 1.8rem;
+}
+.podium-row__rank--simple .podium-row__pos {
+  display: none;
+}
+
+/* Hide PDF button while capturing */
+
+.is-exporting .pdf-button {
+  display: none !important;
 }
 
 /* ===== Galería ===== */

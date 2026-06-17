@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { PLAYERS_BY_ID, PLAYERS_SORTED } from '../data/players';
 import {
   fetchIndicadoresData,
@@ -6,7 +6,7 @@ import {
   type DbMatchPlayer,
   type DbPlay,
 } from '../lib/queries';
-import { exportIndicadoresToPdf } from '../utils/exportIndicadoresPdf';
+import { exportElementToPdf } from '../utils/exportElementPdf';
 
 interface ShotPodium {
   playerId: number;
@@ -22,9 +22,27 @@ interface TeamBattle {
   otrosB: number;
 }
 
-interface MinuteBin {
-  minute: number;
+interface QuarterBin {
+  label: string;
+  range: string;
   points: number;
+}
+
+interface MatchBreakdown {
+  matchId: string;
+  date: string;
+  dateLabel: string;
+  doublesPts: number;
+  triplesPts: number;
+  total: number;
+}
+
+interface MatchDiff {
+  matchId: string;
+  date: string;
+  dateLabel: string;
+  diff: number;
+  winnerName: string;
 }
 
 export function Indicadores() {
@@ -34,6 +52,8 @@ export function Indicadores() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [player, setPlayer] = useState<number | 'all'>('all');
+  const [exporting, setExporting] = useState(false);
+  const captureRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     let cancelled = false;
@@ -62,71 +82,47 @@ export function Indicadores() {
     return PLAYERS_SORTED.filter((p) => ids.has(p.id));
   }, [plays]);
 
-  const dobles = useMemo(
-    () => topShots(plays, 'double'),
-    [plays],
-  );
-  const triples = useMemo(
-    () => topShots(plays, 'triple'),
-    [plays],
-  );
+  const dobles = useMemo(() => topShots(plays, 'double'), [plays]);
+  const triples = useMemo(() => topShots(plays, 'triple'), [plays]);
 
   const teamBattle = useMemo(
     () => computeTeamBattle(matches, matchPlayers),
     [matches, matchPlayers],
   );
 
-  const minuteSeries = useMemo(() => {
+  const quarterSeries = useMemo(() => {
     const filtered =
       player === 'all' ? plays : plays.filter((p) => p.player_id === player);
-    return groupByMinute(filtered);
+    return groupByQuarter(filtered);
   }, [plays, player]);
 
-  const minuteTotal = useMemo(
-    () => minuteSeries.reduce((s, b) => s + b.points, 0),
-    [minuteSeries],
+  const quarterTotal = useMemo(
+    () => quarterSeries.reduce((s, b) => s + b.points, 0),
+    [quarterSeries],
   );
 
-  const topScorers = useMemo(() => {
-    const map = new Map<number, { points: number; doubles: number; triples: number }>();
-    for (const p of plays) {
-      const cur = map.get(p.player_id) ?? { points: 0, doubles: 0, triples: 0 };
-      cur.points += p.points;
-      if (p.shot_type === 'double') cur.doubles += 1;
-      else cur.triples += 1;
-      map.set(p.player_id, cur);
-    }
-    return [...map.entries()]
-      .map(([playerId, v]) => ({
-        playerName: PLAYERS_BY_ID[playerId]?.name ?? `#${playerId}`,
-        ...v,
-      }))
-      .sort((a, b) => b.points - a.points || a.playerName.localeCompare(b.playerName))
-      .slice(0, 15);
-  }, [plays]);
+  const breakdown = useMemo(
+    () => computeMatchBreakdown(matches, plays),
+    [matches, plays],
+  );
 
-  const exportPdf = () => {
-    const playerLabel =
-      player === 'all'
-        ? 'Todos'
-        : PLAYERS_BY_ID[player as number]?.name ?? `#${player}`;
-    exportIndicadoresToPdf({
-      battle: {
-        negro: teamBattle.negro,
-        blanco: teamBattle.blanco,
-        empates: teamBattle.empates,
-        otros: teamBattle.otrosA + teamBattle.otrosB,
-      },
-      triples,
-      dobles,
-      topScorers,
-      minuteSeries: minuteSeries.filter((b) => b.points > 0),
-      playerFilterLabel: playerLabel,
-    });
+  const diffs = useMemo(
+    () => computeMatchDiffs(matches),
+    [matches],
+  );
+
+  const handleExportPdf = async () => {
+    if (!captureRef.current) return;
+    setExporting(true);
+    try {
+      await exportElementToPdf(captureRef.current, 'indicadores-basquet.pdf');
+    } finally {
+      setExporting(false);
+    }
   };
 
   return (
-    <div className="informe">
+    <div className="informe" ref={captureRef}>
       <div className="section-head">
         <div>
           <h2 className="section-head__title">Indicadores</h2>
@@ -136,11 +132,11 @@ export function Indicadores() {
         </div>
         <button
           type="button"
-          className="btn btn--ghost btn--sm"
-          onClick={exportPdf}
-          disabled={loading || plays.length === 0}
+          className="btn btn--ghost btn--sm pdf-button"
+          onClick={() => void handleExportPdf()}
+          disabled={loading || plays.length === 0 || exporting}
         >
-          📄 PDF
+          {exporting ? 'Generando…' : '📄 PDF'}
         </button>
       </div>
 
@@ -156,12 +152,14 @@ export function Indicadores() {
         <>
           <TeamBattleBlock battle={teamBattle} />
 
+          {breakdown.length > 0 && <PuntosPorFechaChart data={breakdown} />}
+
+          {diffs.length > 0 && <DiferenciaChart data={diffs} />}
+
           <section className="block">
             <div className="block__head">
-              <h3 className="block__title">Puntos por minuto</h3>
-              <div className="block__hint">
-                {minuteTotal} pts · {minuteSeries.length} min
-              </div>
+              <h3 className="block__title">Puntos por cuarto</h3>
+              <div className="block__hint">{quarterTotal} pts</div>
             </div>
             <div className="filters">
               <div className="pill-group" role="tablist" aria-label="Jugador">
@@ -172,7 +170,7 @@ export function Indicadores() {
                 >
                   Todos
                 </button>
-                {playersWithPlays.slice(0, 8).map((p) => (
+                {playersWithPlays.slice(0, 6).map((p) => (
                   <button
                     key={p.id}
                     type="button"
@@ -203,20 +201,12 @@ export function Indicadores() {
                 </select>
               )}
             </div>
-            <LineChart data={minuteSeries} />
+            <QuarterChart data={quarterSeries} />
           </section>
 
           <div className="podio-grid">
-            <ShotPodiumBlock
-              title="🎯 Podio de Triples"
-              data={triples}
-              unit="triples"
-            />
-            <ShotPodiumBlock
-              title="🏀 Podio de Dobles"
-              data={dobles}
-              unit="dobles"
-            />
+            <ShotPodiumBlock title="🎯 Podio de Triples" data={triples} />
+            <ShotPodiumBlock title="🏀 Podio de Dobles" data={dobles} />
           </div>
         </>
       )}
@@ -242,19 +232,82 @@ function topShots(plays: DbPlay[], shot: 'double' | 'triple'): ShotPodium[] {
     .slice(0, 3);
 }
 
-function groupByMinute(plays: DbPlay[]): MinuteBin[] {
-  if (plays.length === 0) return [];
-  const map = new Map<number, number>();
-  let max = 0;
+function groupByQuarter(plays: DbPlay[]): QuarterBin[] {
+  const bins: QuarterBin[] = [
+    { label: 'Q1', range: "0-14'", points: 0 },
+    { label: 'Q2', range: "15-29'", points: 0 },
+    { label: 'Q3', range: "30-44'", points: 0 },
+    { label: 'Q4', range: "45'+", points: 0 },
+  ];
   for (const p of plays) {
-    map.set(p.minute, (map.get(p.minute) ?? 0) + p.points);
-    if (p.minute > max) max = p.minute;
+    const q = Math.min(3, Math.max(0, Math.floor(p.minute / 15)));
+    bins[q].points += p.points;
   }
-  const out: MinuteBin[] = [];
-  for (let m = 0; m <= max; m++) {
-    out.push({ minute: m, points: map.get(m) ?? 0 });
+  return bins;
+}
+
+function computeMatchBreakdown(
+  matches: DbMatch[],
+  plays: DbPlay[],
+): MatchBreakdown[] {
+  const byMatch = new Map<string, { doubles: number; triples: number }>();
+  for (const p of plays) {
+    const cur = byMatch.get(p.match_id) ?? { doubles: 0, triples: 0 };
+    if (p.shot_type === 'double') cur.doubles += p.points;
+    else cur.triples += p.points;
+    byMatch.set(p.match_id, cur);
   }
-  return out;
+  const matchById = new Map(matches.map((m) => [m.id, m]));
+  return [...byMatch.entries()]
+    .map(([id, v]) => {
+      const m = matchById.get(id);
+      const date = m?.played_at ?? '';
+      return {
+        matchId: id,
+        date,
+        dateLabel: date ? formatShortDate(date) : '',
+        doublesPts: v.doubles,
+        triplesPts: v.triples,
+        total: v.doubles + v.triples,
+      };
+    })
+    .filter((b) => b.total > 0 && b.date)
+    .sort((a, b) => a.date.localeCompare(b.date));
+}
+
+function computeMatchDiffs(matches: DbMatch[]): MatchDiff[] {
+  return matches
+    .filter(
+      (m) =>
+        m.score_a != null &&
+        m.score_b != null &&
+        (m.winner === 'A' || m.winner === 'B' || m.winner === 'tie'),
+    )
+    .map((m) => {
+      const a = m.score_a ?? 0;
+      const b = m.score_b ?? 0;
+      const diff = Math.abs(a - b);
+      const winnerName =
+        m.winner === 'tie'
+          ? 'Empate'
+          : m.winner === 'A'
+            ? m.team_a_name ?? 'A'
+            : m.team_b_name ?? 'B';
+      return {
+        matchId: m.id,
+        date: m.played_at,
+        dateLabel: formatShortDate(m.played_at),
+        diff,
+        winnerName,
+      };
+    })
+    .sort((a, b) => a.date.localeCompare(b.date));
+}
+
+function formatShortDate(iso: string): string {
+  const d = new Date(iso);
+  const pad = (n: number) => n.toString().padStart(2, '0');
+  return `${pad(d.getDate())}/${pad(d.getMonth() + 1)}`;
 }
 
 function computeTeamBattle(
@@ -375,17 +428,15 @@ const MEDAL = ['🥇', '🥈', '🥉'];
 function ShotPodiumBlock({
   title,
   data,
-  unit,
 }: {
   title: string;
   data: ShotPodium[];
-  unit: string;
 }) {
   return (
     <section className="block">
       <h3 className="block__title">{title}</h3>
       {data.length === 0 ? (
-        <div className="lb-empty">Sin {unit} cargados.</div>
+        <div className="lb-empty">Sin datos.</div>
       ) : (
         <div className="podium-list">
           {data.map((s, idx) => (
@@ -393,17 +444,14 @@ function ShotPodiumBlock({
               key={s.playerId}
               className={`podium-row podium-row--${idx + 1}`}
             >
-              <div className="podium-row__rank">
+              <div className="podium-row__rank podium-row__rank--simple">
                 <span className="podium-row__medal">{MEDAL[idx]}</span>
-                <span className="podium-row__pos">{idx + 1}°</span>
               </div>
               <div className="podium-row__main">
                 <div className="podium-row__name">{s.playerName}</div>
-                <div className="podium-row__meta">{unit}</div>
               </div>
               <div className="podium-row__pts">
                 <span className="podium-row__pts-num">{s.count}</span>
-                <span className="podium-row__pts-label">{unit.slice(0, 3)}</span>
               </div>
             </article>
           ))}
@@ -413,105 +461,117 @@ function ShotPodiumBlock({
   );
 }
 
-/* ---------- Line chart ---------- */
+/* ---------- Quarter chart (bars) ---------- */
 
-function LineChart({ data }: { data: MinuteBin[] }) {
-  if (data.length === 0) {
-    return (
-      <div className="lb-empty">
-        Todavía no hay jugadas registradas para mostrar.
-      </div>
-    );
-  }
-  const W = 600;
-  const H = 180;
-  const pad = { top: 14, right: 14, bottom: 28, left: 32 };
-  const innerW = W - pad.left - pad.right;
-  const innerH = H - pad.top - pad.bottom;
-  const maxY = Math.max(1, ...data.map((d) => d.points));
-  const maxX = Math.max(1, data[data.length - 1].minute);
-  const x = (m: number) => pad.left + (m / maxX) * innerW;
-  const y = (p: number) => pad.top + innerH - (p / maxY) * innerH;
-  const path = data.map((d) => `${x(d.minute)},${y(d.points)}`).join(' ');
-  const area = `${pad.left},${pad.top + innerH} ${path} ${x(maxX)},${pad.top + innerH}`;
-  const gridYs = [0, 0.25, 0.5, 0.75, 1];
-  const xTicks = Math.min(6, maxX + 1);
-  const tickStep = Math.max(1, Math.round(maxX / (xTicks - 1)));
-  const xLabels: number[] = [];
-  for (let m = 0; m <= maxX; m += tickStep) xLabels.push(m);
-  if (xLabels[xLabels.length - 1] !== maxX) xLabels.push(maxX);
-
+function QuarterChart({ data }: { data: QuarterBin[] }) {
+  const max = Math.max(1, ...data.map((d) => d.points));
   return (
-    <div className="line-chart-wrap">
-      <svg
-        viewBox={`0 0 ${W} ${H}`}
-        className="line-chart"
-        preserveAspectRatio="none"
-        role="img"
-      >
-        {gridYs.map((t) => (
-          <line
-            key={t}
-            x1={pad.left}
-            x2={W - pad.right}
-            y1={pad.top + innerH * (1 - t)}
-            y2={pad.top + innerH * (1 - t)}
-            stroke="var(--border)"
-            strokeDasharray="3 5"
-          />
-        ))}
-        <polygon
-          points={area}
-          fill="var(--accent-dim)"
-          stroke="none"
-        />
-        <polyline
-          points={path}
-          fill="none"
-          stroke="var(--accent)"
-          strokeWidth="2.5"
-          strokeLinejoin="round"
-          strokeLinecap="round"
-        />
-        {data
-          .filter((d) => d.points > 0)
-          .map((d) => (
-            <circle
-              key={d.minute}
-              cx={x(d.minute)}
-              cy={y(d.points)}
-              r="3"
-              fill="var(--accent)"
-            />
-          ))}
-        {gridYs.map((t) => {
-          const v = Math.round(maxY * t);
+    <div className="quarter-chart">
+      {data.map((q) => {
+        const heightPct = (q.points / max) * 100;
+        return (
+          <div key={q.label} className="quarter-col">
+            <div className="quarter-col__num">{q.points}</div>
+            <div className="quarter-col__bar-wrap">
+              <div
+                className="quarter-col__bar"
+                style={{ height: `${heightPct}%` }}
+              />
+            </div>
+            <div className="quarter-col__label">{q.label}</div>
+            <div className="quarter-col__range">{q.range}</div>
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
+/* ---------- Puntos por fecha (stacked dobles + triples) ---------- */
+
+function PuntosPorFechaChart({ data }: { data: MatchBreakdown[] }) {
+  const max = Math.max(1, ...data.map((d) => d.total));
+  const totalDobles = data.reduce((s, d) => s + d.doublesPts, 0);
+  const totalTriples = data.reduce((s, d) => s + d.triplesPts, 0);
+  return (
+    <section className="block">
+      <div className="block__head">
+        <h3 className="block__title">Puntos por fecha</h3>
+        <div className="legend">
+          <span className="legend__item">
+            <i className="legend__dot legend__dot--played" /> Dobles ({totalDobles})
+          </span>
+          <span className="legend__item">
+            <i className="legend__dot legend__dot--triple" /> Triples ({totalTriples})
+          </span>
+        </div>
+      </div>
+      <div className="bar-chart">
+        {data.map((d) => {
+          const heightPct = (d.total / max) * 100;
+          const doblePart = d.total > 0 ? (d.doublesPts / d.total) * 100 : 0;
+          const triplePart = d.total > 0 ? (d.triplesPts / d.total) * 100 : 0;
           return (
-            <text
-              key={`yl-${t}`}
-              x={pad.left - 6}
-              y={pad.top + innerH * (1 - t) + 4}
-              textAnchor="end"
-              fontSize="10"
-              fill="var(--text-subtle)"
-            >
-              {v}
-            </text>
+            <div key={d.matchId} className="bar-col">
+              <div className="bar-col__total">{d.total}</div>
+              <div className="bar-col__bar-wrap">
+                <div
+                  className="bar-col__stack"
+                  style={{ height: `${heightPct}%` }}
+                >
+                  {d.triplesPts > 0 && (
+                    <div
+                      className="bar-col__seg bar-col__seg--triple"
+                      style={{ height: `${triplePart}%` }}
+                      title={`Triples: ${d.triplesPts}`}
+                    />
+                  )}
+                  {d.doublesPts > 0 && (
+                    <div
+                      className="bar-col__seg bar-col__seg--double"
+                      style={{ height: `${doblePart}%` }}
+                      title={`Dobles: ${d.doublesPts}`}
+                    />
+                  )}
+                </div>
+              </div>
+              <div className="bar-col__label">{d.dateLabel}</div>
+            </div>
           );
         })}
-        {xLabels.map((m) => (
-          <text
-            key={`xl-${m}`}
-            x={x(m)}
-            y={H - 8}
-            textAnchor="middle"
-            fontSize="10"
-            fill="var(--text-subtle)"
-          >
-            {m}'
-          </text>
-        ))}
-      </svg>
-    </div>
+      </div>
+    </section>
+  );
+}
+
+/* ---------- Diferencia por fecha ---------- */
+
+function DiferenciaChart({ data }: { data: MatchDiff[] }) {
+  const max = Math.max(1, ...data.map((d) => d.diff));
+  const avg = data.reduce((s, d) => s + d.diff, 0) / data.length;
+  return (
+    <section className="block">
+      <div className="block__head">
+        <h3 className="block__title">Diferencia de resultado</h3>
+        <div className="block__hint">Promedio: {avg.toFixed(1)} pts</div>
+      </div>
+      <div className="bar-chart">
+        {data.map((d) => {
+          const heightPct = d.diff === 0 ? 4 : (d.diff / max) * 100;
+          return (
+            <div key={d.matchId} className="bar-col" title={`${d.dateLabel} · Ganó ${d.winnerName} por ${d.diff}`}>
+              <div className="bar-col__total">{d.diff}</div>
+              <div className="bar-col__bar-wrap">
+                <div
+                  className="bar-col__stack bar-col__stack--diff"
+                  style={{ height: `${heightPct}%` }}
+                />
+              </div>
+              <div className="bar-col__label">{d.dateLabel}</div>
+            </div>
+          );
+        })}
+      </div>
+    </section>
   );
 }

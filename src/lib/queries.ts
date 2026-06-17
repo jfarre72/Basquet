@@ -5,6 +5,8 @@ export interface DbMatch {
   played_at: string;
   team_a_name?: string | null;
   team_b_name?: string | null;
+  score_a?: number | null;
+  score_b?: number | null;
   winner?: 'A' | 'B' | 'tie' | null;
   partial?: boolean | null;
 }
@@ -165,7 +167,7 @@ export async function fetchIndicadoresData(): Promise<{
   const [matchesRes, mpRes, playsRes] = await Promise.all([
     supabase
       .from('matches')
-      .select('id, played_at, team_a_name, team_b_name, winner, partial'),
+      .select('id, played_at, team_a_name, team_b_name, score_a, score_b, winner, partial'),
     supabase
       .from('match_players')
       .select('match_id, player_id, team, outcome, points, doubles, triples'),

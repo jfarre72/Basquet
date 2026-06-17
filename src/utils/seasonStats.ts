@@ -14,9 +14,12 @@ export interface PlayerSeasonStat {
   puntaje: number;
   presentismo: number;
   puntos: number;
+  dobles: number;
+  triples: number;
   ptosPorPJ: number | null;
-  /** Últimos partidos (más viejo → más reciente), hasta 7. */
-  form: Outcome[];
+  /** Últimos partidos del torneo (más viejo → más reciente), hasta 7.
+   *  null = el jugador no fue a ese partido. */
+  form: (Outcome | null)[];
 }
 
 export interface MonthBucket {
@@ -52,6 +55,8 @@ export type SortKey =
   | 'tp'
   | 'presentismo'
   | 'puntos'
+  | 'dobles'
+  | 'triples'
   | 'ptosPorPJ';
 
 export type SortDir = 'asc' | 'desc';
@@ -125,18 +130,17 @@ export function computeSeasonStats(
     const puntaje = WIN_PTS * PG + TIE_PTS * PE + LOSS_PTS * PP;
     const presentismo = TP > 0 ? PJ / TP : 0;
     const puntos = mps.reduce((sum, mp) => sum + (mp.points ?? 0), 0);
+    const dobles = mps.reduce((sum, mp) => sum + (mp.doubles ?? 0), 0);
+    const triples = mps.reduce((sum, mp) => sum + (mp.triples ?? 0), 0);
     const matchesWithPoints = mps.filter((mp) => mp.points != null).length;
     const ptosPorPJ =
       matchesWithPoints > 0 ? puntos / matchesWithPoints : null;
-    const form = [...mps]
-      .filter((mp) => mp.outcome != null)
-      .sort((a, b) =>
-        (matchDateById.get(a.match_id) ?? '').localeCompare(
-          matchDateById.get(b.match_id) ?? '',
-        ),
-      )
+    const form: (Outcome | null)[] = seasonMatches
       .slice(-7)
-      .map((mp) => mp.outcome as Outcome);
+      .map((m) => {
+        const mp = mps.find((x) => x.match_id === m.id);
+        return (mp?.outcome ?? null) as Outcome | null;
+      });
     out.push({
       playerId,
       playerName: PLAYERS_BY_ID[playerId]?.name ?? `Jugador #${playerId}`,
@@ -148,6 +152,8 @@ export function computeSeasonStats(
       puntaje,
       presentismo,
       puntos,
+      dobles,
+      triples,
       ptosPorPJ,
       form,
     });
@@ -193,6 +199,10 @@ function sortValue(s: PlayerSeasonStat, key: SortKey): number {
       return s.presentismo;
     case 'puntos':
       return s.puntos;
+    case 'dobles':
+      return s.dobles;
+    case 'triples':
+      return s.triples;
     case 'ptosPorPJ':
       return s.ptosPorPJ ?? -1;
     case 'name':
