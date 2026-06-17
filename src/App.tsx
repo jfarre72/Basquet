@@ -3,6 +3,7 @@ import { BottomNav } from './components/BottomNav';
 import { Galeria } from './components/Galeria';
 import { GameScreen } from './components/GameScreen';
 import { Header } from './components/Header';
+import { Indicadores } from './components/Indicadores';
 import { Informe } from './components/Informe';
 import { LoginScreen } from './components/LoginScreen';
 import { PlayerSelection } from './components/PlayerSelection';
@@ -48,6 +49,7 @@ export default function App() {
       <Header />
       <main className="app__main">
         {section === 'informe' && <Informe />}
+        {section === 'indicadores' && <Indicadores />}
         {section === 'contador' && <ContadorRouter />}
         {section === 'galeria' && <Galeria />}
       </main>

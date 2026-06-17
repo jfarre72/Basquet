@@ -1586,14 +1586,14 @@ main.app__main {
   transform: translateX(-50%);
   bottom: calc(12px + env(safe-area-inset-bottom));
   width: calc(100% - 24px);
-  max-width: 480px;
+  max-width: 520px;
   background: rgba(17, 26, 46, 0.92);
   border: 1px solid var(--border);
   border-radius: 18px;
   padding: 6px;
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 4px;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 2px;
   z-index: 50;
   box-shadow: var(--shadow);
   backdrop-filter: blur(14px);
@@ -1604,13 +1604,13 @@ main.app__main {
   border: 0;
   background: transparent;
   color: var(--text-muted);
-  padding: 8px 6px;
+  padding: 8px 4px;
   border-radius: 14px;
   display: flex;
   flex-direction: column;
   align-items: center;
   gap: 3px;
-  font-size: 0.72rem;
+  font-size: 0.66rem;
   font-weight: 600;
   letter-spacing: 0.01em;
   transition: background 0.15s ease, color 0.15s ease;
@@ -2162,6 +2162,113 @@ main.app__main {
   background: var(--text);
   color: var(--bg);
   border-color: var(--text);
+}
+
+/* ===== Indicadores ===== */
+
+.battle-card {
+  display: grid;
+  grid-template-columns: 1fr 2fr 1fr;
+  align-items: center;
+  gap: 10px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 14px;
+}
+.battle-side {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+.battle-side--blanco {
+  align-items: flex-end;
+}
+.battle-side__name {
+  font-weight: 800;
+  font-size: 0.78rem;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+.battle-side__count {
+  font-weight: 900;
+  font-size: 1.8rem;
+  letter-spacing: -0.02em;
+  font-variant-numeric: tabular-nums;
+  line-height: 1;
+}
+.battle-side__pct {
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: var(--text-subtle);
+  font-variant-numeric: tabular-nums;
+}
+.battle-bar {
+  display: flex;
+  height: 18px;
+  border-radius: 999px;
+  overflow: hidden;
+  border: 1px solid var(--border);
+}
+.battle-bar__negro {
+  background: linear-gradient(180deg, #0a1224, #1e293b);
+}
+.battle-bar__blanco {
+  background: linear-gradient(180deg, #f1f5f9, #cbd5e1);
+}
+.battle-meta {
+  display: flex;
+  gap: 12px;
+  font-size: 0.72rem;
+  color: var(--text-subtle);
+  font-weight: 600;
+  margin-top: 4px;
+  flex-wrap: wrap;
+}
+
+.podio-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 14px;
+}
+@media (min-width: 720px) {
+  .podio-grid {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+.player-select {
+  appearance: none;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  color: var(--text);
+  border-radius: 999px;
+  padding: 8px 32px 8px 14px;
+  font-size: 0.82rem;
+  font-weight: 700;
+  background-image: linear-gradient(45deg, transparent 50%, var(--text-muted) 50%),
+    linear-gradient(135deg, var(--text-muted) 50%, transparent 50%);
+  background-position: calc(100% - 18px) 50%, calc(100% - 12px) 50%;
+  background-size: 6px 6px, 6px 6px;
+  background-repeat: no-repeat;
+}
+.player-select:focus {
+  outline: none;
+  border-color: var(--accent);
+}
+
+.line-chart-wrap {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 10px;
+}
+.line-chart {
+  width: 100%;
+  height: auto;
+  display: block;
 }
 
 /* ===== Galería ===== */

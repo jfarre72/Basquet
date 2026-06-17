@@ -57,3 +57,8 @@ export const PLAYERS: Player[] = [
 export const PLAYERS_BY_ID: Record<number, Player> = Object.fromEntries(
   PLAYERS.map((p) => [p.id, p]),
 );
+
+/** Mismo roster pero ordenado alfabéticamente por nombre. */
+export const PLAYERS_SORTED: Player[] = [...PLAYERS].sort((a, b) =>
+  a.name.localeCompare(b.name),
+);

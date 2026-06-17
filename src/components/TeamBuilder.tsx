@@ -7,7 +7,11 @@ export function TeamBuilder() {
   const { teams, selectedPlayerIds } = state;
 
   const assigned = new Set([...teams.A.playerIds, ...teams.B.playerIds]);
-  const pool = selectedPlayerIds.filter((id) => !assigned.has(id));
+  const pool = selectedPlayerIds
+    .filter((id) => !assigned.has(id))
+    .sort((a, b) =>
+      (PLAYERS_BY_ID[a]?.name ?? '').localeCompare(PLAYERS_BY_ID[b]?.name ?? ''),
+    );
 
   const canStart = teams.A.playerIds.length > 0 && teams.B.playerIds.length > 0;
   const allAssigned = pool.length === 0;
@@ -161,7 +165,13 @@ function TeamCard({ team }: { team: TeamId }) {
         </div>
       ) : (
         <ul className="team-card__list">
-          {data.playerIds.map((id) => (
+          {[...data.playerIds]
+            .sort((a, b) =>
+              (PLAYERS_BY_ID[a]?.name ?? '').localeCompare(
+                PLAYERS_BY_ID[b]?.name ?? '',
+              ),
+            )
+            .map((id) => (
             <li key={id} className="team-pill">
               <span className="team-pill__name">
                 {PLAYERS_BY_ID[id]?.name}

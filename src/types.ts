@@ -4,7 +4,7 @@ export type ShotType = 'double' | 'triple';
 
 export type Stage = 'selection' | 'teams' | 'game' | 'finished';
 
-export type Section = 'informe' | 'contador' | 'galeria';
+export type Section = 'informe' | 'indicadores' | 'contador' | 'galeria';
 
 export interface Player {
   id: number;

@@ -16,7 +16,7 @@ import {
 } from '../utils/seasonStats';
 
 const TOURNAMENTS: { key: Tournament; label: string }[] = [
-  { key: 'completo', label: 'Completo' },
+  { key: 'completo', label: 'Anual' },
   { key: 'apertura', label: 'Apertura' },
   { key: 'clausura', label: 'Clausura' },
 ];

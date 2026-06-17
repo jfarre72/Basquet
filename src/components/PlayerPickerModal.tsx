@@ -40,16 +40,22 @@ export function PlayerPickerModal({ team, shot, onClose }: Props) {
             <div className="empty-state">No hay jugadores en este equipo.</div>
           ) : (
             <div className="modal__player-list">
-              {teamData.playerIds.map((id) => (
-                <button
-                  key={id}
-                  type="button"
-                  className="modal__player-btn"
-                  onClick={() => select(id)}
-                >
-                  {PLAYERS_BY_ID[id]?.name}
-                </button>
-              ))}
+              {[...teamData.playerIds]
+                .sort((a, b) =>
+                  (PLAYERS_BY_ID[a]?.name ?? '').localeCompare(
+                    PLAYERS_BY_ID[b]?.name ?? '',
+                  ),
+                )
+                .map((id) => (
+                  <button
+                    key={id}
+                    type="button"
+                    className="modal__player-btn"
+                    onClick={() => select(id)}
+                  >
+                    {PLAYERS_BY_ID[id]?.name}
+                  </button>
+                ))}
             </div>
           )}
         </div>
