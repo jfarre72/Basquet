@@ -75,5 +75,10 @@ export async function saveGameToSupabase(state: GameState): Promise<string> {
     if (playsErr) throw playsErr;
   }
 
+  // Si el partido venía de un draft, lo borramos: ya se jugó.
+  if (state.loadedDraftId) {
+    await supabase.from('match_drafts').delete().eq('id', state.loadedDraftId);
+  }
+
   return matchId;
 }

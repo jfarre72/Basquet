@@ -54,6 +54,7 @@ export function Armado({ onStartMatch }: { onStartMatch: () => void }) {
   const startMatch = (d: DbDraft) => {
     dispatch({
       type: 'LOAD_DRAFT',
+      draftId: d.id,
       teamAName: d.team_a_name,
       teamBName: d.team_b_name,
       teamAIds: d.team_a_ids,

@@ -87,9 +87,21 @@ textarea {
   flex-direction: column;
   min-height: 100vh;
   min-height: 100dvh;
-  max-width: 880px;
+  max-width: 600px;
   margin: 0 auto;
-  padding: 0 16px calc(96px + env(safe-area-inset-bottom));
+  padding: 0 8px calc(88px + env(safe-area-inset-bottom));
+  overflow-x: hidden;
+}
+@media (min-width: 640px) {
+  .app {
+    padding-left: 16px;
+    padding-right: 16px;
+  }
+}
+
+main.app__main,
+main.app__main > * {
+  min-width: 0;
 }
 
 .app__header {
@@ -196,6 +208,26 @@ main.app__main {
   display: flex;
   flex-direction: column;
   gap: 16px;
+  min-width: 0;
+  max-width: 100%;
+}
+
+.informe,
+.galeria,
+.armado {
+  min-width: 0;
+  max-width: 100%;
+}
+.informe > *,
+.galeria > *,
+.armado > * {
+  min-width: 0;
+  max-width: 100%;
+}
+.block,
+.block > * {
+  min-width: 0;
+  max-width: 100%;
 }
 
 .section-title {
@@ -1584,7 +1616,7 @@ main.app__main {
   position: fixed;
   left: 50%;
   transform: translateX(-50%);
-  bottom: calc(12px + env(safe-area-inset-bottom));
+  bottom: calc(8px + env(safe-area-inset-bottom));
   width: calc(100% - 16px);
   max-width: 600px;
   background: rgba(17, 26, 46, 0.92);
@@ -1634,17 +1666,24 @@ main.app__main {
   gap: 12px;
   flex-wrap: wrap;
   margin-bottom: 2px;
+  min-width: 0;
+}
+.section-head > div {
+  min-width: 0;
+  flex: 1 1 auto;
 }
 .section-head__title {
   font-size: 1.35rem;
   font-weight: 800;
   letter-spacing: -0.02em;
   margin: 0;
+  word-break: break-word;
 }
 .section-head__subtitle {
   margin: 4px 0 0;
   color: var(--text-muted);
   font-size: 0.86rem;
+  word-break: break-word;
 }
 
 /* ===== Filtros (año + torneo) ===== */
@@ -1653,6 +1692,7 @@ main.app__main {
   display: flex;
   flex-wrap: wrap;
   gap: 8px;
+  width: 100%;
 }
 .pill-group {
   display: inline-flex;
@@ -1662,6 +1702,20 @@ main.app__main {
   border: 1px solid var(--border);
   border-radius: 999px;
   padding: 4px;
+}
+.filters > .pill-group {
+  flex: 1 1 0;
+  min-width: 0;
+  justify-content: center;
+}
+.filters > .pill-group .pill {
+  flex: 1 1 0;
+  text-align: center;
+  padding: 6px 8px;
+  min-width: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 .pill {
   appearance: none;
@@ -2214,6 +2268,12 @@ main.app__main {
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 10px;
+  min-width: 0;
+}
+@media (max-width: 480px) {
+  .draft-card__teams {
+    grid-template-columns: 1fr;
+  }
 }
 .draft-card__foot {
   display: flex;

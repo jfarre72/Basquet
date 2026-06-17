@@ -13,6 +13,7 @@ export const INITIAL_STATE: GameState = {
   saveStatus: 'idle',
   saveError: null,
   savedMatchId: null,
+  loadedDraftId: null,
 };
 
 export type GameAction =
@@ -27,6 +28,7 @@ export type GameAction =
   | { type: 'SET_TEAM_NAME'; team: TeamId; name: string }
   | {
       type: 'LOAD_DRAFT';
+      draftId: string;
       teamAName: string;
       teamBName: string;
       teamAIds: number[];
@@ -193,6 +195,7 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
           A: { name: action.teamAName, playerIds: action.teamAIds },
           B: { name: action.teamBName, playerIds: action.teamBIds },
         },
+        loadedDraftId: action.draftId,
       };
     }
 

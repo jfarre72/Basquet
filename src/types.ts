@@ -46,4 +46,5 @@ export interface GameState {
   saveStatus: SaveStatus;
   saveError: string | null;
   savedMatchId: string | null;
+  loadedDraftId: string | null;
 }
