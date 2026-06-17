@@ -7,6 +7,7 @@ import { GameScreen } from './components/GameScreen';
 import { Header } from './components/Header';
 import { Indicadores } from './components/Indicadores';
 import { Informe } from './components/Informe';
+import { Jugadas } from './components/Jugadas';
 import { LoginScreen } from './components/LoginScreen';
 import { PlayerSelection } from './components/PlayerSelection';
 import { TeamBuilder } from './components/TeamBuilder';
@@ -59,6 +60,7 @@ export default function App() {
           <ContadorRouter onGoToArmado={() => setSection('armado')} />
         )}
         {section === 'galeria' && <Galeria />}
+        {section === 'jugadas' && <Jugadas />}
       </main>
       <BottomNav section={section} onChange={setSection} />
     </div>

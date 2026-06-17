@@ -122,6 +122,28 @@ export interface DbHistoric {
   partial: boolean;
 }
 
+export async function fetchAllPlays(): Promise<{
+  plays: DbPlay[];
+  matches: DbMatch[];
+}> {
+  if (!supabase) return { plays: [], matches: [] };
+  const [pRes, mRes] = await Promise.all([
+    supabase
+      .from('plays')
+      .select('match_id, ts, minute, team, player_id, shot_type, points')
+      .order('ts', { ascending: false }),
+    supabase
+      .from('matches')
+      .select('id, played_at, team_a_name, team_b_name'),
+  ]);
+  if (pRes.error) throw pRes.error;
+  if (mRes.error) throw mRes.error;
+  return {
+    plays: (pRes.data ?? []) as DbPlay[],
+    matches: (mRes.data ?? []) as DbMatch[],
+  };
+}
+
 export async function fetchHistoricos(): Promise<DbHistoric[]> {
   if (!supabase) return [];
   const { data, error } = await supabase

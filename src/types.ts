@@ -9,7 +9,8 @@ export type Section =
   | 'indicadores'
   | 'armado'
   | 'contador'
-  | 'galeria';
+  | 'galeria'
+  | 'jugadas';
 
 export interface Player {
   id: number;
