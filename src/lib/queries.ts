@@ -50,6 +50,66 @@ export async function fetchSeasonData(): Promise<{
   };
 }
 
+export interface DbDraft {
+  id: string;
+  name: string | null;
+  team_a_name: string;
+  team_b_name: string;
+  team_a_ids: number[];
+  team_b_ids: number[];
+  created_at: string;
+}
+
+export interface DraftInput {
+  name: string | null;
+  team_a_name: string;
+  team_b_name: string;
+  team_a_ids: number[];
+  team_b_ids: number[];
+}
+
+export async function fetchDrafts(): Promise<DbDraft[]> {
+  if (!supabase) return [];
+  const { data, error } = await supabase
+    .from('match_drafts')
+    .select('id, name, team_a_name, team_b_name, team_a_ids, team_b_ids, created_at')
+    .order('created_at', { ascending: false });
+  if (error) throw error;
+  return (data ?? []) as DbDraft[];
+}
+
+export async function createDraft(input: DraftInput): Promise<DbDraft> {
+  if (!supabase) throw new Error('Sin conexión a Supabase.');
+  const { data, error } = await supabase
+    .from('match_drafts')
+    .insert(input)
+    .select('id, name, team_a_name, team_b_name, team_a_ids, team_b_ids, created_at')
+    .single();
+  if (error) throw error;
+  return data as DbDraft;
+}
+
+export async function updateDraft(
+  id: string,
+  input: DraftInput,
+): Promise<DbDraft> {
+  if (!supabase) throw new Error('Sin conexión a Supabase.');
+  const { data, error } = await supabase
+    .from('match_drafts')
+    .update(input)
+    .eq('id', id)
+    .select('id, name, team_a_name, team_b_name, team_a_ids, team_b_ids, created_at')
+    .single();
+  if (error) throw error;
+  return data as DbDraft;
+}
+
+export async function deleteDraft(id: string): Promise<void> {
+  if (!supabase) throw new Error('Sin conexión a Supabase.');
+  const { error } = await supabase.from('match_drafts').delete().eq('id', id);
+  if (error) throw error;
+}
+
 export async function fetchIndicadoresData(): Promise<{
   matches: DbMatch[];
   matchPlayers: DbMatchPlayer[];

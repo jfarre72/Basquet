@@ -31,6 +31,19 @@ const TABS: Tab[] = [
     ),
   },
   {
+    id: 'armado',
+    label: 'Armado',
+    icon: (
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"
+        strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+        <circle cx="8" cy="8" r="3" />
+        <circle cx="16" cy="8" r="3" />
+        <path d="M3 19a5 5 0 0 1 10 0" />
+        <path d="M11 19a5 5 0 0 1 10 0" />
+      </svg>
+    ),
+  },
+  {
     id: 'contador',
     label: 'Contador',
     icon: (

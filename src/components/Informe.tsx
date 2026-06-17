@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { fetchSeasonData, type DbMatch, type DbMatchPlayer } from '../lib/queries';
+import { exportInformeToPdf } from '../utils/exportInformePdf';
 import {
   computeMonthly,
   computeSeasonStats,
@@ -129,6 +130,25 @@ export function Informe() {
             Estadísticas por jugador. Martes de básquet.
           </p>
         </div>
+        <button
+          type="button"
+          className="btn btn--ghost btn--sm"
+          onClick={() => {
+            if (year == null) return;
+            exportInformeToPdf({
+              year,
+              tournament,
+              jugados: totals.jugados,
+              faltantes: totals.faltantes,
+              podium,
+              monthly,
+              stats: tableStats,
+            });
+          }}
+          disabled={year == null || tableStats.length === 0}
+        >
+          📄 PDF
+        </button>
       </div>
       <div className="filters">
         {years.length > 0 && (

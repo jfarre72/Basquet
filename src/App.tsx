@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { Armado } from './components/Armado';
 import { BottomNav } from './components/BottomNav';
 import { Galeria } from './components/Galeria';
 import { GameScreen } from './components/GameScreen';
@@ -50,6 +51,9 @@ export default function App() {
       <main className="app__main">
         {section === 'informe' && <Informe />}
         {section === 'indicadores' && <Indicadores />}
+        {section === 'armado' && (
+          <Armado onStartMatch={() => setSection('contador')} />
+        )}
         {section === 'contador' && <ContadorRouter />}
         {section === 'galeria' && <Galeria />}
       </main>

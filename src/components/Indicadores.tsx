@@ -6,6 +6,7 @@ import {
   type DbMatchPlayer,
   type DbPlay,
 } from '../lib/queries';
+import { exportIndicadoresToPdf } from '../utils/exportIndicadoresPdf';
 
 interface ShotPodium {
   playerId: number;
@@ -86,6 +87,44 @@ export function Indicadores() {
     [minuteSeries],
   );
 
+  const topScorers = useMemo(() => {
+    const map = new Map<number, { points: number; doubles: number; triples: number }>();
+    for (const p of plays) {
+      const cur = map.get(p.player_id) ?? { points: 0, doubles: 0, triples: 0 };
+      cur.points += p.points;
+      if (p.shot_type === 'double') cur.doubles += 1;
+      else cur.triples += 1;
+      map.set(p.player_id, cur);
+    }
+    return [...map.entries()]
+      .map(([playerId, v]) => ({
+        playerName: PLAYERS_BY_ID[playerId]?.name ?? `#${playerId}`,
+        ...v,
+      }))
+      .sort((a, b) => b.points - a.points || a.playerName.localeCompare(b.playerName))
+      .slice(0, 15);
+  }, [plays]);
+
+  const exportPdf = () => {
+    const playerLabel =
+      player === 'all'
+        ? 'Todos'
+        : PLAYERS_BY_ID[player as number]?.name ?? `#${player}`;
+    exportIndicadoresToPdf({
+      battle: {
+        negro: teamBattle.negro,
+        blanco: teamBattle.blanco,
+        empates: teamBattle.empates,
+        otros: teamBattle.otrosA + teamBattle.otrosB,
+      },
+      triples,
+      dobles,
+      topScorers,
+      minuteSeries: minuteSeries.filter((b) => b.points > 0),
+      playerFilterLabel: playerLabel,
+    });
+  };
+
   return (
     <div className="informe">
       <div className="section-head">
@@ -95,6 +134,14 @@ export function Indicadores() {
             Cómo se distribuyen los puntos y quiénes definen.
           </p>
         </div>
+        <button
+          type="button"
+          className="btn btn--ghost btn--sm"
+          onClick={exportPdf}
+          disabled={loading || plays.length === 0}
+        >
+          📄 PDF
+        </button>
       </div>
 
       {error && (

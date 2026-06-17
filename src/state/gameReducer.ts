@@ -25,6 +25,13 @@ export type GameAction =
   | { type: 'CLEAR_TEAMS' }
   | { type: 'SHUFFLE_TEAMS' }
   | { type: 'SET_TEAM_NAME'; team: TeamId; name: string }
+  | {
+      type: 'LOAD_DRAFT';
+      teamAName: string;
+      teamBName: string;
+      teamAIds: number[];
+      teamBIds: number[];
+    }
   | { type: 'START_GAME' }
   | {
       type: 'ADD_PLAY';
@@ -175,6 +182,19 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
           [action.team]: { ...state.teams[action.team], name: action.name },
         },
       };
+
+    case 'LOAD_DRAFT': {
+      const allIds = [...action.teamAIds, ...action.teamBIds];
+      return {
+        ...INITIAL_STATE,
+        stage: 'teams',
+        selectedPlayerIds: allIds,
+        teams: {
+          A: { name: action.teamAName, playerIds: action.teamAIds },
+          B: { name: action.teamBName, playerIds: action.teamBIds },
+        },
+      };
+    }
 
     case 'START_GAME': {
       if (
