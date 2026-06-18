@@ -44,6 +44,7 @@ export function ContadorEntry({ onManual, onCreateNew }: Props) {
       teamBName: d.team_b_name,
       teamAIds: d.team_a_ids,
       teamBIds: d.team_b_ids,
+      playDate: d.play_date,
     });
   };
 

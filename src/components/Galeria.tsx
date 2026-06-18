@@ -17,6 +17,7 @@ export function Galeria() {
   );
   const [error, setError] = useState<string | null>(null);
   const [index, setIndex] = useState(0);
+  const [fullscreen, setFullscreen] = useState(false);
   const pickerRef = useRef<HTMLInputElement>(null);
   const cameraRef = useRef<HTMLInputElement>(null);
   const touchStartX = useRef<number | null>(null);
@@ -56,10 +57,20 @@ export function Galeria() {
       if (e.key === 'ArrowLeft') setIndex((i) => Math.max(0, i - 1));
       if (e.key === 'ArrowRight')
         setIndex((i) => Math.min(photos.length - 1, i + 1));
+      if (e.key === 'Escape') setFullscreen(false);
     };
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
   }, [photos.length]);
+
+  useEffect(() => {
+    if (fullscreen) {
+      document.body.style.overflow = 'hidden';
+      return () => {
+        document.body.style.overflow = '';
+      };
+    }
+  }, [fullscreen]);
 
   const handleFiles = async (files: FileList | null) => {
     if (!files || files.length === 0) return;
@@ -192,6 +203,7 @@ export function Galeria() {
                 src={getPhotoUrl(current.storage_path)}
                 alt={current.caption ?? 'Foto'}
                 className="carousel__img"
+                onClick={() => setFullscreen(true)}
               />
             )}
             {photos.length > 1 && (
@@ -254,6 +266,65 @@ export function Galeria() {
               ))}
             </div>
           )}
+        </div>
+      )}
+
+      {fullscreen && current && (
+        <div
+          className="photo-lightbox"
+          onClick={() => setFullscreen(false)}
+          onTouchStart={onTouchStart}
+          onTouchEnd={onTouchEnd}
+        >
+          <button
+            type="button"
+            className="photo-lightbox__close"
+            aria-label="Cerrar"
+            onClick={(e) => {
+              e.stopPropagation();
+              setFullscreen(false);
+            }}
+          >
+            ×
+          </button>
+          {photos.length > 1 && (
+            <>
+              <button
+                type="button"
+                className="photo-lightbox__nav photo-lightbox__nav--prev"
+                aria-label="Anterior"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setIndex((i) => Math.max(0, i - 1));
+                }}
+                disabled={index === 0}
+              >
+                ‹
+              </button>
+              <button
+                type="button"
+                className="photo-lightbox__nav photo-lightbox__nav--next"
+                aria-label="Siguiente"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setIndex((i) => Math.min(photos.length - 1, i + 1));
+                }}
+                disabled={index === photos.length - 1}
+              >
+                ›
+              </button>
+            </>
+          )}
+          <img
+            key={current.id}
+            src={getPhotoUrl(current.storage_path)}
+            alt={current.caption ?? 'Foto'}
+            className="photo-lightbox__img"
+            onClick={(e) => e.stopPropagation()}
+          />
+          <div className="photo-lightbox__counter">
+            {index + 1} / {photos.length}
+          </div>
         </div>
       )}
     </div>

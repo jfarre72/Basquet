@@ -90,6 +90,7 @@ export function Armado({ onStartMatch }: { onStartMatch: () => void }) {
       teamBName: d.team_b_name,
       teamAIds: d.team_a_ids,
       teamBIds: d.team_b_ids,
+      playDate: d.play_date,
     });
     onStartMatch();
   };
@@ -237,7 +238,7 @@ function DraftCard({
           <div className="draft-card__title">{draftLabel(draft)}</div>
           <div className="draft-card__sub">
             {draft.team_a_ids.length + draft.team_b_ids.length} jugadores ·{' '}
-            {formatDraftDate(draft.created_at)}
+            {formatDraftDate(draft.play_date ?? draft.created_at)}
           </div>
         </div>
         <button
@@ -315,6 +316,11 @@ function DraftEditor({
   onSavedAndStart: (d: DbDraft) => void;
 }) {
   const [name, setName] = useState(initial?.name ?? '');
+  const [playDate, setPlayDate] = useState<string>(() =>
+    initial?.play_date
+      ? initial.play_date.slice(0, 10)
+      : isoToday(),
+  );
   const [teamAName, setTeamAName] = useState(initial?.team_a_name ?? 'Negro');
   const [teamBName, setTeamBName] = useState(initial?.team_b_name ?? 'Blanco');
   const [assignments, setAssignments] = useState<Map<number, TeamSide>>(() => {
@@ -367,6 +373,9 @@ function DraftEditor({
       team_b_name: teamBName.trim() || 'Blanco',
       team_a_ids: teamAIds,
       team_b_ids: teamBIds,
+      play_date: playDate
+        ? new Date(`${playDate}T20:00:00`).toISOString()
+        : null,
     };
     try {
       const saved = initial
@@ -390,6 +399,13 @@ function DraftEditor({
           value={name}
           onChange={(e) => setName(e.target.value)}
           maxLength={60}
+        />
+        <input
+          className="armado-editor__date"
+          type="date"
+          value={playDate}
+          onChange={(e) => setPlayDate(e.target.value)}
+          aria-label="Fecha del partido"
         />
       </div>
 
@@ -566,6 +582,12 @@ function draftLabel(d: DbDraft): string {
     day: '2-digit',
     month: '2-digit',
   })}`;
+}
+
+function isoToday(): string {
+  const d = new Date();
+  const pad = (n: number) => n.toString().padStart(2, '0');
+  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
 }
 
 function formatDraftDate(iso: string): string {

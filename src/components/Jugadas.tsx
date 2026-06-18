@@ -73,10 +73,6 @@ export function Jugadas() {
         const ts = new Date(p.ts);
         return {
           fecha: ts.toLocaleDateString('es-AR'),
-          hora: ts.toLocaleTimeString('es-AR', {
-            hour: '2-digit',
-            minute: '2-digit',
-          }),
           minuto: p.minute,
           equipo:
             p.team === 'A'
@@ -195,7 +191,6 @@ export function Jugadas() {
                 <thead>
                   <tr>
                     <th>Fecha</th>
-                    <th>Hora</th>
                     <th>Min</th>
                     <th>Equipo</th>
                     <th>ID</th>
@@ -208,7 +203,6 @@ export function Jugadas() {
                   {rows.map((r, idx) => (
                     <tr key={idx}>
                       <td className="stats-grid__muted">{r.fecha}</td>
-                      <td className="stats-grid__muted">{r.hora}</td>
                       <td>{r.minuto}</td>
                       <td>{r.equipo}</td>
                       <td className="stats-grid__muted">{r.playerId}</td>

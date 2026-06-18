@@ -59,6 +59,7 @@ export interface DbDraft {
   team_b_name: string;
   team_a_ids: number[];
   team_b_ids: number[];
+  play_date: string | null;
   created_at: string;
 }
 
@@ -68,13 +69,14 @@ export interface DraftInput {
   team_b_name: string;
   team_a_ids: number[];
   team_b_ids: number[];
+  play_date: string | null;
 }
 
 export async function fetchDrafts(): Promise<DbDraft[]> {
   if (!supabase) return [];
   const { data, error } = await supabase
     .from('match_drafts')
-    .select('id, name, team_a_name, team_b_name, team_a_ids, team_b_ids, created_at')
+    .select('id, name, team_a_name, team_b_name, team_a_ids, team_b_ids, play_date, created_at')
     .order('created_at', { ascending: false });
   if (error) throw error;
   return (data ?? []) as DbDraft[];
@@ -85,7 +87,7 @@ export async function createDraft(input: DraftInput): Promise<DbDraft> {
   const { data, error } = await supabase
     .from('match_drafts')
     .insert(input)
-    .select('id, name, team_a_name, team_b_name, team_a_ids, team_b_ids, created_at')
+    .select('id, name, team_a_name, team_b_name, team_a_ids, team_b_ids, play_date, created_at')
     .single();
   if (error) throw error;
   return data as DbDraft;
@@ -100,7 +102,7 @@ export async function updateDraft(
     .from('match_drafts')
     .update(input)
     .eq('id', id)
-    .select('id, name, team_a_name, team_b_name, team_a_ids, team_b_ids, created_at')
+    .select('id, name, team_a_name, team_b_name, team_a_ids, team_b_ids, play_date, created_at')
     .single();
   if (error) throw error;
   return data as DbDraft;

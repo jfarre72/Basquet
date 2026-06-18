@@ -47,4 +47,5 @@ export interface GameState {
   saveError: string | null;
   savedMatchId: string | null;
   loadedDraftId: string | null;
+  scheduledDate: string | null;
 }

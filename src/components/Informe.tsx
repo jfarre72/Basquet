@@ -16,10 +16,10 @@ import {
   type Tournament,
 } from '../utils/seasonStats';
 
-const TOURNAMENTS: { key: Tournament; label: string }[] = [
+const TOURNAMENTS: { key: Tournament; label: string; short?: string }[] = [
   { key: 'completo', label: 'Anual' },
-  { key: 'apertura', label: 'Apertura' },
-  { key: 'clausura', label: 'Clausura' },
+  { key: 'apertura', label: 'Apertura', short: 'APE' },
+  { key: 'clausura', label: 'Clausura', short: 'CLA' },
 ];
 
 interface ColumnDef {
@@ -184,7 +184,10 @@ export function Informe() {
               className={`pill${t.key === tournament ? ' pill--active' : ''}`}
               onClick={() => setTournament(t.key)}
             >
-              {t.label}
+              <span className="pill__label-full">{t.label}</span>
+              {t.short && (
+                <span className="pill__label-short">{t.short}</span>
+              )}
             </button>
           ))}
         </div>

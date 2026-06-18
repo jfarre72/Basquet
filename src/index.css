@@ -98,6 +98,11 @@ textarea {
     padding-right: 16px;
   }
 }
+@media (min-width: 1024px) {
+  .app {
+    max-width: 1080px;
+  }
+}
 
 main.app__main,
 main.app__main > * {
@@ -1734,6 +1739,22 @@ main.app__main {
   background: var(--text);
   color: var(--bg);
 }
+.pill__label-short {
+  display: none;
+}
+@media (max-width: 480px) {
+  .pill__label-full {
+    display: none;
+  }
+  .pill__label-short {
+    display: inline;
+  }
+}
+@media (max-width: 640px) {
+  .pill-group--hide-mobile {
+    display: none !important;
+  }
+}
 
 /* ===== Summary cards (Informe) ===== */
 
@@ -2045,11 +2066,17 @@ main.app__main {
   border: 1px solid var(--border);
   border-radius: var(--radius);
   -webkit-overflow-scrolling: touch;
+  max-width: 100%;
 }
 .stats-grid {
   border-collapse: collapse;
   width: 100%;
   font-size: 0.8rem;
+}
+@media (min-width: 1024px) {
+  .stats-grid {
+    font-size: 0.88rem;
+  }
 }
 .stats-grid th,
 .stats-grid td {
@@ -2360,9 +2387,10 @@ main.app__main {
 .armado-editor__head {
   display: flex;
   gap: 8px;
+  flex-wrap: wrap;
 }
 .armado-editor__name {
-  flex: 1;
+  flex: 1 1 200px;
   appearance: none;
   background: var(--surface);
   border: 1px solid var(--border);
@@ -2374,6 +2402,23 @@ main.app__main {
   outline: none;
 }
 .armado-editor__name:focus {
+  border-color: var(--accent);
+}
+.armado-editor__date {
+  appearance: none;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  color: var(--text);
+  border-radius: var(--radius);
+  padding: 12px 14px;
+  font-size: 0.95rem;
+  font-weight: 700;
+  outline: none;
+  font-family: inherit;
+  flex: 0 0 auto;
+  color-scheme: dark;
+}
+.armado-editor__date:focus {
   border-color: var(--accent);
 }
 .armado-editor__teams {
@@ -2854,6 +2899,7 @@ main.app__main {
   object-fit: contain;
   display: block;
   animation: carouselFadeIn 0.2s ease;
+  cursor: zoom-in;
 }
 @keyframes carouselFadeIn {
   from { opacity: 0; }
@@ -2959,6 +3005,91 @@ main.app__main {
 .carousel-thumb--active {
   border-color: var(--accent);
   opacity: 1;
+}
+
+/* Lightbox a pantalla completa */
+
+.photo-lightbox {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.94);
+  z-index: 200;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  animation: fadeIn 0.15s ease;
+  touch-action: pan-y;
+  user-select: none;
+}
+.photo-lightbox__img {
+  max-width: 100%;
+  max-height: 100%;
+  object-fit: contain;
+  display: block;
+  cursor: zoom-out;
+}
+.photo-lightbox__close {
+  position: absolute;
+  top: calc(12px + env(safe-area-inset-top));
+  right: 12px;
+  appearance: none;
+  border: 0;
+  background: rgba(255, 255, 255, 0.12);
+  color: #fff;
+  width: 44px;
+  height: 44px;
+  border-radius: 999px;
+  font-size: 1.6rem;
+  font-weight: 800;
+  line-height: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  backdrop-filter: blur(6px);
+  z-index: 2;
+}
+.photo-lightbox__nav {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  appearance: none;
+  border: 0;
+  background: rgba(255, 255, 255, 0.12);
+  color: #fff;
+  width: 48px;
+  height: 48px;
+  border-radius: 999px;
+  font-size: 2rem;
+  font-weight: 800;
+  line-height: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  backdrop-filter: blur(6px);
+  z-index: 2;
+}
+.photo-lightbox__nav:disabled {
+  opacity: 0.25;
+}
+.photo-lightbox__nav--prev {
+  left: 12px;
+}
+.photo-lightbox__nav--next {
+  right: 12px;
+}
+.photo-lightbox__counter {
+  position: absolute;
+  bottom: calc(20px + env(safe-area-inset-bottom));
+  left: 50%;
+  transform: translateX(-50%);
+  background: rgba(255, 255, 255, 0.12);
+  color: #fff;
+  font-size: 0.86rem;
+  font-weight: 700;
+  padding: 6px 14px;
+  border-radius: 999px;
+  backdrop-filter: blur(6px);
+  font-variant-numeric: tabular-nums;
 }
 
 .photo-card {

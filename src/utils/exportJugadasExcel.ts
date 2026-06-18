@@ -2,7 +2,6 @@ import * as XLSX from 'xlsx';
 
 export interface JugadaRow {
   fecha: string;
-  hora: string;
   minuto: number;
   equipo: string;
   playerId: number;
@@ -17,7 +16,6 @@ export function exportJugadasToExcel(rows: JugadaRow[]): void {
     rows.length > 0
       ? rows.map((r) => ({
           Fecha: r.fecha,
-          Hora: r.hora,
           Minuto: r.minuto,
           Equipo: r.equipo,
           'ID Jugador': r.playerId,
@@ -28,7 +26,6 @@ export function exportJugadasToExcel(rows: JugadaRow[]): void {
       : [
           {
             Fecha: '',
-            Hora: '',
             Minuto: '',
             Equipo: '',
             'ID Jugador': '',
@@ -38,7 +35,7 @@ export function exportJugadasToExcel(rows: JugadaRow[]): void {
           },
         ],
   );
-  sheet['!cols'] = [12, 8, 8, 16, 12, 18, 14, 8].map((wch) => ({ wch }));
+  sheet['!cols'] = [12, 8, 16, 12, 18, 14, 8].map((wch) => ({ wch }));
   XLSX.utils.book_append_sheet(wb, sheet, 'Jugadas');
 
   const ts = fileTimestamp();

@@ -14,7 +14,11 @@ export async function saveGameToSupabase(state: GameState): Promise<string> {
 
   const { winner, scoreA, scoreB } = getWinner(state);
   const winnerDb = winner === 'A' ? 'A' : winner === 'B' ? 'B' : 'tie';
-  const startedAt = new Date(state.startTime ?? Date.now()).toISOString();
+  const startedAt = (
+    state.scheduledDate
+      ? new Date(state.scheduledDate)
+      : new Date(state.startTime ?? Date.now())
+  ).toISOString();
   const finishedAt = new Date(state.endTime ?? Date.now()).toISOString();
 
   const { data: match, error: matchErr } = await supabase

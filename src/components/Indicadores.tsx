@@ -162,7 +162,11 @@ export function Indicadores() {
               <div className="block__hint">{quarterTotal} pts</div>
             </div>
             <div className="filters">
-              <div className="pill-group" role="tablist" aria-label="Jugador">
+              <div
+                className="pill-group pill-group--hide-mobile"
+                role="tablist"
+                aria-label="Jugador"
+              >
                 <button
                   type="button"
                   className={`pill${player === 'all' ? ' pill--active' : ''}`}
