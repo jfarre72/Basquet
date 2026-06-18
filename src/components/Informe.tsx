@@ -236,7 +236,6 @@ export function Informe() {
 /* ---------- Podio ---------- */
 
 const MEDAL = ['🥇', '🥈', '🥉'];
-const POS_LABEL = ['1°', '2°', '3°'];
 
 function PodiumBlock({ podium }: { podium: PlayerSeasonStat[] }) {
   return (
@@ -245,9 +244,8 @@ function PodiumBlock({ podium }: { podium: PlayerSeasonStat[] }) {
       <div className="podium-list">
         {podium.map((s, idx) => (
           <article key={s.playerId} className={`podium-row podium-row--${idx + 1}`}>
-            <div className="podium-row__rank">
+            <div className="podium-row__rank podium-row__rank--simple">
               <span className="podium-row__medal">{MEDAL[idx]}</span>
-              <span className="podium-row__pos">{POS_LABEL[idx]}</span>
             </div>
             <div className="podium-row__main">
               <div className="podium-row__name">{s.playerName}</div>

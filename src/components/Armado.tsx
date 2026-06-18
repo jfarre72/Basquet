@@ -5,9 +5,12 @@ import {
   deleteDraft,
   fetchDrafts,
   fetchHistoricos,
+  fetchSeasonData,
   updateDraft,
   type DbDraft,
   type DbHistoric,
+  type DbMatch,
+  type DbMatchPlayer,
   type DraftInput,
 } from '../lib/queries';
 import { SUPABASE_CONFIGURED } from '../lib/supabase';
@@ -22,6 +25,8 @@ export function Armado({ onStartMatch }: { onStartMatch: () => void }) {
   const { dispatch } = useGame();
   const [drafts, setDrafts] = useState<DbDraft[]>([]);
   const [historicos, setHistoricos] = useState<DbHistoric[]>([]);
+  const [matchPlayers, setMatchPlayers] = useState<DbMatchPlayer[]>([]);
+  const [seasonMatches, setSeasonMatches] = useState<DbMatch[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [view, setView] = useState<View>('list');
@@ -34,11 +39,13 @@ export function Armado({ onStartMatch }: { onStartMatch: () => void }) {
       return;
     }
     let cancelled = false;
-    Promise.all([fetchDrafts(), fetchHistoricos()])
-      .then(([d, h]) => {
+    Promise.all([fetchDrafts(), fetchHistoricos(), fetchSeasonData()])
+      .then(([d, h, season]) => {
         if (cancelled) return;
         setDrafts(d);
         setHistoricos(h);
+        setSeasonMatches(season.matches);
+        setMatchPlayers(season.matchPlayers);
       })
       .catch((e: Error) => {
         if (!cancelled) setError(e.message);
@@ -50,6 +57,30 @@ export function Armado({ onStartMatch }: { onStartMatch: () => void }) {
       cancelled = true;
     };
   }, []);
+
+  /** Detecta drafts cuyos jugadores ya aparecieron en un partido jugado
+   *  después de la creación del draft → ese armado ya se usó. */
+  const pendingDrafts = useMemo(() => {
+    if (drafts.length === 0) return drafts;
+    const mpsByMatch = new Map<string, Set<number>>();
+    for (const mp of matchPlayers) {
+      const set = mpsByMatch.get(mp.match_id) ?? new Set<number>();
+      set.add(mp.player_id);
+      mpsByMatch.set(mp.match_id, set);
+    }
+    return drafts.filter((d) => {
+      const allDraftIds = [...d.team_a_ids, ...d.team_b_ids];
+      if (allDraftIds.length === 0) return true;
+      for (const m of seasonMatches) {
+        if (m.played_at <= d.created_at) continue;
+        const players = mpsByMatch.get(m.id);
+        if (!players) continue;
+        const allPresent = allDraftIds.every((id) => players.has(id));
+        if (allPresent) return false;
+      }
+      return true;
+    });
+  }, [drafts, matchPlayers, seasonMatches]);
 
   const startMatch = (d: DbDraft) => {
     dispatch({
@@ -64,7 +95,12 @@ export function Armado({ onStartMatch }: { onStartMatch: () => void }) {
   };
 
   const handleDelete = async (d: DbDraft) => {
-    if (!window.confirm(`¿Borrar el armado "${draftLabel(d)}"?`)) return;
+    if (
+      !window.confirm(
+        `¿Borrar el armado "${draftLabel(d)}"?\n\nSe elimina solo la plantilla de equipos prearmada. No afecta los partidos ya jugados ni sus estadísticas.`,
+      )
+    )
+      return;
     try {
       await deleteDraft(d.id);
       setDrafts((arr) => arr.filter((x) => x.id !== d.id));
@@ -109,7 +145,7 @@ export function Armado({ onStartMatch }: { onStartMatch: () => void }) {
               className={`pill${tab === 'pendientes' ? ' pill--active' : ''}`}
               onClick={() => setTab('pendientes')}
             >
-              Pendientes ({drafts.length})
+              Pendientes ({pendingDrafts.length})
             </button>
             <button
               type="button"
@@ -138,13 +174,13 @@ export function Armado({ onStartMatch }: { onStartMatch: () => void }) {
 
               {loading ? (
                 <div className="lb-loading">Cargando...</div>
-              ) : drafts.length === 0 ? (
+              ) : pendingDrafts.length === 0 ? (
                 <div className="lb-empty">
                   No tenés partidos pendientes. Creá uno para arrancar.
                 </div>
               ) : (
                 <div className="drafts">
-                  {drafts.map((d) => (
+                  {pendingDrafts.map((d) => (
                     <DraftCard
                       key={d.id}
                       draft={d}
