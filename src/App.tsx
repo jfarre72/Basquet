@@ -19,7 +19,7 @@ import type { Section } from './types';
 export default function App() {
   const { status } = useAuth();
   const { state } = useGame();
-  const [section, setSection] = useState<Section>('informe');
+  const [section, setSection] = useState<Section>('leyendas');
 
   useEffect(() => {
     if (state.stage === 'game' || (state.stage === 'finished' && state.plays.length > 0)) {

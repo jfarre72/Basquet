@@ -5,13 +5,13 @@ export type ShotType = 'double' | 'triple';
 export type Stage = 'selection' | 'teams' | 'game' | 'finished';
 
 export type Section =
+  | 'leyendas'
   | 'informe'
   | 'indicadores'
-  | 'leyendas'
+  | 'jugadas'
   | 'armado'
   | 'contador'
-  | 'galeria'
-  | 'jugadas';
+  | 'galeria';
 
 export interface Player {
   id: number;

@@ -1,9 +1,10 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import {
   fetchSeasonData,
   type DbMatch,
   type DbMatchPlayer,
 } from '../lib/queries';
+import { exportElementToPdf } from '../utils/exportElementPdf';
 import {
   computeSeasonStats,
   listAvailableYears,
@@ -25,6 +26,12 @@ interface HofData {
   awards: Award[];
 }
 
+interface YearVitrina {
+  year: number;
+  totalMatches: number;
+  byTournament: Record<Tournament, HofData>;
+}
+
 const TOURNAMENTS: { key: Tournament; label: string }[] = [
   { key: 'completo', label: 'Anual' },
   { key: 'apertura', label: 'Apertura' },
@@ -36,7 +43,8 @@ export function Leyendas() {
   const [matchPlayers, setMatchPlayers] = useState<DbMatchPlayer[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [year, setYear] = useState<number | null>(null);
+  const [exporting, setExporting] = useState(false);
+  const captureRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     let cancelled = false;
@@ -46,9 +54,6 @@ export function Leyendas() {
         if (cancelled) return;
         setMatches(data.matches);
         setMatchPlayers(data.matchPlayers);
-        const years = listAvailableYears(data.matches);
-        const currentYear = new Date().getFullYear();
-        setYear(years.includes(currentYear) ? currentYear : (years[0] ?? null));
         setError(null);
       })
       .catch((e: Error) => {
@@ -64,49 +69,57 @@ export function Leyendas() {
 
   const years = useMemo(() => listAvailableYears(matches), [matches]);
 
-  const hofByTournament = useMemo(() => {
-    if (year == null) return null;
-    const out: Record<Tournament, HofData> = {
-      completo: emptyHof(),
-      apertura: emptyHof(),
-      clausura: emptyHof(),
-    };
-    for (const t of TOURNAMENTS) {
-      const stats = computeSeasonStats(year, matches, matchPlayers, t.key);
-      out[t.key] = computeAwards(stats, year, matches, t.key);
+  const vitrinas: YearVitrina[] = useMemo(() => {
+    return years.map((year) => {
+      const seasonMatches = matches.filter(
+        (m) => new Date(m.played_at).getUTCFullYear() === year,
+      );
+      const byTournament: Record<Tournament, HofData> = {
+        completo: { hasData: false, matchCount: 0, awards: [] },
+        apertura: { hasData: false, matchCount: 0, awards: [] },
+        clausura: { hasData: false, matchCount: 0, awards: [] },
+      };
+      for (const t of TOURNAMENTS) {
+        const stats = computeSeasonStats(
+          year,
+          matches,
+          matchPlayers,
+          t.key,
+        );
+        byTournament[t.key] = computeAwards(stats, year, matches, t.key);
+      }
+      return { year, totalMatches: seasonMatches.length, byTournament };
+    });
+  }, [years, matches, matchPlayers]);
+
+  const handleExportPdf = async () => {
+    if (!captureRef.current) return;
+    setExporting(true);
+    try {
+      await exportElementToPdf(captureRef.current, 'leyendas-basquet.pdf');
+    } finally {
+      setExporting(false);
     }
-    return out;
-  }, [year, matches, matchPlayers]);
+  };
 
   return (
-    <div className="informe leyendas">
+    <div className="informe leyendas" ref={captureRef}>
       <div className="section-head">
         <div>
           <h2 className="section-head__title">🏆 Leyendas</h2>
           <p className="section-head__subtitle">
-            Hall of Fame del básquet de los martes.
+            Vitrina del básquet de los martes.
           </p>
         </div>
+        <button
+          type="button"
+          className="btn btn--ghost btn--sm pdf-button"
+          onClick={() => void handleExportPdf()}
+          disabled={loading || vitrinas.length === 0 || exporting}
+        >
+          {exporting ? 'Generando…' : '📄 PDF'}
+        </button>
       </div>
-
-      {years.length > 0 && (
-        <div className="filters">
-          <div className="pill-group" role="tablist" aria-label="Año">
-            {years.map((y) => (
-              <button
-                key={y}
-                type="button"
-                role="tab"
-                aria-selected={y === year}
-                className={`pill${y === year ? ' pill--active' : ''}`}
-                onClick={() => setYear(y)}
-              >
-                {y}
-              </button>
-            ))}
-          </div>
-        </div>
-      )}
 
       {error && (
         <div className="warning-banner">
@@ -116,41 +129,45 @@ export function Leyendas() {
 
       {loading ? (
         <div className="lb-loading">Cargando leyendas...</div>
-      ) : year == null || !hofByTournament ? (
+      ) : vitrinas.length === 0 ? (
         <div className="lb-empty">
           Todavía no hay datos para mostrar.
         </div>
       ) : (
-        <>
-          <HofCard
-            tournament="completo"
-            label="Anual"
-            year={year}
-            data={hofByTournament.completo}
-            featured
-          />
-          <div className="hof-grid-two">
-            <HofCard
-              tournament="apertura"
-              label="Apertura"
-              year={year}
-              data={hofByTournament.apertura}
-            />
-            <HofCard
-              tournament="clausura"
-              label="Clausura"
-              year={year}
-              data={hofByTournament.clausura}
-            />
-          </div>
-        </>
+        <div className="vitrina">
+          {vitrinas.map((v) => (
+            <YearShowcase key={v.year} vitrina={v} />
+          ))}
+        </div>
       )}
     </div>
   );
 }
 
-function emptyHof(): HofData {
-  return { hasData: false, matchCount: 0, awards: [] };
+function YearShowcase({ vitrina }: { vitrina: YearVitrina }) {
+  const { year, totalMatches, byTournament } = vitrina;
+  return (
+    <section className="vitrina-year">
+      <header className="vitrina-year__head">
+        <span className="vitrina-year__line" />
+        <span className="vitrina-year__num">{year}</span>
+        <span className="vitrina-year__line" />
+      </header>
+      <div className="vitrina-year__meta">
+        {totalMatches} partidos jugados
+      </div>
+      <div className="vitrina-cards">
+        {TOURNAMENTS.map((t) => (
+          <HofCard
+            key={t.key}
+            tournament={t.key}
+            label={t.label}
+            data={byTournament[t.key]}
+          />
+        ))}
+      </div>
+    </section>
+  );
 }
 
 function computeAwards(
@@ -193,7 +210,7 @@ function computeAwards(
       secondary: `${champion.PG}G · ${champion.PE}E · ${champion.PP}P`,
     },
     {
-      label: 'Más partidos jugados',
+      label: 'Más partidos',
       icon: '📅',
       player: mostPlayed.playerName,
       primary: `${mostPlayed.PJ} PJ`,
@@ -218,36 +235,27 @@ const HONOR_VARIANTS = ['gold', 'silver', 'bronze'] as const;
 function HofCard({
   tournament,
   label,
-  year,
   data,
-  featured,
 }: {
   tournament: Tournament;
   label: string;
-  year: number;
   data: HofData;
-  featured?: boolean;
 }) {
   return (
-    <article
-      className={`hof-card hof-card--${tournament}${
-        featured ? ' hof-card--featured' : ''
-      }`}
-    >
+    <article className={`hof-card hof-card--${tournament}`}>
       <header className="hof-card__head">
         <span className="hof-card__crest" aria-hidden>
           🏆
         </span>
         <div className="hof-card__titles">
           <div className="hof-card__label">{label}</div>
-          <div className="hof-card__year">{year}</div>
+          {data.hasData && (
+            <div className="hof-card__matches">{data.matchCount} partidos</div>
+          )}
         </div>
-        {data.hasData && (
-          <span className="hof-card__matches">{data.matchCount} partidos</span>
-        )}
       </header>
       {!data.hasData ? (
-        <div className="hof-card__empty">Sin partidos en este torneo.</div>
+        <div className="hof-card__empty">Sin partidos.</div>
       ) : (
         <div className="hof-honorees">
           {data.awards.map((a, idx) => (
