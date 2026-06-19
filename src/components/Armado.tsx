@@ -16,10 +16,10 @@ import {
 import { SUPABASE_CONFIGURED } from '../lib/supabase';
 import { useGame } from '../state/GameContext';
 import { normalizeText } from '../utils/text';
+import { FlyerModal } from './FlyerModal';
 
 type View = 'list' | 'edit';
 type Tab = 'pendientes' | 'historicos';
-type TeamSide = 'A' | 'B' | null;
 
 export function Armado({ onStartMatch }: { onStartMatch: () => void }) {
   const { dispatch } = useGame();
@@ -32,6 +32,7 @@ export function Armado({ onStartMatch }: { onStartMatch: () => void }) {
   const [view, setView] = useState<View>('list');
   const [tab, setTab] = useState<Tab>('pendientes');
   const [editing, setEditing] = useState<DbDraft | null>(null);
+  const [flyer, setFlyer] = useState<DbDraft | null>(null);
 
   useEffect(() => {
     if (!SUPABASE_CONFIGURED) {
@@ -57,6 +58,20 @@ export function Armado({ onStartMatch }: { onStartMatch: () => void }) {
       cancelled = true;
     };
   }, []);
+
+  /** Jugadores que estuvieron en alguno de los últimos 10 partidos. */
+  const recentPlayerIds = useMemo(() => {
+    const sorted = [...seasonMatches]
+      .filter((m) => m.played_at)
+      .sort((a, b) => b.played_at.localeCompare(a.played_at))
+      .slice(0, 10);
+    const ids = new Set<number>();
+    const lastIds = new Set(sorted.map((m) => m.id));
+    for (const mp of matchPlayers) {
+      if (lastIds.has(mp.match_id)) ids.add(mp.player_id);
+    }
+    return ids;
+  }, [seasonMatches, matchPlayers]);
 
   /** Detecta drafts cuyos jugadores ya aparecieron en un partido jugado
    *  después de la creación del draft → ese armado ya se usó. */
@@ -191,6 +206,7 @@ export function Armado({ onStartMatch }: { onStartMatch: () => void }) {
                         setView('edit');
                       }}
                       onDelete={() => void handleDelete(d)}
+                      onFlyer={() => setFlyer(d)}
                     />
                   ))}
                 </div>
@@ -203,6 +219,7 @@ export function Armado({ onStartMatch }: { onStartMatch: () => void }) {
       ) : (
         <DraftEditor
           initial={editing}
+          recentIds={recentPlayerIds}
           onCancel={() => {
             setView('list');
             setEditing(null);
@@ -214,6 +231,8 @@ export function Armado({ onStartMatch }: { onStartMatch: () => void }) {
           }}
         />
       )}
+
+      {flyer && <FlyerModal draft={flyer} onClose={() => setFlyer(null)} />}
     </div>
   );
 }
@@ -225,11 +244,13 @@ function DraftCard({
   onStart,
   onEdit,
   onDelete,
+  onFlyer,
 }: {
   draft: DbDraft;
   onStart: () => void;
   onEdit: () => void;
   onDelete: () => void;
+  onFlyer: () => void;
 }) {
   return (
     <article className="draft-card">
@@ -254,6 +275,9 @@ function DraftCard({
         <DraftTeam name={draft.team_b_name} ids={draft.team_b_ids} side="B" />
       </div>
       <footer className="draft-card__foot">
+        <button type="button" className="btn btn--blue btn--sm" onClick={onFlyer}>
+          📲 Flyer
+        </button>
         <button type="button" className="btn btn--ghost btn--sm" onClick={onEdit}>
           Editar
         </button>
@@ -306,63 +330,105 @@ function DraftTeam({
 
 function DraftEditor({
   initial,
+  recentIds,
   onCancel,
   onSaved,
   onSavedAndStart,
 }: {
   initial: DbDraft | null;
+  recentIds: Set<number>;
   onCancel: () => void;
   onSaved: (d: DbDraft, isNew: boolean) => void;
   onSavedAndStart: (d: DbDraft) => void;
 }) {
+  const initialSelected = useMemo(() => {
+    const set = new Set<number>();
+    initial?.team_a_ids.forEach((id) => set.add(id));
+    initial?.team_b_ids.forEach((id) => set.add(id));
+    return set;
+  }, [initial]);
+
   const [name, setName] = useState(initial?.name ?? '');
   const [playDate, setPlayDate] = useState<string>(() =>
-    initial?.play_date
-      ? initial.play_date.slice(0, 10)
-      : isoToday(),
+    initial?.play_date ? initial.play_date.slice(0, 10) : isoToday(),
   );
   const [teamAName, setTeamAName] = useState(initial?.team_a_name ?? 'Negro');
   const [teamBName, setTeamBName] = useState(initial?.team_b_name ?? 'Blanco');
-  const [assignments, setAssignments] = useState<Map<number, TeamSide>>(() => {
-    const map = new Map<number, TeamSide>();
-    initial?.team_a_ids.forEach((id) => map.set(id, 'A'));
-    initial?.team_b_ids.forEach((id) => map.set(id, 'B'));
-    return map;
-  });
+  const [selected, setSelected] = useState<Set<number>>(initialSelected);
+  const [teamA, setTeamA] = useState<number[]>(initial?.team_a_ids ?? []);
+  const [teamB, setTeamB] = useState<number[]>(initial?.team_b_ids ?? []);
+  const [step, setStep] = useState<'select' | 'teams'>(
+    initialSelected.size > 0 ? 'teams' : 'select',
+  );
   const [query, setQuery] = useState('');
   const [saving, setSaving] = useState(false);
   const [err, setErr] = useState<string | null>(null);
 
-  const filtered = useMemo(() => {
+  const playersFiltered = useMemo(() => {
     const q = normalizeText(query.trim());
-    if (!q) return PLAYERS_SORTED;
-    return PLAYERS_SORTED.filter((p) => normalizeText(p.name).includes(q));
+    return PLAYERS_SORTED.filter((p) =>
+      !q ? true : normalizeText(p.name).includes(q),
+    );
   }, [query]);
 
-  const teamAIds = useMemo(
-    () =>
-      [...assignments.entries()].filter(([, s]) => s === 'A').map(([id]) => id),
-    [assignments],
+  // Frecuentes / Otros
+  const frecuentes = useMemo(
+    () => playersFiltered.filter((p) => recentIds.has(p.id)),
+    [playersFiltered, recentIds],
   );
-  const teamBIds = useMemo(
-    () =>
-      [...assignments.entries()].filter(([, s]) => s === 'B').map(([id]) => id),
-    [assignments],
+  const otros = useMemo(
+    () => playersFiltered.filter((p) => !recentIds.has(p.id)),
+    [playersFiltered, recentIds],
   );
 
-  const cycle = (id: number) => {
-    setAssignments((prev) => {
-      const next = new Map(prev);
-      const cur = prev.get(id) ?? null;
-      const nx: TeamSide = cur === null ? 'A' : cur === 'A' ? 'B' : null;
-      if (nx === null) next.delete(id);
-      else next.set(id, nx);
+  const togglePlayer = (id: number) => {
+    setSelected((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) {
+        next.delete(id);
+        setTeamA((arr) => arr.filter((x) => x !== id));
+        setTeamB((arr) => arr.filter((x) => x !== id));
+      } else {
+        next.add(id);
+      }
       return next;
     });
   };
 
-  const canSave =
-    !saving && teamAIds.length > 0 && teamBIds.length > 0;
+  const pool = useMemo(
+    () =>
+      [...selected].filter((id) => !teamA.includes(id) && !teamB.includes(id)),
+    [selected, teamA, teamB],
+  );
+
+  const assign = (id: number, side: 'A' | 'B') => {
+    if (side === 'A') {
+      setTeamA((arr) => (arr.includes(id) ? arr : [...arr, id]));
+      setTeamB((arr) => arr.filter((x) => x !== id));
+    } else {
+      setTeamB((arr) => (arr.includes(id) ? arr : [...arr, id]));
+      setTeamA((arr) => arr.filter((x) => x !== id));
+    }
+  };
+
+  const unassign = (id: number) => {
+    setTeamA((arr) => arr.filter((x) => x !== id));
+    setTeamB((arr) => arr.filter((x) => x !== id));
+  };
+
+  const shuffle = () => {
+    const arr = [...selected];
+    for (let i = arr.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [arr[i], arr[j]] = [arr[j], arr[i]];
+    }
+    const half = Math.ceil(arr.length / 2);
+    setTeamA(arr.slice(0, half));
+    setTeamB(arr.slice(half));
+  };
+
+  const canSave = !saving && teamA.length > 0 && teamB.length > 0;
+  const canContinue = selected.size >= 2;
 
   const save = async (alsoStart: boolean) => {
     setSaving(true);
@@ -371,8 +437,8 @@ function DraftEditor({
       name: name.trim() || null,
       team_a_name: teamAName.trim() || 'Negro',
       team_b_name: teamBName.trim() || 'Blanco',
-      team_a_ids: teamAIds,
-      team_b_ids: teamBIds,
+      team_a_ids: teamA,
+      team_b_ids: teamB,
       play_date: playDate
         ? new Date(`${playDate}T20:00:00`).toISOString()
         : null,
@@ -409,42 +475,179 @@ function DraftEditor({
         />
       </div>
 
-      <div className="armado-editor__teams">
-        <TeamHeader side="A" name={teamAName} count={teamAIds.length} onChange={setTeamAName} />
-        <TeamHeader side="B" name={teamBName} count={teamBIds.length} onChange={setTeamBName} />
+      <div className="step-tabs" role="tablist" aria-label="Paso">
+        <button
+          type="button"
+          role="tab"
+          aria-selected={step === 'select'}
+          className={`step-tab${step === 'select' ? ' step-tab--active' : ''}`}
+          onClick={() => setStep('select')}
+        >
+          1. Jugadores ({selected.size})
+        </button>
+        <button
+          type="button"
+          role="tab"
+          aria-selected={step === 'teams'}
+          className={`step-tab${step === 'teams' ? ' step-tab--active' : ''}`}
+          onClick={() => canContinue && setStep('teams')}
+          disabled={!canContinue}
+        >
+          2. Equipos ({teamA.length}–{teamB.length})
+        </button>
       </div>
 
-      <div className="search">
-        <span className="search__icon" aria-hidden>🔎</span>
-        <input
-          inputMode="search"
-          placeholder="Buscar jugador..."
-          value={query}
-          onChange={(e) => setQuery(e.target.value)}
-          aria-label="Buscar jugador"
-        />
-      </div>
+      {step === 'select' ? (
+        <>
+          <div className="search">
+            <span className="search__icon" aria-hidden>🔎</span>
+            <input
+              inputMode="search"
+              placeholder="Buscar jugador..."
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+              aria-label="Buscar jugador"
+            />
+          </div>
 
-      <p className="armado-hint">
-        Tocá un nombre para mandarlo al equipo A. Tocalo de nuevo para mandarlo al B. Una vez más para sacarlo.
-      </p>
+          {frecuentes.length > 0 && (
+            <section>
+              <div className="armado-section-title">
+                ⭐ Habituales (últimos 10 partidos)
+              </div>
+              <div className="players-grid">
+                {frecuentes.map((p) => {
+                  const isSel = selected.has(p.id);
+                  return (
+                    <button
+                      key={p.id}
+                      type="button"
+                      className={`player-chip${isSel ? ' player-chip--selected' : ''}`}
+                      onClick={() => togglePlayer(p.id)}
+                      aria-pressed={isSel}
+                    >
+                      <span className="player-chip__name">{p.name}</span>
+                      {isSel && <span className="player-chip__check">✓</span>}
+                    </button>
+                  );
+                })}
+              </div>
+            </section>
+          )}
 
-      <div className="armado-grid">
-        {filtered.map((p) => {
-          const side = assignments.get(p.id) ?? null;
-          return (
+          {otros.length > 0 && (
+            <section>
+              <div className="armado-section-title">Otros</div>
+              <div className="players-grid">
+                {otros.map((p) => {
+                  const isSel = selected.has(p.id);
+                  return (
+                    <button
+                      key={p.id}
+                      type="button"
+                      className={`player-chip${isSel ? ' player-chip--selected' : ''}`}
+                      onClick={() => togglePlayer(p.id)}
+                      aria-pressed={isSel}
+                    >
+                      <span className="player-chip__name">{p.name}</span>
+                      {isSel && <span className="player-chip__check">✓</span>}
+                    </button>
+                  );
+                })}
+              </div>
+            </section>
+          )}
+        </>
+      ) : (
+        <>
+          <div className="armado-editor__teams">
+            <TeamPanel
+              side="A"
+              name={teamAName}
+              ids={teamA}
+              onName={setTeamAName}
+              onMove={(id) => assign(id, 'B')}
+              onRemove={unassign}
+            />
+            <TeamPanel
+              side="B"
+              name={teamBName}
+              ids={teamB}
+              onName={setTeamBName}
+              onMove={(id) => assign(id, 'A')}
+              onRemove={unassign}
+            />
+          </div>
+
+          <div className="page-head__actions">
             <button
-              key={p.id}
               type="button"
-              className={`armado-chip${side ? ` armado-chip--${side}` : ''}`}
-              onClick={() => cycle(p.id)}
+              className="btn btn--ghost btn--sm"
+              onClick={shuffle}
+              disabled={selected.size < 2}
             >
-              <span className="armado-chip__name">{p.name}</span>
-              {side && <span className="armado-chip__tag">{side}</span>}
+              🎲 Sortear
             </button>
-          );
-        })}
-      </div>
+            <button
+              type="button"
+              className="btn btn--ghost btn--sm"
+              onClick={() => {
+                setTeamA([]);
+                setTeamB([]);
+              }}
+              disabled={teamA.length + teamB.length === 0}
+            >
+              Limpiar equipos
+            </button>
+          </div>
+
+          <section className={`pool-section${pool.length === 0 ? ' is-empty' : ''}`}>
+            <div className="pool-section__head">
+              <span className="pool-section__title">Sin asignar</span>
+              <span className="pool-section__count">
+                {pool.length} jugador{pool.length === 1 ? '' : 'es'}
+              </span>
+            </div>
+            {pool.length === 0 ? (
+              <div className="pool-section__empty">
+                ✓ Todos los jugadores ya están en un equipo.
+              </div>
+            ) : (
+              <div className="pool-grid">
+                {[...pool]
+                  .sort((a, b) =>
+                    (PLAYERS_BY_ID[a]?.name ?? '').localeCompare(
+                      PLAYERS_BY_ID[b]?.name ?? '',
+                    ),
+                  )
+                  .map((id) => (
+                    <div key={id} className="pool-card">
+                      <span className="pool-card__name">
+                        {PLAYERS_BY_ID[id]?.name}
+                      </span>
+                      <div className="pool-card__actions">
+                        <button
+                          type="button"
+                          className="assign-btn assign-btn--A"
+                          onClick={() => assign(id, 'A')}
+                        >
+                          {teamAName}
+                        </button>
+                        <button
+                          type="button"
+                          className="assign-btn assign-btn--B"
+                          onClick={() => assign(id, 'B')}
+                        >
+                          {teamBName}
+                        </button>
+                      </div>
+                    </div>
+                  ))}
+              </div>
+            )}
+          </section>
+        </>
+      )}
 
       {err && <div className="warning-banner">{err}</div>}
 
@@ -478,17 +681,25 @@ function DraftEditor({
   );
 }
 
-function TeamHeader({
+function TeamPanel({
   side,
   name,
-  count,
-  onChange,
+  ids,
+  onName,
+  onMove,
+  onRemove,
 }: {
   side: 'A' | 'B';
   name: string;
-  count: number;
-  onChange: (s: string) => void;
+  ids: number[];
+  onName: (s: string) => void;
+  onMove: (id: number) => void;
+  onRemove: (id: number) => void;
 }) {
+  const otherSide = side === 'A' ? 'B' : 'A';
+  const sorted = [...ids].sort((a, b) =>
+    (PLAYERS_BY_ID[a]?.name ?? '').localeCompare(PLAYERS_BY_ID[b]?.name ?? ''),
+  );
   return (
     <div className={`team-card team-card--${side}`}>
       <div className="team-card__head">
@@ -497,11 +708,42 @@ function TeamHeader({
           className="team-card__name-input"
           value={name}
           maxLength={40}
-          onChange={(e) => onChange(e.target.value)}
+          onChange={(e) => onName(e.target.value)}
           aria-label={`Nombre del equipo ${side}`}
         />
-        <span className="team-card__count">{count}</span>
+        <span className="team-card__count">{ids.length}</span>
       </div>
+      {ids.length === 0 ? (
+        <div className="team-card__empty">Sin jugadores.</div>
+      ) : (
+        <ul className="team-card__list">
+          {sorted.map((id) => (
+            <li key={id} className="team-pill">
+              <span className="team-pill__name">
+                {PLAYERS_BY_ID[id]?.name}
+              </span>
+              <button
+                type="button"
+                className="team-pill__icon"
+                onClick={() => onMove(id)}
+                title={`Mover al equipo ${otherSide}`}
+                aria-label={`Mover al equipo ${otherSide}`}
+              >
+                ↔
+              </button>
+              <button
+                type="button"
+                className="team-pill__icon team-pill__icon--danger"
+                onClick={() => onRemove(id)}
+                title="Sacar del equipo"
+                aria-label="Sacar del equipo"
+              >
+                ✕
+              </button>
+            </li>
+          ))}
+        </ul>
+      )}
     </div>
   );
 }

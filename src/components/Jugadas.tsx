@@ -134,15 +134,13 @@ export function Jugadas() {
               onChange={(e) => setMatchFilter(e.target.value)}
               aria-label="Filtrar por partido"
             >
-              <option value="all">Todos los partidos ({plays.length})</option>
+              <option value="all">Todos los partidos</option>
               {matchOptions.map((m) => {
-                const count = plays.filter((p) => p.match_id === m.id).length;
                 const d = new Date(m.played_at);
                 return (
                   <option key={m.id} value={m.id}>
                     {d.toLocaleDateString('es-AR')} ·{' '}
-                    {m.team_a_name ?? 'Negro'} vs {m.team_b_name ?? 'Blanco'} (
-                    {count})
+                    {m.team_a_name ?? 'Negro'} vs {m.team_b_name ?? 'Blanco'}
                   </option>
                 );
               })}
@@ -160,7 +158,7 @@ export function Jugadas() {
               <option value="all">Todos los jugadores</option>
               {playersWithPlays.map((p) => (
                 <option key={p.id} value={p.id}>
-                  {p.name} (#{p.id})
+                  {p.name}
                 </option>
               ))}
             </select>
