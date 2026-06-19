@@ -7,6 +7,7 @@ export type Stage = 'selection' | 'teams' | 'game' | 'finished';
 export type Section =
   | 'informe'
   | 'indicadores'
+  | 'leyendas'
   | 'armado'
   | 'contador'
   | 'galeria'

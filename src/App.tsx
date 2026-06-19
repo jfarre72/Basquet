@@ -8,6 +8,7 @@ import { Header } from './components/Header';
 import { Indicadores } from './components/Indicadores';
 import { Informe } from './components/Informe';
 import { Jugadas } from './components/Jugadas';
+import { Leyendas } from './components/Leyendas';
 import { LoginScreen } from './components/LoginScreen';
 import { PlayerSelection } from './components/PlayerSelection';
 import { TeamBuilder } from './components/TeamBuilder';
@@ -53,6 +54,7 @@ export default function App() {
       <main className="app__main">
         {section === 'informe' && <Informe />}
         {section === 'indicadores' && <Indicadores />}
+        {section === 'leyendas' && <Leyendas />}
         {section === 'armado' && (
           <Armado onStartMatch={() => setSection('contador')} />
         )}
