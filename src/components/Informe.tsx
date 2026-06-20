@@ -140,7 +140,10 @@ export function Informe() {
   );
 
   const pointsRanking = useMemo(
-    () => sortSeasonStats(baseStats, 'puntos', 'desc').filter((s) => s.puntos > 0),
+    () =>
+      sortSeasonStats(baseStats, 'puntos', 'desc')
+        .filter((s) => s.puntos > 0)
+        .slice(0, 3),
     [baseStats],
   );
 
@@ -399,19 +402,28 @@ function topShots(plays: DbPlay[], shot: 'double' | 'triple'): ShotPodiumItem[] 
 function PointsTableBlock({ data }: { data: PlayerSeasonStat[] }) {
   return (
     <section className="block">
-      <h3 className="block__title">🏀 Tabla de puntos</h3>
+      <h3 className="block__title">🏀 Podio de Puntos</h3>
       {data.length === 0 ? (
         <div className="lb-empty">Sin datos.</div>
       ) : (
-        <ol className="points-table">
+        <div className="podium-list">
           {data.map((s, idx) => (
-            <li key={s.playerId} className="points-row">
-              <span className="points-row__rank">{idx + 1}</span>
-              <span className="points-row__name">{s.playerName}</span>
-              <span className="points-row__pts">{s.puntos}</span>
-            </li>
+            <article
+              key={s.playerId}
+              className={`podium-row podium-row--${idx + 1}`}
+            >
+              <div className="podium-row__rank podium-row__rank--simple">
+                <span className="podium-row__medal">{MEDAL[idx]}</span>
+              </div>
+              <div className="podium-row__main">
+                <div className="podium-row__name">{s.playerName}</div>
+              </div>
+              <div className="podium-row__pts">
+                <span className="podium-row__pts-num">{s.puntos}</span>
+              </div>
+            </article>
           ))}
-        </ol>
+        </div>
       )}
     </section>
   );
