@@ -13,6 +13,8 @@ import { Leyendas } from './components/Leyendas';
 import { LoginScreen } from './components/LoginScreen';
 import { PlayerSelection } from './components/PlayerSelection';
 import { TeamBuilder } from './components/TeamBuilder';
+import { applyPlayerNames } from './data/players';
+import { fetchPlayerNames } from './lib/avatars';
 import { useAuth } from './state/AuthContext';
 import { useGame } from './state/GameContext';
 import type { Section } from './types';
@@ -21,6 +23,25 @@ export default function App() {
   const { status } = useAuth();
   const { state } = useGame();
   const [section, setSection] = useState<Section>('leyendas');
+  const [namesReady, setNamesReady] = useState(false);
+
+  useEffect(() => {
+    if (status !== 'authed') return;
+    let cancelled = false;
+    fetchPlayerNames()
+      .then((rows) => {
+        if (!cancelled) applyPlayerNames(rows);
+      })
+      .catch(() => {
+        /* si falla, se usa el roster local por defecto */
+      })
+      .finally(() => {
+        if (!cancelled) setNamesReady(true);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [status]);
 
   useEffect(() => {
     if (state.stage === 'game' || (state.stage === 'finished' && state.plays.length > 0)) {
@@ -35,7 +56,7 @@ export default function App() {
     }
   }, [state.stage, state.plays.length]);
 
-  if (status === 'loading') {
+  if (status === 'loading' || (status === 'authed' && !namesReady)) {
     return (
       <div className="app">
         <main className="app__main">

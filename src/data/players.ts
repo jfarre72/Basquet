@@ -62,3 +62,17 @@ export const PLAYERS_BY_ID: Record<number, Player> = Object.fromEntries(
 export const PLAYERS_SORTED: Player[] = [...PLAYERS].sort((a, b) =>
   a.name.localeCompare(b.name),
 );
+
+/**
+ * Aplica los nombres guardados en la base sobre el roster local. Como
+ * PLAYERS, PLAYERS_BY_ID y PLAYERS_SORTED comparten las mismas referencias de
+ * objeto, mutar `name` impacta en todas las tablas que usan el roster.
+ * Se reordena PLAYERS_SORTED para mantener el orden alfabético.
+ */
+export function applyPlayerNames(rows: { id: number; name: string }[]): void {
+  for (const r of rows) {
+    const p = PLAYERS_BY_ID[r.id];
+    if (p && r.name && r.name.trim()) p.name = r.name.trim();
+  }
+  PLAYERS_SORTED.sort((a, b) => a.name.localeCompare(b.name));
+}

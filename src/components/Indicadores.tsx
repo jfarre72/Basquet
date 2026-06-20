@@ -89,6 +89,12 @@ export function Indicadores() {
     [quarterSeries],
   );
 
+  const quarterMatches = useMemo(() => {
+    const filtered =
+      player === 'all' ? plays : plays.filter((p) => p.player_id === player);
+    return new Set(filtered.map((p) => p.match_id)).size;
+  }, [plays, player]);
+
   const breakdown = useMemo(
     () => computeMatchBreakdown(matches, plays),
     [matches, plays],
@@ -129,7 +135,10 @@ export function Indicadores() {
           <section className="block">
             <div className="block__head">
               <h3 className="block__title">Puntos por cuarto</h3>
-              <div className="block__hint">{quarterTotal} pts</div>
+              <div className="block__hint">
+                {quarterMatches} {quarterMatches === 1 ? 'partido' : 'partidos'} ·{' '}
+                {quarterTotal} pts
+              </div>
             </div>
             <div className="filters">
               <div

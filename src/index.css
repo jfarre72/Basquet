@@ -3804,3 +3804,29 @@ main.app__main {
   font-weight: 600;
   text-align: center;
 }
+
+/* ===== Modal para renombrar jugador ===== */
+.name-modal {
+  max-width: 360px;
+  width: calc(100% - 32px);
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 20px;
+}
+.name-modal__title {
+  margin: 0;
+  font-size: 1.05rem;
+  font-weight: 800;
+}
+.name-modal__sub {
+  margin: 0;
+  color: var(--text-muted);
+  font-size: 0.84rem;
+}
+.name-modal__actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  margin-top: 6px;
+}

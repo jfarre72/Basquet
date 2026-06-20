@@ -28,6 +28,30 @@ export async function fetchAvatars(): Promise<Record<number, string>> {
   return map;
 }
 
+/** Nombres guardados en la base (para aplicar overrides al roster local). */
+export async function fetchPlayerNames(): Promise<
+  { id: number; name: string }[]
+> {
+  if (!supabase) return [];
+  const { data, error } = await supabase.from('players').select('id, name');
+  if (error) throw error;
+  return (data ?? []) as { id: number; name: string }[];
+}
+
+/** Renombra a un jugador. El cambio queda en players.name e impacta en todas
+ *  las tablas (que resuelven el nombre desde el roster). */
+export async function updatePlayerName(
+  id: number,
+  name: string,
+): Promise<void> {
+  if (!supabase) throw new Error('Sin conexión a Supabase.');
+  const { error } = await supabase
+    .from('players')
+    .update({ name: name.trim() })
+    .eq('id', id);
+  if (error) throw error;
+}
+
 /** Sube la selfie de un jugador y guarda la ruta en la tabla players. */
 export async function uploadAvatar(
   playerId: number,
