@@ -95,7 +95,7 @@ export function Leyendas() {
     <div className="informe leyendas">
       <div className="section-head">
         <div>
-          <h2 className="section-head__title">🏆 Leyendas</h2>
+          <h2 className="section-head__title">⭐ Nuestras Leyendas</h2>
           <p className="section-head__subtitle">
             Vitrina del básquet de los martes.
           </p>

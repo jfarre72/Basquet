@@ -1,3 +1,4 @@
+import { useEffect } from 'react';
 import type { Section } from '../types';
 
 interface RadialItem {
@@ -10,16 +11,12 @@ interface RadialItem {
 const ITEMS: RadialItem[] = [
   {
     id: 'leyendas',
-    label: 'Leyendas',
+    label: 'Nuestras Leyendas',
     hint: 'Ranking histórico y récords',
     icon: (
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"
         strokeLinecap="round" strokeLinejoin="round" aria-hidden>
-        <path d="M8 21h8" />
-        <path d="M12 17v4" />
-        <path d="M7 4h10v4a5 5 0 0 1-10 0V4z" />
-        <path d="M17 5h2a2 2 0 0 1 0 4h-2" />
-        <path d="M7 5H5a2 2 0 0 0 0 4h2" />
+        <polygon points="12 2 14.9 8.6 22 9.3 16.7 14 18.2 21 12 17.3 5.8 21 7.3 14 2 9.3 9.1 8.6" />
       </svg>
     ),
   },
@@ -98,8 +95,11 @@ const ITEMS: RadialItem[] = [
     icon: (
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"
         strokeLinecap="round" strokeLinejoin="round" aria-hidden>
-        <path d="M3 3v18h18" />
-        <path d="M7 14l4-4 4 4 5-6" />
+        <path d="M8 21h8" />
+        <path d="M12 17v4" />
+        <path d="M7 4h10v4a5 5 0 0 1-10 0V4z" />
+        <path d="M17 5h2a2 2 0 0 1 0 4h-2" />
+        <path d="M7 5H5a2 2 0 0 0 0 4h2" />
       </svg>
     ),
   },
@@ -111,6 +111,12 @@ const RADIUS = 39;
 
 export function Home({ onNavigate }: { onNavigate: (s: Section) => void }) {
   const count = ITEMS.length;
+
+  // La Home ocupa exactamente el viewport: sin barras de scroll.
+  useEffect(() => {
+    document.documentElement.classList.add('home-locked');
+    return () => document.documentElement.classList.remove('home-locked');
+  }, []);
   return (
     <div className="home">
       <div className="home__arena" aria-hidden>
@@ -121,8 +127,8 @@ export function Home({ onNavigate }: { onNavigate: (s: Section) => void }) {
             <line x1="20" y1="0" x2="20" y2="256" />
             <line x1="380" y1="0" x2="380" y2="256" />
             <line x1="20" y1="256" x2="380" y2="256" />
-            {/* Llave / pintura */}
-            <path d="M160 150 H240 V256" />
+            {/* Llave / pintura (los dos laterales + la línea superior) */}
+            <path d="M160 256 V150 H240 V256" />
             <ellipse cx="200" cy="150" rx="38" ry="38" />
             {/* Línea de tres */}
             <path d="M44 256 V196 A172 168 0 0 0 356 196 V256" />
