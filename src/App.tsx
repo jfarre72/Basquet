@@ -5,6 +5,7 @@ import { ContadorEntry } from './components/ContadorEntry';
 import { Galeria } from './components/Galeria';
 import { GameScreen } from './components/GameScreen';
 import { Header } from './components/Header';
+import { Home } from './components/Home';
 import { Indicadores } from './components/Indicadores';
 import { Informe } from './components/Informe';
 import { Jugadas } from './components/Jugadas';
@@ -22,7 +23,7 @@ import type { Section } from './types';
 export default function App() {
   const { status } = useAuth();
   const { state } = useGame();
-  const [section, setSection] = useState<Section>('leyendas');
+  const [section, setSection] = useState<Section>('home');
   const [namesReady, setNamesReady] = useState(false);
 
   useEffect(() => {
@@ -75,7 +76,24 @@ export default function App() {
   return (
     <div className="app">
       <Header />
+      {section !== 'home' && (
+        <button
+          type="button"
+          className="home-fab"
+          onClick={() => setSection('home')}
+          aria-label="Ir al menú principal"
+          title="Menú principal"
+        >
+          <svg viewBox="0 0 24 24" width="20" height="20" fill="none"
+            stroke="currentColor" strokeWidth="2" strokeLinecap="round"
+            strokeLinejoin="round" aria-hidden>
+            <path d="M3 11l9-8 9 8" />
+            <path d="M5 10v10a1 1 0 0 0 1 1h4v-6h4v6h4a1 1 0 0 0 1-1V10" />
+          </svg>
+        </button>
+      )}
       <main className="app__main">
+        {section === 'home' && <Home onNavigate={setSection} />}
         {section === 'informe' && <Informe />}
         {section === 'indicadores' && <Indicadores />}
         {section === 'leyendas' && <Leyendas />}
@@ -89,7 +107,7 @@ export default function App() {
         {section === 'galeria' && <Galeria />}
         {section === 'jugadas' && <Jugadas />}
       </main>
-      <BottomNav section={section} onChange={setSection} />
+      {section !== 'home' && <BottomNav section={section} onChange={setSection} />}
     </div>
   );
 }
