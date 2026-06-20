@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { PlayerAvatar } from './PlayerAvatar';
-import { PLAYERS_BY_ID, PLAYERS_SORTED } from '../data/players';
+import { PLAYERS_ACTIVE_SORTED, PLAYERS_BY_ID } from '../data/players';
 import {
   createDraft,
   deleteDraft,
@@ -368,7 +368,7 @@ function DraftEditor({
 
   const playersFiltered = useMemo(() => {
     const q = normalizeText(query.trim());
-    return PLAYERS_SORTED.filter((p) =>
+    return PLAYERS_ACTIVE_SORTED.filter((p) =>
       !q ? true : normalizeText(p.name).includes(q),
     );
   }, [query]);

@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import {
   applyPlayerNames,
+  isInactivePlayer,
   PLAYERS_BY_ID,
   PLAYERS_SORTED,
 } from '../data/players';
@@ -51,9 +52,14 @@ export function Jugadores() {
 
   const filtered = useMemo(() => {
     const q = normalizeText(search.trim());
-    if (!q) return PLAYERS_SORTED;
-    return PLAYERS_SORTED.filter((p) =>
-      normalizeText(names[p.id] ?? p.name).includes(q),
+    const base = !q
+      ? PLAYERS_SORTED
+      : PLAYERS_SORTED.filter((p) =>
+          normalizeText(names[p.id] ?? p.name).includes(q),
+        );
+    // Activos primero; los inactivos quedan al final.
+    return [...base].sort(
+      (a, b) => Number(isInactivePlayer(a.id)) - Number(isInactivePlayer(b.id)),
     );
   }, [search, names]);
 
@@ -151,15 +157,19 @@ export function Jugadores() {
           {filtered.map((p) => {
             const path = avatars[p.id];
             const isUploading = uploadingId === p.id;
+            const inactive = isInactivePlayer(p.id);
             return (
               <button
                 key={p.id}
                 type="button"
-                className="avatar-card"
+                className={`avatar-card${inactive ? ' avatar-card--inactive' : ''}`}
                 onClick={() => openPicker(p.id)}
                 disabled={!SUPABASE_CONFIGURED || uploadingId != null}
                 title={path ? 'Cambiar foto' : 'Agregar foto'}
               >
+                {inactive && (
+                  <span className="avatar-card__badge">Inactivo</span>
+                )}
                 <span className="avatar-card__photo">
                   {isUploading ? (
                     <span className="avatar-card__spinner">…</span>

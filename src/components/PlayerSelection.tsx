@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react';
 import { PlayerAvatar } from './PlayerAvatar';
-import { PLAYERS_BY_ID, PLAYERS_SORTED } from '../data/players';
+import { PLAYERS_ACTIVE_SORTED, PLAYERS_BY_ID } from '../data/players';
 import { useGame } from '../state/GameContext';
 import { normalizeText } from '../utils/text';
 
@@ -10,8 +10,10 @@ export function PlayerSelection() {
 
   const filtered = useMemo(() => {
     const q = normalizeText(query.trim());
-    if (!q) return PLAYERS_SORTED;
-    return PLAYERS_SORTED.filter((p) => normalizeText(p.name).includes(q));
+    if (!q) return PLAYERS_ACTIVE_SORTED;
+    return PLAYERS_ACTIVE_SORTED.filter((p) =>
+      normalizeText(p.name).includes(q),
+    );
   }, [query]);
 
   const selectedCount = state.selectedPlayerIds.length;

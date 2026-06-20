@@ -115,7 +115,21 @@ export function Home({ onNavigate }: { onNavigate: (s: Section) => void }) {
     <div className="home">
       <div className="home__arena" aria-hidden>
         <span className="home__lights" />
-        <span className="home__floor" />
+        <div className="home__court">
+          <svg className="home__court-lines" viewBox="0 0 400 260"
+            preserveAspectRatio="none">
+            <line x1="20" y1="0" x2="20" y2="256" />
+            <line x1="380" y1="0" x2="380" y2="256" />
+            <line x1="20" y1="256" x2="380" y2="256" />
+            {/* Llave / pintura */}
+            <path d="M160 150 H240 V256" />
+            <ellipse cx="200" cy="150" rx="38" ry="38" />
+            {/* Línea de tres */}
+            <path d="M44 256 V196 A172 168 0 0 0 356 196 V256" />
+            {/* Círculo central (al fondo) */}
+            <ellipse cx="200" cy="6" rx="46" ry="46" />
+          </svg>
+        </div>
       </div>
 
       <div className="home__radial">
@@ -149,20 +163,32 @@ export function Home({ onNavigate }: { onNavigate: (s: Section) => void }) {
           aria-label="Crear partido"
         >
           <span className="home-ball__glow" aria-hidden />
+          <svg className="home-ball__seams" viewBox="0 0 100 100" aria-hidden>
+            <line x1="50" y1="2" x2="50" y2="98" />
+            <line x1="2" y1="50" x2="98" y2="50" />
+            <path d="M30 5 Q1 50 30 95" />
+            <path d="M70 5 Q99 50 70 95" />
+          </svg>
           <span className="home-ball__text">
             <span>CREAR</span>
             <strong>PARTIDO</strong>
           </span>
-          <svg className="home-ball__hoop" viewBox="0 0 80 44" aria-hidden>
-            <ellipse cx="40" cy="9" rx="26" ry="7" fill="none"
-              stroke="#1a0f06" strokeWidth="3.2" opacity="0.85" />
-            <path
-              d="M16 11c3 12 7 20 24 20s21-8 24-20"
-              fill="none" stroke="#1a0f06" strokeWidth="2" opacity="0.7" />
-            <path d="M22 11l3 17M31 12l1.5 19M40 12.5v19M49 12l-1.5 19M58 11l-3 17"
-              fill="none" stroke="#1a0f06" strokeWidth="1.6" opacity="0.7" />
-            <path d="M19 18h42M23 25h34" fill="none" stroke="#1a0f06"
-              strokeWidth="1.4" opacity="0.55" />
+          <svg className="home-ball__hoop" viewBox="0 0 100 70" aria-hidden>
+            {/* Aro */}
+            <ellipse className="hoop-rim" cx="50" cy="15" rx="30" ry="7" />
+            {/* Red: malla horizontal */}
+            <ellipse className="hoop-net" cx="50" cy="29" rx="25" ry="5" />
+            <ellipse className="hoop-net" cx="50" cy="41" rx="19" ry="4" />
+            <ellipse className="hoop-net" cx="50" cy="51" rx="14" ry="3" />
+            <ellipse className="hoop-net" cx="50" cy="59" rx="9" ry="2.4" />
+            {/* Red: hilos verticales */}
+            <path className="hoop-net" d="M22 17 L41 60" />
+            <path className="hoop-net" d="M31 18 L45 60" />
+            <path className="hoop-net" d="M41 19 L48 60" />
+            <path className="hoop-net" d="M50 19 L50 60" />
+            <path className="hoop-net" d="M59 19 L52 60" />
+            <path className="hoop-net" d="M69 18 L55 60" />
+            <path className="hoop-net" d="M78 17 L59 60" />
           </svg>
         </button>
       </div>

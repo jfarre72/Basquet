@@ -58,9 +58,43 @@ export const PLAYERS_BY_ID: Record<number, Player> = Object.fromEntries(
   PLAYERS.map((p) => [p.id, p]),
 );
 
+/**
+ * Jugadores que ya no vienen más. Se marcan como inactivos: no aparecen al
+ * crear un partido nuevo (selección/armado), pero SÍ siguen figurando en las
+ * tablas históricas (jugadas, leyendas, indicadores, informes, etc.).
+ */
+export const INACTIVE_PLAYER_IDS: ReadonlySet<number> = new Set([
+  30, // Claudio
+  38, // Emilio
+  18, // Facundo
+  22, // Fran L
+  15, // Fran S
+  31, // Ivan
+  44, // Jorge
+  34, // Juli C
+  17, // Marcos
+  36, // Mariano
+  32, // Negro
+  33, // Nahuel
+  20, // Walter
+  21, // Valentin
+]);
+
+export function isInactivePlayer(id: number): boolean {
+  return INACTIVE_PLAYER_IDS.has(id);
+}
+
 /** Mismo roster pero ordenado alfabéticamente por nombre. */
 export const PLAYERS_SORTED: Player[] = [...PLAYERS].sort((a, b) =>
   a.name.localeCompare(b.name),
+);
+
+/**
+ * Roster activo (sin los jugadores inactivos), ordenado alfabéticamente.
+ * Es el que se usa para armar partidos nuevos.
+ */
+export const PLAYERS_ACTIVE_SORTED: Player[] = PLAYERS_SORTED.filter(
+  (p) => !INACTIVE_PLAYER_IDS.has(p.id),
 );
 
 /**
