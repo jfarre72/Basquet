@@ -155,6 +155,14 @@ main.app__main > * {
   display: flex;
   align-items: center;
   gap: 12px;
+  appearance: none;
+  border: 0;
+  background: none;
+  padding: 0;
+  margin: 0;
+  color: inherit;
+  text-align: left;
+  cursor: pointer;
 }
 
 .brand__ball {
@@ -1692,6 +1700,13 @@ html.home-locked body {
   overflow: hidden;
 }
 
+/* En la Home el header es transparente: el logo y el botón de cerrar
+   sesión quedan sobre el fondo de la cancha. */
+html.home-locked .app__header {
+  background: transparent;
+  backdrop-filter: none;
+}
+
 .home {
   position: relative;
   display: flex;
@@ -2208,6 +2223,10 @@ html.home-locked body {
 .podium-row__name .player-avatar {
   width: 34px;
   height: 34px;
+}
+.stats-grid__name .player-avatar {
+  width: 30px;
+  height: 30px;
 }
 .podium-row__meta {
   font-size: 0.72rem;

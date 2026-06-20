@@ -10,7 +10,13 @@ export function Header({
   const { signOut, configured } = useAuth();
   return (
     <header className="app__header">
-      <div className="app__brand">
+      <button
+        type="button"
+        className="app__brand"
+        onClick={() => onHome?.()}
+        aria-label="Ir al menú principal"
+        title="Menú principal"
+      >
         <div className="brand__ball" aria-hidden />
         <div>
           <div className="brand__name">
@@ -18,7 +24,7 @@ export function Header({
           </div>
           <div className="stage-label">Martes</div>
         </div>
-      </div>
+      </button>
       <div className="app__header-actions">
         {showHome && onHome && (
           <button
