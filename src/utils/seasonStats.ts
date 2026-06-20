@@ -28,6 +28,8 @@ export interface MonthBucket {
   label: string;
   jugados: number;
   pendientes: number;
+  /** Cantidad de martes que tiene el mes (máximo posible de partidos). */
+  martes: number;
 }
 
 const MONTH_LABELS = [
@@ -162,6 +164,43 @@ export function computeSeasonStats(
   return out;
 }
 
+export interface PlayerMatchDetail {
+  matchId: string;
+  date: string;
+  outcome: Outcome | null;
+  points: number | null;
+  dobles: number;
+  triples: number;
+}
+
+/** Detalle de cada partido que jugó un jugador en el año/torneo, del más
+ *  reciente al más viejo. */
+export function computePlayerMatches(
+  playerId: number,
+  year: number,
+  allMatches: DbMatch[],
+  allMatchPlayers: DbMatchPlayer[],
+  tournament: Tournament = 'completo',
+): PlayerMatchDetail[] {
+  const seasonMatches = allMatches.filter(
+    (m) =>
+      getMatchYear(m) === year &&
+      isMonthInTournament(getMatchMonth(m), tournament),
+  );
+  const dateById = new Map(seasonMatches.map((m) => [m.id, m.played_at]));
+  return allMatchPlayers
+    .filter((mp) => mp.player_id === playerId && dateById.has(mp.match_id))
+    .map((mp) => ({
+      matchId: mp.match_id,
+      date: dateById.get(mp.match_id) ?? '',
+      outcome: mp.outcome,
+      points: mp.points,
+      dobles: mp.doubles ?? 0,
+      triples: mp.triples ?? 0,
+    }))
+    .sort((a, b) => b.date.localeCompare(a.date));
+}
+
 export function sortSeasonStats(
   stats: PlayerSeasonStat[],
   key: SortKey,
@@ -242,10 +281,15 @@ export function computeMonthly(
   for (let month = 0; month < 12; month++) {
     if (!isMonthInTournament(month, tournament)) continue;
     const jugados = jugadosByMonth[month];
-    const pendientes = tuesdaysInMonth(year, month).filter(
-      (t) => t > now,
-    ).length;
-    buckets.push({ month, label: MONTH_LABELS[month], jugados, pendientes });
+    const tuesdays = tuesdaysInMonth(year, month);
+    const pendientes = tuesdays.filter((t) => t > now).length;
+    buckets.push({
+      month,
+      label: MONTH_LABELS[month],
+      jugados,
+      pendientes,
+      martes: tuesdays.length,
+    });
   }
 
   if (tournament !== 'completo') return buckets;

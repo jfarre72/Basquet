@@ -8,6 +8,7 @@ export type Section =
   | 'leyendas'
   | 'informe'
   | 'indicadores'
+  | 'jugadores'
   | 'jugadas'
   | 'armado'
   | 'contador'

@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { PLAYERS_BY_ID, PLAYERS_SORTED } from '../data/players';
+import { PLAYERS_SORTED } from '../data/players';
 import {
   fetchIndicadoresData,
   type DbMatch,
@@ -7,12 +7,6 @@ import {
   type DbPlay,
 } from '../lib/queries';
 import { exportElementToPdf } from '../utils/exportElementPdf';
-
-interface ShotPodium {
-  playerId: number;
-  playerName: string;
-  count: number;
-}
 
 interface TeamBattle {
   negro: number;
@@ -81,9 +75,6 @@ export function Indicadores() {
     const ids = new Set(plays.map((p) => p.player_id));
     return PLAYERS_SORTED.filter((p) => ids.has(p.id));
   }, [plays]);
-
-  const dobles = useMemo(() => topShots(plays, 'double'), [plays]);
-  const triples = useMemo(() => topShots(plays, 'triple'), [plays]);
 
   const teamBattle = useMemo(
     () => computeTeamBattle(matches, matchPlayers),
@@ -207,11 +198,6 @@ export function Indicadores() {
             </div>
             <QuarterChart data={quarterSeries} />
           </section>
-
-          <div className="podio-grid">
-            <ShotPodiumBlock title="🎯 Podio de Triples" data={triples} />
-            <ShotPodiumBlock title="🏀 Podio de Dobles" data={dobles} />
-          </div>
         </>
       )}
     </div>
@@ -219,22 +205,6 @@ export function Indicadores() {
 }
 
 /* ---------- Helpers ---------- */
-
-function topShots(plays: DbPlay[], shot: 'double' | 'triple'): ShotPodium[] {
-  const counts = new Map<number, number>();
-  for (const p of plays) {
-    if (p.shot_type !== shot) continue;
-    counts.set(p.player_id, (counts.get(p.player_id) ?? 0) + 1);
-  }
-  return [...counts.entries()]
-    .map(([playerId, count]) => ({
-      playerId,
-      playerName: PLAYERS_BY_ID[playerId]?.name ?? `#${playerId}`,
-      count,
-    }))
-    .sort((a, b) => b.count - a.count || a.playerName.localeCompare(b.playerName))
-    .slice(0, 3);
-}
 
 function groupByQuarter(plays: DbPlay[]): QuarterBin[] {
   const bins: QuarterBin[] = [
@@ -421,46 +391,6 @@ function TeamBattleBlock({ battle }: { battle: TeamBattle }) {
           <span>{battle.otrosA + battle.otrosB} con otros nombres</span>
         )}
       </div>
-    </section>
-  );
-}
-
-/* ---------- ShotPodium ---------- */
-
-const MEDAL = ['🥇', '🥈', '🥉'];
-
-function ShotPodiumBlock({
-  title,
-  data,
-}: {
-  title: string;
-  data: ShotPodium[];
-}) {
-  return (
-    <section className="block">
-      <h3 className="block__title">{title}</h3>
-      {data.length === 0 ? (
-        <div className="lb-empty">Sin datos.</div>
-      ) : (
-        <div className="podium-list">
-          {data.map((s, idx) => (
-            <article
-              key={s.playerId}
-              className={`podium-row podium-row--${idx + 1}`}
-            >
-              <div className="podium-row__rank podium-row__rank--simple">
-                <span className="podium-row__medal">{MEDAL[idx]}</span>
-              </div>
-              <div className="podium-row__main">
-                <div className="podium-row__name">{s.playerName}</div>
-              </div>
-              <div className="podium-row__pts">
-                <span className="podium-row__pts-num">{s.count}</span>
-              </div>
-            </article>
-          ))}
-        </div>
-      )}
     </section>
   );
 }

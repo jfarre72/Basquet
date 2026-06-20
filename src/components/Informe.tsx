@@ -1,8 +1,15 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
-import { fetchSeasonData, type DbMatch, type DbMatchPlayer } from '../lib/queries';
+import { Fragment, useEffect, useMemo, useRef, useState } from 'react';
+import { PLAYERS_BY_ID } from '../data/players';
+import {
+  fetchIndicadoresData,
+  type DbMatch,
+  type DbMatchPlayer,
+  type DbPlay,
+} from '../lib/queries';
 import { exportElementToPdf } from '../utils/exportElementPdf';
 import {
   computeMonthly,
+  computePlayerMatches,
   computeSeasonStats,
   isMonthInTournament,
   getMatchMonth,
@@ -47,6 +54,7 @@ const COLUMNS: ColumnDef[] = [
 export function Informe() {
   const [matches, setMatches] = useState<DbMatch[]>([]);
   const [matchPlayers, setMatchPlayers] = useState<DbMatchPlayer[]>([]);
+  const [plays, setPlays] = useState<DbPlay[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [year, setYear] = useState<number | null>(null);
@@ -66,11 +74,12 @@ export function Informe() {
   useEffect(() => {
     let cancelled = false;
     setLoading(true);
-    fetchSeasonData()
+    fetchIndicadoresData()
       .then((data) => {
         if (cancelled) return;
         setMatches(data.matches);
         setMatchPlayers(data.matchPlayers);
+        setPlays(data.plays);
         const years = listAvailableYears(data.matches);
         const currentYear = new Date().getFullYear();
         setYear(years.includes(currentYear) ? currentYear : (years[0] ?? null));
@@ -110,6 +119,33 @@ export function Informe() {
   const monthly = useMemo(
     () => (year == null ? [] : computeMonthly(year, matches, tournament)),
     [year, matches, tournament],
+  );
+
+  const seasonMatchIds = useMemo(() => {
+    if (year == null) return new Set<string>();
+    return new Set(
+      matches
+        .filter(
+          (m) =>
+            getMatchYear(m) === year &&
+            isMonthInTournament(getMatchMonth(m), tournament),
+        )
+        .map((m) => m.id),
+    );
+  }, [year, matches, tournament]);
+
+  const seasonPlays = useMemo(
+    () => plays.filter((p) => seasonMatchIds.has(p.match_id)),
+    [plays, seasonMatchIds],
+  );
+
+  const topTriples = useMemo(
+    () => topShots(seasonPlays, 'triple'),
+    [seasonPlays],
+  );
+  const topDobles = useMemo(
+    () => topShots(seasonPlays, 'double'),
+    [seasonPlays],
   );
 
   const totals = useMemo(() => {
@@ -220,15 +256,26 @@ export function Informe() {
             </div>
           </div>
 
+          {monthly.length > 0 && <MonthlyChart data={monthly} />}
+
           {podium.length > 0 && <PodiumBlock podium={podium} />}
 
-          {monthly.length > 0 && <MonthlyChart data={monthly} />}
+          {(topTriples.length > 0 || topDobles.length > 0) && (
+            <div className="podio-grid">
+              <ShotPodiumBlock title="🎯 Podio de Triples" data={topTriples} />
+              <ShotPodiumBlock title="🏀 Podio de Dobles" data={topDobles} />
+            </div>
+          )}
 
           <StatsTable
             stats={tableStats}
             sort={sort}
             sortDir={sortDir}
             onSort={handleSort}
+            year={year}
+            matches={matches}
+            matchPlayers={matchPlayers}
+            tournament={tournament}
           />
         </>
       )}
@@ -270,6 +317,8 @@ function PodiumBlock({ podium }: { podium: PlayerSeasonStat[] }) {
 /* ---------- Gráfico mensual ---------- */
 
 function MonthlyChart({ data }: { data: ReturnType<typeof computeMonthly> }) {
+  // Escala fija: el máximo de martes que puede tener un mes es 5.
+  const scale = Math.max(5, ...data.map((d) => d.martes));
   return (
     <section className="block">
       <div className="block__head">
@@ -279,41 +328,98 @@ function MonthlyChart({ data }: { data: ReturnType<typeof computeMonthly> }) {
             <i className="legend__dot legend__dot--played" /> Jugados
           </span>
           <span className="legend__item">
-            <i className="legend__dot legend__dot--pending" /> Pendientes
+            <i className="legend__dot legend__dot--pending" /> Martes del mes
           </span>
         </div>
       </div>
       <div className="month-chart">
         {data.map((d) => {
-          const total = d.jugados + d.pendientes;
-          const playedPct = total > 0 ? (d.jugados / total) * 100 : 0;
-          const pendingPct = total > 0 ? (d.pendientes / total) * 100 : 0;
+          const martesPct = (d.martes / scale) * 100;
           return (
             <div key={d.month} className="month-col">
               <div className="month-col__bars">
-                {d.pendientes > 0 && (
+                <div
+                  className="month-col__track"
+                  style={{ height: `${martesPct}%` }}
+                  title={`${d.martes} martes`}
+                >
+                  <span className="month-col__track-num">{d.martes}</span>
                   <div
-                    className="month-col__seg month-col__seg--pending"
-                    style={{ height: `${pendingPct}%` }}
+                    className="month-col__fill"
+                    style={{ height: `${d.martes > 0 ? (d.jugados / d.martes) * 100 : 0}%` }}
                   >
-                    <span className="month-col__inline">{d.pendientes}</span>
+                    {d.jugados > 0 && (
+                      <span className="month-col__inline">{d.jugados}</span>
+                    )}
                   </div>
-                )}
-                {d.jugados > 0 && (
-                  <div
-                    className="month-col__seg month-col__seg--played"
-                    style={{ height: `${playedPct}%` }}
-                  >
-                    <span className="month-col__inline">{d.jugados}</span>
-                  </div>
-                )}
+                </div>
               </div>
-              <span className="month-col__total">{total || ''}</span>
+              <span className="month-col__total">{d.jugados || ''}</span>
               <span className="month-col__label">{d.label}</span>
             </div>
           );
         })}
       </div>
+    </section>
+  );
+}
+
+/* ---------- Podios de tiros ---------- */
+
+interface ShotPodiumItem {
+  playerId: number;
+  playerName: string;
+  count: number;
+}
+
+function topShots(plays: DbPlay[], shot: 'double' | 'triple'): ShotPodiumItem[] {
+  const counts = new Map<number, number>();
+  for (const p of plays) {
+    if (p.shot_type !== shot) continue;
+    counts.set(p.player_id, (counts.get(p.player_id) ?? 0) + 1);
+  }
+  return [...counts.entries()]
+    .map(([playerId, count]) => ({
+      playerId,
+      playerName: PLAYERS_BY_ID[playerId]?.name ?? `#${playerId}`,
+      count,
+    }))
+    .sort((a, b) => b.count - a.count || a.playerName.localeCompare(b.playerName))
+    .slice(0, 3);
+}
+
+function ShotPodiumBlock({
+  title,
+  data,
+}: {
+  title: string;
+  data: ShotPodiumItem[];
+}) {
+  return (
+    <section className="block">
+      <h3 className="block__title">{title}</h3>
+      {data.length === 0 ? (
+        <div className="lb-empty">Sin datos.</div>
+      ) : (
+        <div className="podium-list">
+          {data.map((s, idx) => (
+            <article
+              key={s.playerId}
+              className={`podium-row podium-row--${idx + 1}`}
+            >
+              <div className="podium-row__rank podium-row__rank--simple">
+                <span className="podium-row__medal">{MEDAL[idx]}</span>
+              </div>
+              <div className="podium-row__main">
+                <div className="podium-row__name">{s.playerName}</div>
+              </div>
+              <div className="podium-row__pts">
+                <span className="podium-row__pts-num">{s.count}</span>
+              </div>
+            </article>
+          ))}
+        </div>
+      )}
     </section>
   );
 }
@@ -356,17 +462,29 @@ function StatsTable({
   sort,
   sortDir,
   onSort,
+  year,
+  matches,
+  matchPlayers,
+  tournament,
 }: {
   stats: PlayerSeasonStat[];
   sort: SortKey;
   sortDir: SortDir;
   onSort: (k: SortKey) => void;
+  year: number;
+  matches: DbMatch[];
+  matchPlayers: DbMatchPlayer[];
+  tournament: Tournament;
 }) {
+  const [expanded, setExpanded] = useState<number | null>(null);
+  const colSpan = COLUMNS.length + 1;
   return (
     <section className="block">
       <div className="block__head">
         <h3 className="block__title">Tabla</h3>
-        <span className="block__hint">Tocá una columna para ordenar</span>
+        <span className="block__hint">
+          Tocá una columna para ordenar · tocá un jugador para ver sus partidos
+        </span>
       </div>
 
       {stats.length === 0 ? (
@@ -418,38 +536,136 @@ function StatsTable({
               </tr>
             </thead>
             <tbody>
-              {stats.map((s, idx) => (
-                <tr key={s.playerId}>
-                  <td className="stats-grid__sticky stats-grid__name">
-                    <span className="stats-grid__rank">{idx + 1}</span>
-                    {s.playerName}
-                  </td>
-                  <td className="stats-grid__muted">{s.TP}</td>
-                  <td>{s.PJ}</td>
-                  <td className="stats-grid__win">{s.PG}</td>
-                  <td>{s.PE}</td>
-                  <td className="stats-grid__loss">{s.PP}</td>
-                  <td className="stats-grid__hl">{s.puntaje}</td>
-                  <td className={attendanceClass(s.presentismo)}>
-                    {Math.round(s.presentismo * 100)}%
-                  </td>
-                  <td>{s.puntos}</td>
-                  <td>{s.dobles}</td>
-                  <td className="stats-grid__hl">{s.triples}</td>
-                  <td className="stats-grid__muted">
-                    {s.ptosPorPJ == null ? '—' : s.ptosPorPJ.toFixed(1)}
-                  </td>
-                  <td>
-                    <FormDots form={s.form} />
-                  </td>
-                </tr>
-              ))}
+              {stats.map((s, idx) => {
+                const isOpen = expanded === s.playerId;
+                return (
+                  <Fragment key={s.playerId}>
+                    <tr
+                      className={`stats-grid__row${isOpen ? ' stats-grid__row--open' : ''}`}
+                      onClick={() =>
+                        setExpanded((cur) =>
+                          cur === s.playerId ? null : s.playerId,
+                        )
+                      }
+                    >
+                      <td className="stats-grid__sticky stats-grid__name">
+                        <span className="stats-grid__rank">{idx + 1}</span>
+                        <span className="stats-grid__caret" aria-hidden>
+                          {isOpen ? '▾' : '▸'}
+                        </span>
+                        {s.playerName}
+                      </td>
+                      <td className="stats-grid__muted">{s.TP}</td>
+                      <td>{s.PJ}</td>
+                      <td className="stats-grid__win">{s.PG}</td>
+                      <td>{s.PE}</td>
+                      <td className="stats-grid__loss">{s.PP}</td>
+                      <td className="stats-grid__hl">{s.puntaje}</td>
+                      <td className={attendanceClass(s.presentismo)}>
+                        {Math.round(s.presentismo * 100)}%
+                      </td>
+                      <td>{s.puntos}</td>
+                      <td>{s.dobles}</td>
+                      <td className="stats-grid__hl">{s.triples}</td>
+                      <td className="stats-grid__muted">
+                        {s.ptosPorPJ == null ? '—' : s.ptosPorPJ.toFixed(1)}
+                      </td>
+                      <td>
+                        <FormDots form={s.form} />
+                      </td>
+                    </tr>
+                    {isOpen && (
+                      <tr className="stats-grid__detail-row">
+                        <td colSpan={colSpan} className="stats-grid__detail-cell">
+                          <PlayerMatchesDetail
+                            playerId={s.playerId}
+                            year={year}
+                            matches={matches}
+                            matchPlayers={matchPlayers}
+                            tournament={tournament}
+                          />
+                        </td>
+                      </tr>
+                    )}
+                  </Fragment>
+                );
+              })}
             </tbody>
           </table>
         </div>
       )}
     </section>
   );
+}
+
+/* ---------- Detalle de partidos por jugador ---------- */
+
+function PlayerMatchesDetail({
+  playerId,
+  year,
+  matches,
+  matchPlayers,
+  tournament,
+}: {
+  playerId: number;
+  year: number;
+  matches: DbMatch[];
+  matchPlayers: DbMatchPlayer[];
+  tournament: Tournament;
+}) {
+  const detail = useMemo(
+    () =>
+      computePlayerMatches(playerId, year, matches, matchPlayers, tournament),
+    [playerId, year, matches, matchPlayers, tournament],
+  );
+
+  if (detail.length === 0) {
+    return <div className="lb-empty">Sin partidos jugados.</div>;
+  }
+
+  return (
+    <div className="player-matches">
+      {detail.map((d) => {
+        const cls =
+          d.outcome === 'Gana'
+            ? 'win'
+            : d.outcome === 'Pierde'
+              ? 'loss'
+              : d.outcome === 'Empate'
+                ? 'tie'
+                : 'none';
+        const icon =
+          d.outcome === 'Gana'
+            ? '🟢'
+            : d.outcome === 'Pierde'
+              ? '🔴'
+              : d.outcome === 'Empate'
+                ? '🟡'
+                : '⚪';
+        return (
+          <div key={d.matchId} className={`pmatch pmatch--${cls}`}>
+            <span className="pmatch__icon" aria-hidden>
+              {icon}
+            </span>
+            <span className="pmatch__date">{formatMatchDate(d.date)}</span>
+            <span className="pmatch__outcome">{d.outcome ?? '—'}</span>
+            <span className="pmatch__stats">
+              {d.points != null && <span>{d.points} pts</span>}
+              <span>{d.dobles}× 2pt</span>
+              <span>{d.triples}× 3pt</span>
+            </span>
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
+function formatMatchDate(iso: string): string {
+  if (!iso) return '';
+  const d = new Date(iso);
+  const pad = (n: number) => n.toString().padStart(2, '0');
+  return `${pad(d.getUTCDate())}/${pad(d.getUTCMonth() + 1)}/${d.getUTCFullYear()}`;
 }
 
 function attendanceClass(p: number): string {

@@ -9,6 +9,9 @@ create table if not exists public.players (
     id   integer primary key,
     name text    not null unique
 );
+-- Avatar (selfie) del jugador: ruta dentro del bucket "avatars".
+alter table public.players
+    add column if not exists avatar_path text;
 
 -- Matches: un row por partido.
 -- `partial = true` indica que el partido viene del histórico viejo y no tiene
