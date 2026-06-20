@@ -6,7 +6,6 @@ import { PlayerStats } from './PlayerStats';
 import { Podium } from './Podium';
 import { Scoreboard } from './Scoreboard';
 import { exportGameToExcel } from '../utils/exportExcel';
-import { exportGameToPdf } from '../utils/exportPdf';
 import { getWinner } from '../utils/stats';
 import { saveGameToSupabase } from '../lib/saveGame';
 import { SUPABASE_CONFIGURED } from '../lib/supabase';
@@ -146,14 +145,6 @@ export function GameScreen() {
           disabled={state.plays.length === 0}
         >
           📊 Excel
-        </button>
-        <button
-          type="button"
-          className="btn"
-          onClick={() => exportGameToPdf(state)}
-          disabled={state.plays.length === 0}
-        >
-          📄 PDF
         </button>
 
         {!finished && (

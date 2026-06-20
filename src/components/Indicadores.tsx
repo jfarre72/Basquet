@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { PLAYERS_SORTED } from '../data/players';
 import {
   fetchIndicadoresData,
@@ -6,7 +6,6 @@ import {
   type DbMatchPlayer,
   type DbPlay,
 } from '../lib/queries';
-import { exportElementToPdf } from '../utils/exportElementPdf';
 
 interface TeamBattle {
   negro: number;
@@ -46,8 +45,6 @@ export function Indicadores() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [player, setPlayer] = useState<number | 'all'>('all');
-  const [exporting, setExporting] = useState(false);
-  const captureRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     let cancelled = false;
@@ -102,18 +99,8 @@ export function Indicadores() {
     [matches],
   );
 
-  const handleExportPdf = async () => {
-    if (!captureRef.current) return;
-    setExporting(true);
-    try {
-      await exportElementToPdf(captureRef.current, 'indicadores-basquet.pdf');
-    } finally {
-      setExporting(false);
-    }
-  };
-
   return (
-    <div className="informe" ref={captureRef}>
+    <div className="informe">
       <div className="section-head">
         <div>
           <h2 className="section-head__title">Indicadores</h2>
@@ -121,14 +108,6 @@ export function Indicadores() {
             Cómo se distribuyen los puntos y quiénes definen.
           </p>
         </div>
-        <button
-          type="button"
-          className="btn btn--ghost btn--sm pdf-button"
-          onClick={() => void handleExportPdf()}
-          disabled={loading || plays.length === 0 || exporting}
-        >
-          {exporting ? 'Generando…' : '📄 PDF'}
-        </button>
       </div>
 
       {error && (

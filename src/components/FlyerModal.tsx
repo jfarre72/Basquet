@@ -2,7 +2,6 @@ import { useRef, useState } from 'react';
 import html2canvas from 'html2canvas';
 import { PLAYERS_BY_ID } from '../data/players';
 import type { DbDraft } from '../lib/queries';
-import { exportElementToPdf } from '../utils/exportElementPdf';
 
 interface Props {
   draft: DbDraft;
@@ -45,19 +44,6 @@ export function FlyerModal({ draft, onClose }: Props) {
       a.click();
       a.remove();
       URL.revokeObjectURL(url);
-    } catch (e) {
-      setError((e as Error).message);
-    } finally {
-      setBusy(false);
-    }
-  };
-
-  const downloadPdf = async () => {
-    if (!stageRef.current) return;
-    setBusy(true);
-    setError(null);
-    try {
-      await exportElementToPdf(stageRef.current, `${fileBase}.pdf`);
     } catch (e) {
       setError((e as Error).message);
     } finally {
@@ -183,14 +169,6 @@ export function FlyerModal({ draft, onClose }: Props) {
               disabled={busy}
             >
               🖼️ Imagen
-            </button>
-            <button
-              type="button"
-              className="btn btn--ghost"
-              onClick={() => void downloadPdf()}
-              disabled={busy}
-            >
-              📄 PDF
             </button>
           </div>
         </div>

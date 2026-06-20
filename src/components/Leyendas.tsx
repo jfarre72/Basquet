@@ -1,10 +1,9 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import {
   fetchSeasonData,
   type DbMatch,
   type DbMatchPlayer,
 } from '../lib/queries';
-import { exportElementToPdf } from '../utils/exportElementPdf';
 import {
   computeSeasonStats,
   listAvailableYears,
@@ -43,8 +42,6 @@ export function Leyendas() {
   const [matchPlayers, setMatchPlayers] = useState<DbMatchPlayer[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [exporting, setExporting] = useState(false);
-  const captureRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     let cancelled = false;
@@ -92,18 +89,8 @@ export function Leyendas() {
     });
   }, [years, matches, matchPlayers]);
 
-  const handleExportPdf = async () => {
-    if (!captureRef.current) return;
-    setExporting(true);
-    try {
-      await exportElementToPdf(captureRef.current, 'leyendas-basquet.pdf');
-    } finally {
-      setExporting(false);
-    }
-  };
-
   return (
-    <div className="informe leyendas" ref={captureRef}>
+    <div className="informe leyendas">
       <div className="section-head">
         <div>
           <h2 className="section-head__title">🏆 Leyendas</h2>
@@ -111,14 +98,6 @@ export function Leyendas() {
             Vitrina del básquet de los martes.
           </p>
         </div>
-        <button
-          type="button"
-          className="btn btn--ghost btn--sm pdf-button"
-          onClick={() => void handleExportPdf()}
-          disabled={loading || vitrinas.length === 0 || exporting}
-        >
-          {exporting ? 'Generando…' : '📄 PDF'}
-        </button>
       </div>
 
       {error && (

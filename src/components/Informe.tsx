@@ -1,12 +1,10 @@
-import { Fragment, useEffect, useMemo, useRef, useState } from 'react';
+import { Fragment, useEffect, useMemo, useState } from 'react';
 import { PLAYERS_BY_ID } from '../data/players';
-import {
-  fetchIndicadoresData,
+import { fetchIndicadoresData,
   type DbMatch,
   type DbMatchPlayer,
   type DbPlay,
 } from '../lib/queries';
-import { exportElementToPdf } from '../utils/exportElementPdf';
 import {
   computeMonthly,
   computePlayerMatches,
@@ -24,7 +22,7 @@ import {
 } from '../utils/seasonStats';
 
 const TOURNAMENTS: { key: Tournament; label: string; short?: string }[] = [
-  { key: 'completo', label: 'Anual' },
+  { key: 'completo', label: 'Anual', short: 'TOT' },
   { key: 'apertura', label: 'Apertura', short: 'APE' },
   { key: 'clausura', label: 'Clausura', short: 'CLA' },
 ];
@@ -167,24 +165,8 @@ export function Informe() {
     return { jugados: seasonMatches.length, faltantes };
   }, [year, matches, monthly, tournament]);
 
-  const captureRef = useRef<HTMLDivElement>(null);
-  const [exporting, setExporting] = useState(false);
-
-  const handleExportPdf = async () => {
-    if (!captureRef.current || year == null) return;
-    setExporting(true);
-    try {
-      await exportElementToPdf(
-        captureRef.current,
-        `informe-basquet-${year}-${tournament}.pdf`,
-      );
-    } finally {
-      setExporting(false);
-    }
-  };
-
   return (
-    <div className="informe" ref={captureRef}>
+    <div className="informe">
       <div className="section-head">
         <div>
           <h2 className="section-head__title">Informe</h2>
@@ -192,14 +174,6 @@ export function Informe() {
             Estadísticas por jugador. Martes de básquet.
           </p>
         </div>
-        <button
-          type="button"
-          className="btn btn--ghost btn--sm pdf-button"
-          onClick={() => void handleExportPdf()}
-          disabled={year == null || tableStats.length === 0 || exporting}
-        >
-          {exporting ? 'Generando…' : '📄 PDF'}
-        </button>
       </div>
       <div className="filters">
         {years.length > 0 && (
