@@ -139,6 +139,11 @@ export function Informe() {
     [plays, seasonMatchIds],
   );
 
+  const pointsRanking = useMemo(
+    () => sortSeasonStats(baseStats, 'puntos', 'desc').filter((s) => s.puntos > 0),
+    [baseStats],
+  );
+
   const topTriples = useMemo(
     () => topShots(seasonPlays, 'triple'),
     [seasonPlays],
@@ -260,8 +265,11 @@ export function Informe() {
 
           {podium.length > 0 && <PodiumBlock podium={podium} />}
 
-          {(topTriples.length > 0 || topDobles.length > 0) && (
-            <div className="podio-grid">
+          {(pointsRanking.length > 0 ||
+            topTriples.length > 0 ||
+            topDobles.length > 0) && (
+            <div className="podio-grid podio-grid--3">
+              <PointsTableBlock data={pointsRanking} />
               <ShotPodiumBlock title="🏀 Podio de Dobles" data={topDobles} />
               <ShotPodiumBlock title="🎯 Podio de Triples" data={topTriples} />
             </div>
@@ -386,6 +394,27 @@ function topShots(plays: DbPlay[], shot: 'double' | 'triple'): ShotPodiumItem[] 
     }))
     .sort((a, b) => b.count - a.count || a.playerName.localeCompare(b.playerName))
     .slice(0, 3);
+}
+
+function PointsTableBlock({ data }: { data: PlayerSeasonStat[] }) {
+  return (
+    <section className="block">
+      <h3 className="block__title">🏀 Tabla de puntos</h3>
+      {data.length === 0 ? (
+        <div className="lb-empty">Sin datos.</div>
+      ) : (
+        <ol className="points-table">
+          {data.map((s, idx) => (
+            <li key={s.playerId} className="points-row">
+              <span className="points-row__rank">{idx + 1}</span>
+              <span className="points-row__name">{s.playerName}</span>
+              <span className="points-row__pts">{s.puntos}</span>
+            </li>
+          ))}
+        </ol>
+      )}
+    </section>
+  );
 }
 
 function ShotPodiumBlock({

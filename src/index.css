@@ -89,7 +89,7 @@ textarea {
   min-height: 100dvh;
   max-width: 600px;
   margin: 0 auto;
-  padding: 0 8px calc(24px + env(safe-area-inset-bottom));
+  padding: 0 8px calc(88px + env(safe-area-inset-bottom));
   overflow-x: hidden;
 }
 @media (min-width: 640px) {
@@ -113,7 +113,9 @@ main.app__main > * {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 16px 4px 8px;
+  padding: 16px 4px 14px;
+  position: sticky;
+  top: 0;
   z-index: 5;
   background: linear-gradient(
     to bottom,
@@ -1615,13 +1617,15 @@ main.app__main {
 
 /* ===== Bottom nav ===== */
 
-/* Menú superior: en mobile es una barra de scroll horizontal (los iconos
-   van de izquierda a derecha); en notebook/desktop entra todo en una línea. */
+/* Menú inferior: barra de scroll horizontal en mobile (los iconos van de
+   izquierda a derecha); en notebook/desktop entra todo en una línea. */
 .bottom-nav {
-  position: sticky;
-  top: calc(4px + env(safe-area-inset-top));
-  width: 100%;
-  margin: 0 0 12px;
+  position: fixed;
+  left: 50%;
+  transform: translateX(-50%);
+  bottom: calc(8px + env(safe-area-inset-bottom));
+  width: calc(100% - 16px);
+  max-width: 600px;
   background: rgba(17, 26, 46, 0.92);
   border: 1px solid var(--border);
   border-radius: 16px;
@@ -1672,6 +1676,7 @@ main.app__main {
 @media (min-width: 1024px) {
   .bottom-nav {
     overflow-x: visible;
+    max-width: 760px;
   }
   .bottom-nav__tab {
     flex: 1 1 0;
@@ -3117,6 +3122,56 @@ main.app__main {
   .podio-grid {
     grid-template-columns: 1fr 1fr;
   }
+  .podio-grid--3 {
+    grid-template-columns: 1fr 1fr 1fr;
+  }
+}
+
+/* Tabla de puntos (ranking por PTS) */
+.points-table {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.points-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 9px 12px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+}
+.points-row__rank {
+  flex: 0 0 auto;
+  width: 22px;
+  height: 22px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  background: var(--surface-3, rgba(255, 255, 255, 0.06));
+  color: var(--text-muted);
+  font-size: 0.72rem;
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+}
+.points-row__name {
+  flex: 1 1 auto;
+  font-weight: 700;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.points-row__pts {
+  flex: 0 0 auto;
+  font-weight: 900;
+  font-variant-numeric: tabular-nums;
+  color: var(--accent-strong);
 }
 
 .player-select {
