@@ -262,8 +262,8 @@ export function Informe() {
 
           {(topTriples.length > 0 || topDobles.length > 0) && (
             <div className="podio-grid">
-              <ShotPodiumBlock title="🎯 Podio de Triples" data={topTriples} />
               <ShotPodiumBlock title="🏀 Podio de Dobles" data={topDobles} />
+              <ShotPodiumBlock title="🎯 Podio de Triples" data={topTriples} />
             </div>
           )}
 
@@ -634,18 +634,19 @@ function PlayerMatchesDetail({
               : d.outcome === 'Empate'
                 ? 'tie'
                 : 'none';
-        const icon =
+        const mark =
           d.outcome === 'Gana'
-            ? '🟢'
+            ? '✓'
             : d.outcome === 'Pierde'
-              ? '🔴'
-              : d.outcome === 'Empate'
-                ? '🟡'
-                : '⚪';
+              ? '✕'
+              : '–';
         return (
           <div key={d.matchId} className={`pmatch pmatch--${cls}`}>
-            <span className="pmatch__icon" aria-hidden>
-              {icon}
+            <span
+              className={`form-dot form-dot--${cls}`}
+              aria-hidden
+            >
+              {mark}
             </span>
             <span className="pmatch__date">{formatMatchDate(d.date)}</span>
             <span className="pmatch__outcome">{d.outcome ?? '—'}</span>

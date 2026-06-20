@@ -89,7 +89,7 @@ textarea {
   min-height: 100dvh;
   max-width: 600px;
   margin: 0 auto;
-  padding: 0 8px calc(88px + env(safe-area-inset-bottom));
+  padding: 0 8px calc(24px + env(safe-area-inset-bottom));
   overflow-x: hidden;
 }
 @media (min-width: 640px) {
@@ -113,9 +113,7 @@ main.app__main > * {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 16px 4px 14px;
-  position: sticky;
-  top: 0;
+  padding: 16px 4px 8px;
   z-index: 5;
   background: linear-gradient(
     to bottom,
@@ -1617,23 +1615,28 @@ main.app__main {
 
 /* ===== Bottom nav ===== */
 
+/* Menú superior: en mobile es una barra de scroll horizontal (los iconos
+   van de izquierda a derecha); en notebook/desktop entra todo en una línea. */
 .bottom-nav {
-  position: fixed;
-  left: 50%;
-  transform: translateX(-50%);
-  bottom: calc(8px + env(safe-area-inset-bottom));
-  width: calc(100% - 16px);
-  max-width: 600px;
+  position: sticky;
+  top: calc(4px + env(safe-area-inset-top));
+  width: 100%;
+  margin: 0 0 12px;
   background: rgba(17, 26, 46, 0.92);
   border: 1px solid var(--border);
-  border-radius: 18px;
+  border-radius: 16px;
   padding: 5px;
-  display: grid;
-  grid-template-columns: repeat(7, 1fr);
-  gap: 1px;
+  display: flex;
+  gap: 2px;
+  overflow-x: auto;
+  overscroll-behavior-x: contain;
+  scrollbar-width: none;
   z-index: 50;
   box-shadow: var(--shadow);
   backdrop-filter: blur(14px);
+}
+.bottom-nav::-webkit-scrollbar {
+  display: none;
 }
 
 .bottom-nav__tab {
@@ -1641,17 +1644,20 @@ main.app__main {
   border: 0;
   background: transparent;
   color: var(--text-muted);
-  padding: 5px 1px;
+  padding: 6px 4px;
   border-radius: 10px;
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 2px;
-  font-size: 0.56rem;
+  gap: 3px;
+  font-size: 0.6rem;
   font-weight: 600;
   letter-spacing: 0.01em;
   transition: background 0.15s ease, color 0.15s ease;
   min-height: 48px;
+  flex: 0 0 auto;
+  min-width: 64px;
+  white-space: nowrap;
 }
 .bottom-nav__tab svg {
   width: 20px;
@@ -1660,6 +1666,17 @@ main.app__main {
 .bottom-nav__tab--active {
   background: var(--accent-dim);
   color: var(--accent-strong);
+}
+
+/* Notebook/desktop: hay espacio, entra todo en una línea sin scroll. */
+@media (min-width: 1024px) {
+  .bottom-nav {
+    overflow-x: visible;
+  }
+  .bottom-nav__tab {
+    flex: 1 1 0;
+    min-width: 0;
+  }
 }
 
 /* ===== Section heading ===== */

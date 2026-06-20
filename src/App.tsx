@@ -52,6 +52,7 @@ export default function App() {
   return (
     <div className="app">
       <Header />
+      <BottomNav section={section} onChange={setSection} />
       <main className="app__main">
         {section === 'informe' && <Informe />}
         {section === 'indicadores' && <Indicadores />}
@@ -66,7 +67,6 @@ export default function App() {
         {section === 'galeria' && <Galeria />}
         {section === 'jugadas' && <Jugadas />}
       </main>
-      <BottomNav section={section} onChange={setSection} />
     </div>
   );
 }
