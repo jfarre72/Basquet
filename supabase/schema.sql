@@ -158,4 +158,5 @@ insert into public.players (id, name) values
     (45, 'Gero'),
     (46, 'Facu M'),
     (47, 'Bauti')
-on conflict (id) do update set name = excluded.name;
+-- No pisar nombres ya editados desde la app si se re-corre el seed.
+on conflict (id) do nothing;
