@@ -8,6 +8,7 @@ import { Header } from './components/Header';
 import { Indicadores } from './components/Indicadores';
 import { Informe } from './components/Informe';
 import { Jugadas } from './components/Jugadas';
+import { Jugadores } from './components/Jugadores';
 import { Leyendas } from './components/Leyendas';
 import { LoginScreen } from './components/LoginScreen';
 import { PlayerSelection } from './components/PlayerSelection';
@@ -55,6 +56,7 @@ export default function App() {
         {section === 'informe' && <Informe />}
         {section === 'indicadores' && <Indicadores />}
         {section === 'leyendas' && <Leyendas />}
+        {section === 'jugadores' && <Jugadores />}
         {section === 'armado' && (
           <Armado onStartMatch={() => setSection('contador')} />
         )}

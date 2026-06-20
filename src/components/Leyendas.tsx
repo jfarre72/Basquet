@@ -227,6 +227,34 @@ function computeAwards(
     });
   }
 
+  const topTriples = [...stats]
+    .filter((s) => s.triples > 0)
+    .sort(
+      (a, b) => b.triples - a.triples || a.playerName.localeCompare(b.playerName),
+    )[0];
+  if (topTriples) {
+    awards.push({
+      label: 'Primero en triples',
+      icon: '🎯',
+      player: topTriples.playerName,
+      primary: `${topTriples.triples}× 3pt`,
+    });
+  }
+
+  const topDobles = [...stats]
+    .filter((s) => s.dobles > 0)
+    .sort(
+      (a, b) => b.dobles - a.dobles || a.playerName.localeCompare(b.playerName),
+    )[0];
+  if (topDobles) {
+    awards.push({
+      label: 'Primero en dobles',
+      icon: '🏀',
+      player: topDobles.playerName,
+      primary: `${topDobles.dobles}× 2pt`,
+    });
+  }
+
   return { hasData: true, matchCount, awards };
 }
 
