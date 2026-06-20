@@ -1,6 +1,5 @@
 import { useEffect, useState } from 'react';
 import { Armado } from './components/Armado';
-import { BottomNav } from './components/BottomNav';
 import { ContadorEntry } from './components/ContadorEntry';
 import { Galeria } from './components/Galeria';
 import { GameScreen } from './components/GameScreen';
@@ -75,23 +74,7 @@ export default function App() {
 
   return (
     <div className="app">
-      <Header />
-      {section !== 'home' && (
-        <button
-          type="button"
-          className="home-fab"
-          onClick={() => setSection('home')}
-          aria-label="Ir al menú principal"
-          title="Menú principal"
-        >
-          <svg viewBox="0 0 24 24" width="20" height="20" fill="none"
-            stroke="currentColor" strokeWidth="2" strokeLinecap="round"
-            strokeLinejoin="round" aria-hidden>
-            <path d="M3 11l9-8 9 8" />
-            <path d="M5 10v10a1 1 0 0 0 1 1h4v-6h4v6h4a1 1 0 0 0 1-1V10" />
-          </svg>
-        </button>
-      )}
+      <Header onHome={() => setSection('home')} showHome={section !== 'home'} />
       <main className="app__main">
         {section === 'home' && <Home onNavigate={setSection} />}
         {section === 'informe' && <Informe />}
@@ -107,7 +90,6 @@ export default function App() {
         {section === 'galeria' && <Galeria />}
         {section === 'jugadas' && <Jugadas />}
       </main>
-      {section !== 'home' && <BottomNav section={section} onChange={setSection} />}
     </div>
   );
 }
