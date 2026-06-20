@@ -75,9 +75,9 @@ const ITEMS: RadialItem[] = [
     ),
   },
   {
-    id: 'avatares',
-    label: 'Avatares',
-    hint: 'Cartas de los jugadores',
+    id: 'tarjetas',
+    label: 'Tarjetas',
+    hint: 'Tarjetas de los jugadores',
     icon: (
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"
         strokeLinecap="round" strokeLinejoin="round" aria-hidden>

@@ -10,7 +10,7 @@ export type Section =
   | 'informe'
   | 'indicadores'
   | 'jugadores'
-  | 'avatares'
+  | 'tarjetas'
   | 'jugadas'
   | 'armado'
   | 'contador'

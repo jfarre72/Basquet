@@ -108,6 +108,23 @@ export function Galeria() {
     }
   };
 
+  const downloadPhoto = async (p: DbPhoto) => {
+    try {
+      const res = await fetch(getPhotoUrl(p.storage_path));
+      const blob = await res.blob();
+      const obj = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = obj;
+      a.download = p.storage_path.split('/').pop() || 'foto.jpg';
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      URL.revokeObjectURL(obj);
+    } catch (e) {
+      setError((e as Error).message);
+    }
+  };
+
   const current = photos[index];
 
   const onTouchStart = (e: React.TouchEvent) => {
@@ -233,6 +250,23 @@ export function Galeria() {
             {current && (
               <button
                 type="button"
+                className="carousel__download"
+                aria-label="Descargar foto"
+                title="Descargar foto"
+                onClick={() => void downloadPhoto(current)}
+              >
+                <svg viewBox="0 0 24 24" width="18" height="18" fill="none"
+                  stroke="currentColor" strokeWidth="2" strokeLinecap="round"
+                  strokeLinejoin="round" aria-hidden>
+                  <path d="M12 3v12" />
+                  <path d="M7 11l5 5 5-5" />
+                  <path d="M5 21h14" />
+                </svg>
+              </button>
+            )}
+            {current && (
+              <button
+                type="button"
                 className="carousel__delete"
                 aria-label="Borrar foto"
                 onClick={() => void handleDelete(current)}
@@ -286,6 +320,24 @@ export function Galeria() {
             }}
           >
             ×
+          </button>
+          <button
+            type="button"
+            className="photo-lightbox__download"
+            aria-label="Descargar foto"
+            title="Descargar foto"
+            onClick={(e) => {
+              e.stopPropagation();
+              void downloadPhoto(current);
+            }}
+          >
+            <svg viewBox="0 0 24 24" width="20" height="20" fill="none"
+              stroke="currentColor" strokeWidth="2" strokeLinecap="round"
+              strokeLinejoin="round" aria-hidden>
+              <path d="M12 3v12" />
+              <path d="M7 11l5 5 5-5" />
+              <path d="M5 21h14" />
+            </svg>
           </button>
           {photos.length > 1 && (
             <>

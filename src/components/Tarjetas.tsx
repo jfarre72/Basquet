@@ -1,6 +1,7 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { PLAYERS_BY_ID, PLAYERS_SORTED } from '../data/players';
 import { fetchAvatars, getAvatarUrl } from '../lib/avatars';
+import { getCutout } from '../lib/cutout';
 import { fetchSeasonData, type DbMatchPlayer } from '../lib/queries';
 import { SUPABASE_CONFIGURED } from '../lib/supabase';
 import { normalizeText } from '../utils/text';
@@ -49,7 +50,6 @@ function computeCareer(mps: DbMatchPlayer[]): Map<number, CareerStat> {
   for (const [id, s] of map) {
     const n = withPoints.get(id) ?? 0;
     s.ppp = n > 0 ? s.puntos / n : null;
-    // OVR estilo carta: combina puntos por partido y % de victorias.
     const winRate = s.PJ > 0 ? s.PG / s.PJ : 0;
     const raw = 52 + (s.ppp ?? 0) * 2.2 + winRate * 30;
     s.ovr = Math.max(40, Math.min(99, Math.round(raw)));
@@ -57,12 +57,14 @@ function computeCareer(mps: DbMatchPlayer[]): Map<number, CareerStat> {
   return map;
 }
 
-export function Avatares() {
+export function Tarjetas() {
   const [avatars, setAvatars] = useState<Record<number, string>>({});
   const [career, setCareer] = useState<Map<number, CareerStat>>(new Map());
+  const [cutouts, setCutouts] = useState<Record<number, string>>({});
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [search, setSearch] = useState('');
+  const processing = useRef<Set<number>>(new Set());
 
   useEffect(() => {
     if (!SUPABASE_CONFIGURED) {
@@ -97,22 +99,47 @@ export function Avatares() {
     );
   }, [avatars, search]);
 
+  // Recorta el fondo de cada foto (secuencial para no saturar el dispositivo).
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      for (const p of cards) {
+        if (cancelled) return;
+        if (cutouts[p.id] || processing.current.has(p.id)) continue;
+        const path = avatars[p.id];
+        if (!path) continue;
+        processing.current.add(p.id);
+        try {
+          const url = await getCutout(path, getAvatarUrl(path));
+          if (!cancelled) setCutouts((prev) => ({ ...prev, [p.id]: url }));
+        } catch {
+          /* si falla el recorte, la tarjeta usa la foto original */
+        } finally {
+          processing.current.delete(p.id);
+        }
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [cards, avatars, cutouts]);
+
   const totalConFoto = Object.keys(avatars).length;
 
   return (
-    <div className="avatares">
+    <div className="tarjetas">
       <div className="section-head">
         <div>
-          <h2 className="section-head__title">🃏 Avatares</h2>
+          <h2 className="section-head__title">🃏 Tarjetas</h2>
           <p className="section-head__subtitle">
-            Las cartas de los jugadores que ya subieron su foto.
+            Las tarjetas de los jugadores que ya subieron su foto.
           </p>
         </div>
       </div>
 
       {!SUPABASE_CONFIGURED && (
         <div className="warning-banner">
-          Conectá Supabase para ver los avatares.
+          Conectá Supabase para ver las tarjetas.
         </div>
       )}
       {error && <div className="warning-banner">No se pudo: {error}</div>}
@@ -129,7 +156,7 @@ export function Avatares() {
       </div>
 
       {loading ? (
-        <div className="lb-loading">Cargando avatares…</div>
+        <div className="lb-loading">Cargando tarjetas…</div>
       ) : cards.length === 0 ? (
         <div className="lb-empty">
           {totalConFoto === 0
@@ -141,6 +168,8 @@ export function Avatares() {
           {cards.map((p) => {
             const name = PLAYERS_BY_ID[p.id]?.name ?? p.name;
             const st = career.get(p.id);
+            const cut = cutouts[p.id];
+            const ready = Boolean(cut);
             const stats: { label: string; value: string | number }[] = [
               { label: 'PJ', value: st?.PJ ?? 0 },
               { label: 'PG', value: st?.PG ?? 0 },
@@ -151,8 +180,8 @@ export function Avatares() {
             ];
             return (
               <article className="futcard" key={p.id}>
+                <span className="futcard__facets" aria-hidden />
                 <span className="futcard__rays" aria-hidden />
-                <span className="futcard__shine" aria-hidden />
 
                 <div className="futcard__ovr">
                   <b>{st?.ovr ?? '—'}</b>
@@ -160,13 +189,20 @@ export function Avatares() {
                   <i aria-hidden>🏀</i>
                 </div>
 
-                <div className="futcard__photo">
+                <div className={`futcard__photo${ready ? ' is-cut' : ''}`}>
                   <img
-                    src={getAvatarUrl(avatars[p.id])}
+                    src={cut ?? getAvatarUrl(avatars[p.id])}
                     alt={name}
                     loading="lazy"
                   />
+                  {!ready && (
+                    <span className="futcard__cutting" aria-hidden>
+                      recortando…
+                    </span>
+                  )}
                 </div>
+
+                <span className="futcard__shine" aria-hidden />
 
                 <div className="futcard__body">
                   <div className="futcard__name">{name}</div>
