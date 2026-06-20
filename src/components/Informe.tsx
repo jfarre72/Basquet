@@ -354,7 +354,6 @@ function MonthlyChart({ data }: { data: ReturnType<typeof computeMonthly> }) {
                   style={{ height: `${martesPct}%` }}
                   title={`${d.martes} martes`}
                 >
-                  <span className="month-col__track-num">{d.martes}</span>
                   <div
                     className="month-col__fill"
                     style={{ height: `${d.martes > 0 ? (d.jugados / d.martes) * 100 : 0}%` }}
@@ -365,7 +364,6 @@ function MonthlyChart({ data }: { data: ReturnType<typeof computeMonthly> }) {
                   </div>
                 </div>
               </div>
-              <span className="month-col__total">{d.jugados || ''}</span>
               <span className="month-col__label">{d.label}</span>
             </div>
           );
