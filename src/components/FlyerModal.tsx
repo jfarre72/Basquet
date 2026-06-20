@@ -1,6 +1,7 @@
 import { useRef, useState } from 'react';
 import html2canvas from 'html2canvas';
 import { PLAYERS_BY_ID } from '../data/players';
+import { getPlayerAvatarUrl } from '../lib/avatars';
 import type { DbDraft } from '../lib/queries';
 
 interface Props {
@@ -51,42 +52,6 @@ export function FlyerModal({ draft, onClose }: Props) {
     }
   };
 
-  const shareNative = async () => {
-    setBusy(true);
-    setError(null);
-    try {
-      const blob = await renderToBlob();
-      const file = new File([blob], `${fileBase}.png`, { type: 'image/png' });
-      const canShareFiles =
-        typeof navigator !== 'undefined' &&
-        typeof navigator.canShare === 'function' &&
-        navigator.canShare({ files: [file] });
-      if (canShareFiles && typeof navigator.share === 'function') {
-        await navigator.share({
-          files: [file],
-          title: 'Próximo partido',
-          text: `🏀 ${draft.team_a_name} vs ${draft.team_b_name} · ${dateText}`,
-        });
-      } else {
-        // Fallback: descarga
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = `${fileBase}.png`;
-        document.body.appendChild(a);
-        a.click();
-        a.remove();
-        URL.revokeObjectURL(url);
-      }
-    } catch (e) {
-      if ((e as Error).name !== 'AbortError') {
-        setError((e as Error).message);
-      }
-    } finally {
-      setBusy(false);
-    }
-  };
-
   const sorted = (ids: number[]) =>
     [...ids].sort((a, b) =>
       (PLAYERS_BY_ID[a]?.name ?? '').localeCompare(
@@ -103,7 +68,7 @@ export function FlyerModal({ draft, onClose }: Props) {
         <div className="modal__head">
           <div className="modal__title">
             Flyer del partido
-            <small>Compartilo o descargalo</small>
+            <small>Descargalo y compartilo</small>
           </div>
           <button
             type="button"
@@ -131,7 +96,7 @@ export function FlyerModal({ draft, onClose }: Props) {
                 <div className="flyer__team-name">{draft.team_a_name}</div>
                 <ul className="flyer__list">
                   {sorted(draft.team_a_ids).map((id) => (
-                    <li key={id}>{PLAYERS_BY_ID[id]?.name ?? `#${id}`}</li>
+                    <FlyerPlayer key={id} id={id} />
                   ))}
                 </ul>
               </div>
@@ -142,7 +107,7 @@ export function FlyerModal({ draft, onClose }: Props) {
                 <div className="flyer__team-name">{draft.team_b_name}</div>
                 <ul className="flyer__list">
                   {sorted(draft.team_b_ids).map((id) => (
-                    <li key={id}>{PLAYERS_BY_ID[id]?.name ?? `#${id}`}</li>
+                    <FlyerPlayer key={id} id={id} />
                   ))}
                 </ul>
               </div>
@@ -157,23 +122,34 @@ export function FlyerModal({ draft, onClose }: Props) {
             <button
               type="button"
               className="btn btn--primary"
-              onClick={() => void shareNative()}
-              disabled={busy}
-            >
-              📲 Compartir
-            </button>
-            <button
-              type="button"
-              className="btn btn--blue"
               onClick={() => void downloadImage()}
               disabled={busy}
             >
-              🖼️ Imagen
+              🖼️ Descargar imagen
             </button>
           </div>
         </div>
       </div>
     </div>
+  );
+}
+
+function FlyerPlayer({ id }: { id: number }) {
+  const name = PLAYERS_BY_ID[id]?.name ?? `#${id}`;
+  const url = getPlayerAvatarUrl(id);
+  return (
+    <li className="flyer__player">
+      <span className="flyer__face">
+        {url ? (
+          <img src={url} crossOrigin="anonymous" alt="" />
+        ) : (
+          <span className="flyer__face-ph" aria-hidden>
+            {name.charAt(0).toUpperCase()}
+          </span>
+        )}
+      </span>
+      <span className="flyer__player-name">{name}</span>
+    </li>
   );
 }
 

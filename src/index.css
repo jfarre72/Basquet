@@ -1698,9 +1698,9 @@ html.home-locked body {
   flex: 1;
   flex-direction: column;
   align-items: center;
-  justify-content: center;
+  justify-content: flex-start;
   min-height: 0;
-  padding: 8px 8px 12px;
+  padding: clamp(6px, 2dvh, 20px) 8px 12px;
 }
 
 /* Botón de menú en el header (al lado de cerrar sesión) */
@@ -1773,9 +1773,10 @@ html.home-locked body {
   position: relative;
   z-index: 1;
   /* Limitado también por la altura para que nunca haya scroll. */
-  width: min(88vw, 64dvh, 500px);
+  width: min(88vw, 60dvh, 500px);
   aspect-ratio: 1;
-  margin: 0 auto;
+  /* El slogan queda arriba y el menú baja un poco. */
+  margin: clamp(16px, 6dvh, 64px) auto 0;
 }
 
 /* Anillo orbital que conecta los nodos */
@@ -1972,7 +1973,7 @@ html.home-locked body {
 .home__slogan {
   position: relative;
   z-index: 1;
-  margin: clamp(12px, 2.5dvh, 26px) 0 0;
+  margin: 0;
   text-align: center;
   font-style: italic;
   font-weight: 600;
@@ -3177,10 +3178,42 @@ html.home-locked body {
   margin: 0;
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: 7px;
   font-weight: 600;
   font-size: 0.86rem;
-  text-align: center;
+}
+.flyer__player {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.flyer__face {
+  flex: 0 0 auto;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--surface-3);
+  border: 1.5px solid var(--accent-line);
+}
+.flyer__face img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+.flyer__face-ph {
+  font-size: 0.8rem;
+  font-weight: 900;
+  color: var(--accent-strong);
+}
+.flyer__player-name {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 .flyer__center {
   display: flex;

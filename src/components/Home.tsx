@@ -138,6 +138,10 @@ export function Home({ onNavigate }: { onNavigate: (s: Section) => void }) {
         </div>
       </div>
 
+      <p className="home__slogan">
+        El básquet nos une. Los martes nos definen.
+      </p>
+
       <div className="home__radial">
         <span className="home__ring" aria-hidden />
 
@@ -198,10 +202,6 @@ export function Home({ onNavigate }: { onNavigate: (s: Section) => void }) {
           </svg>
         </button>
       </div>
-
-      <p className="home__slogan">
-        El básquet nos une. Los martes nos definen.
-      </p>
     </div>
   );
 }
