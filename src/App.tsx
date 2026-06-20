@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Armado } from './components/Armado';
+import { Avatares } from './components/Avatares';
 import { ContadorEntry } from './components/ContadorEntry';
 import { Galeria } from './components/Galeria';
 import { GameScreen } from './components/GameScreen';
@@ -81,6 +82,7 @@ export default function App() {
         {section === 'indicadores' && <Indicadores />}
         {section === 'leyendas' && <Leyendas />}
         {section === 'jugadores' && <Jugadores />}
+        {section === 'avatares' && <Avatares />}
         {section === 'armado' && (
           <Armado onStartMatch={() => setSection('contador')} />
         )}

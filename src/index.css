@@ -4264,3 +4264,133 @@ html.home-locked .app__header {
   width: 20px;
   height: 20px;
 }
+
+/* ===== Avatares (cartas de jugador) ===== */
+.pcard-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+  gap: 14px;
+}
+@media (min-width: 640px) {
+  .pcard-grid {
+    grid-template-columns: repeat(auto-fill, minmax(170px, 1fr));
+  }
+}
+.pcard {
+  position: relative;
+  aspect-ratio: 3 / 4;
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+  background: linear-gradient(160deg, var(--surface-2), var(--surface));
+  border: 1px solid var(--accent-line);
+  box-shadow: var(--shadow);
+  isolation: isolate;
+  transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+}
+.pcard:hover {
+  transform: translateY(-4px);
+  border-color: var(--accent);
+  box-shadow: 0 18px 44px rgba(0, 0, 0, 0.5), 0 0 28px rgba(249, 115, 22, 0.28);
+}
+.pcard__photo {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+}
+.pcard__photo img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center top;
+}
+/* Degradado para que el nombre y stats se lean sobre la foto */
+.pcard::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  background: linear-gradient(
+    180deg,
+    rgba(7, 11, 20, 0) 38%,
+    rgba(7, 11, 20, 0.55) 64%,
+    rgba(7, 11, 20, 0.94) 100%
+  );
+  pointer-events: none;
+}
+.pcard__shine {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  pointer-events: none;
+  background: linear-gradient(
+    120deg,
+    transparent 40%,
+    rgba(255, 255, 255, 0.10) 50%,
+    transparent 60%
+  );
+}
+.pcard__rec {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  z-index: 3;
+  padding: 3px 8px;
+  border-radius: 999px;
+  font-size: 0.62rem;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  color: var(--text);
+  background: rgba(7, 11, 20, 0.6);
+  border: 1px solid var(--accent-line);
+  backdrop-filter: blur(4px);
+}
+.pcard__info {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 3;
+  padding: 12px 12px 12px;
+}
+.pcard__name {
+  font-weight: 900;
+  font-style: italic;
+  font-size: 1.05rem;
+  letter-spacing: -0.01em;
+  text-transform: uppercase;
+  color: #fff;
+  text-shadow: 0 2px 8px rgba(0, 0, 0, 0.6);
+  line-height: 1;
+  margin-bottom: 8px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.pcard__stats {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 4px;
+}
+.pcard__stat {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1px;
+  padding: 5px 2px;
+  border-radius: var(--radius-sm);
+  background: rgba(7, 11, 20, 0.45);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+}
+.pcard__stat b {
+  font-size: 0.95rem;
+  font-weight: 900;
+  color: var(--accent-strong);
+  font-variant-numeric: tabular-nums;
+}
+.pcard__stat span {
+  font-size: 0.55rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  color: var(--text-muted);
+  text-transform: uppercase;
+}
