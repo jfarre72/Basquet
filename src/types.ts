@@ -5,6 +5,7 @@ export type ShotType = 'double' | 'triple';
 export type Stage = 'selection' | 'teams' | 'game' | 'finished';
 
 export type Section =
+  | 'home'
   | 'leyendas'
   | 'informe'
   | 'indicadores'
