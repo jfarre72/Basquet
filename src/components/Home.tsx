@@ -84,9 +84,10 @@ const ITEMS: RadialItem[] = [
     icon: (
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"
         strokeLinecap="round" strokeLinejoin="round" aria-hidden>
-        <rect x="3" y="4" width="18" height="16" rx="2" />
-        <path d="M7 9l4 3-4 3" />
-        <path d="M13 15h4" />
+        <rect x="4" y="3" width="16" height="18" rx="2" />
+        <circle cx="9" cy="8" r="1.4" />
+        <path d="M9 8l5 3-5 3" />
+        <path d="M13 16h3" />
       </svg>
     ),
   },
@@ -104,18 +105,27 @@ const ITEMS: RadialItem[] = [
   },
 ];
 
+// Radio del menú radial, en % del contenedor (deja margen para que el nodo
+// superior no se corte).
+const RADIUS = 39;
+
 export function Home({ onNavigate }: { onNavigate: (s: Section) => void }) {
   const count = ITEMS.length;
   return (
     <div className="home">
-      <div className="home__arena" aria-hidden />
+      <div className="home__arena" aria-hidden>
+        <span className="home__lights" />
+        <span className="home__floor" />
+      </div>
 
       <div className="home__radial">
+        <span className="home__ring" aria-hidden />
+
         {ITEMS.map((item, i) => {
           // Distribuir uniformemente alrededor de la pelota, empezando arriba.
           const angle = (i / count) * 2 * Math.PI - Math.PI / 2;
-          const x = 50 + 50 * Math.cos(angle);
-          const y = 50 + 50 * Math.sin(angle);
+          const x = 50 + RADIUS * Math.cos(angle);
+          const y = 50 + RADIUS * Math.sin(angle);
           return (
             <button
               key={item.id}
@@ -143,6 +153,17 @@ export function Home({ onNavigate }: { onNavigate: (s: Section) => void }) {
             <span>CREAR</span>
             <strong>PARTIDO</strong>
           </span>
+          <svg className="home-ball__hoop" viewBox="0 0 80 44" aria-hidden>
+            <ellipse cx="40" cy="9" rx="26" ry="7" fill="none"
+              stroke="#1a0f06" strokeWidth="3.2" opacity="0.85" />
+            <path
+              d="M16 11c3 12 7 20 24 20s21-8 24-20"
+              fill="none" stroke="#1a0f06" strokeWidth="2" opacity="0.7" />
+            <path d="M22 11l3 17M31 12l1.5 19M40 12.5v19M49 12l-1.5 19M58 11l-3 17"
+              fill="none" stroke="#1a0f06" strokeWidth="1.6" opacity="0.7" />
+            <path d="M19 18h42M23 25h34" fill="none" stroke="#1a0f06"
+              strokeWidth="1.4" opacity="0.55" />
+          </svg>
         </button>
       </div>
 
