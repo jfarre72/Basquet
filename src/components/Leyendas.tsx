@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
+import { PlayerAvatar } from './PlayerAvatar';
 import {
   fetchSeasonData,
   type DbMatch,
@@ -15,6 +16,7 @@ interface Award {
   label: string;
   icon: string;
   player: string;
+  playerId: number;
   primary: string;
   secondary?: string;
 }
@@ -185,6 +187,7 @@ function computeAwards(
       label: 'Campeón',
       icon: '👑',
       player: champion.playerName,
+      playerId: champion.playerId,
       primary: `${champion.puntaje} pts`,
       secondary: `${champion.PG}G · ${champion.PE}E · ${champion.PP}P`,
     },
@@ -192,6 +195,7 @@ function computeAwards(
       label: 'Más partidos',
       icon: '📅',
       player: mostPlayed.playerName,
+      playerId: mostPlayed.playerId,
       primary: `${mostPlayed.PJ} PJ`,
       secondary: `${Math.round(mostPlayed.presentismo * 100)}% presentismo`,
     },
@@ -201,6 +205,7 @@ function computeAwards(
       label: 'Top goleador',
       icon: '🎯',
       player: topScorer.playerName,
+      playerId: topScorer.playerId,
       primary: `${topScorer.puntos} pts`,
       secondary: `${topScorer.dobles}× 2pt · ${topScorer.triples}× 3pt`,
     });
@@ -216,6 +221,7 @@ function computeAwards(
       label: 'Primero en triples',
       icon: '🎯',
       player: topTriples.playerName,
+      playerId: topTriples.playerId,
       primary: `${topTriples.triples}× 3pt`,
     });
   }
@@ -230,6 +236,7 @@ function computeAwards(
       label: 'Primero en dobles',
       icon: '🏀',
       player: topDobles.playerName,
+      playerId: topDobles.playerId,
       primary: `${topDobles.dobles}× 2pt`,
     });
   }
@@ -273,7 +280,10 @@ function HofCard({
               <span className="hof-honoree__icon">{a.icon}</span>
               <div className="hof-honoree__main">
                 <span className="hof-honoree__label">{a.label}</span>
-                <span className="hof-honoree__name">{a.player}</span>
+                <span className="hof-honoree__name">
+                  <PlayerAvatar id={a.playerId} />
+                  {a.player}
+                </span>
                 {a.secondary && (
                   <span className="hof-honoree__sub">{a.secondary}</span>
                 )}

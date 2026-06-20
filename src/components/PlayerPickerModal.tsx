@@ -1,3 +1,4 @@
+import { PlayerAvatar } from './PlayerAvatar';
 import { PLAYERS_BY_ID } from '../data/players';
 import { useGame } from '../state/GameContext';
 import type { ShotType, TeamId } from '../types';
@@ -53,6 +54,7 @@ export function PlayerPickerModal({ team, shot, onClose }: Props) {
                     className="modal__player-btn"
                     onClick={() => select(id)}
                   >
+                    <PlayerAvatar id={id} />
                     {PLAYERS_BY_ID[id]?.name}
                   </button>
                 ))}

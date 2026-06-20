@@ -1,4 +1,5 @@
 import { Fragment, useEffect, useMemo, useState } from 'react';
+import { PlayerAvatar } from './PlayerAvatar';
 import { PLAYERS_BY_ID } from '../data/players';
 import { fetchIndicadoresData,
   type DbMatch,
@@ -283,7 +284,10 @@ function PodiumBlock({ podium }: { podium: PlayerSeasonStat[] }) {
               <span className="podium-row__medal">{MEDAL[idx]}</span>
             </div>
             <div className="podium-row__main">
-              <div className="podium-row__name">{s.playerName}</div>
+              <div className="podium-row__name">
+                <PlayerAvatar id={s.playerId} />
+                {s.playerName}
+              </div>
               <div className="podium-row__meta">
                 {s.PG}G · {s.PE}E · {s.PP}P
               </div>
@@ -388,7 +392,10 @@ function PointsTableBlock({ data }: { data: PlayerSeasonStat[] }) {
                 <span className="podium-row__medal">{MEDAL[idx]}</span>
               </div>
               <div className="podium-row__main">
-                <div className="podium-row__name">{s.playerName}</div>
+                <div className="podium-row__name">
+                <PlayerAvatar id={s.playerId} />
+                {s.playerName}
+              </div>
               </div>
               <div className="podium-row__pts">
                 <span className="podium-row__pts-num">{s.puntos}</span>
@@ -424,7 +431,10 @@ function ShotPodiumBlock({
                 <span className="podium-row__medal">{MEDAL[idx]}</span>
               </div>
               <div className="podium-row__main">
-                <div className="podium-row__name">{s.playerName}</div>
+                <div className="podium-row__name">
+                <PlayerAvatar id={s.playerId} />
+                {s.playerName}
+              </div>
               </div>
               <div className="podium-row__pts">
                 <span className="podium-row__pts-num">{s.count}</span>
@@ -566,6 +576,7 @@ function StatsTable({
                         <span className="stats-grid__caret" aria-hidden>
                           {isOpen ? '▾' : '▸'}
                         </span>
+                        <PlayerAvatar id={s.playerId} />
                         {s.playerName}
                       </td>
                       <td className="stats-grid__muted">{s.TP}</td>

@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
+import { PlayerAvatar } from './PlayerAvatar';
 import { PLAYERS_BY_ID, PLAYERS_SORTED } from '../data/players';
 import {
   createDraft,
@@ -318,6 +319,7 @@ function DraftTeam({
           )
           .map((id) => (
             <span key={id} className="draft-team__chip">
+              <PlayerAvatar id={id} />
               {PLAYERS_BY_ID[id]?.name ?? `#${id}`}
             </span>
           ))}
@@ -526,6 +528,7 @@ function DraftEditor({
                       onClick={() => togglePlayer(p.id)}
                       aria-pressed={isSel}
                     >
+                      <PlayerAvatar id={p.id} />
                       <span className="player-chip__name">{p.name}</span>
                       {isSel && <span className="player-chip__check">✓</span>}
                     </button>
@@ -549,6 +552,7 @@ function DraftEditor({
                       onClick={() => togglePlayer(p.id)}
                       aria-pressed={isSel}
                     >
+                      <PlayerAvatar id={p.id} />
                       <span className="player-chip__name">{p.name}</span>
                       {isSel && <span className="player-chip__check">✓</span>}
                     </button>
@@ -623,6 +627,7 @@ function DraftEditor({
                   .map((id) => (
                     <div key={id} className="pool-card">
                       <span className="pool-card__name">
+                        <PlayerAvatar id={id} />
                         {PLAYERS_BY_ID[id]?.name}
                       </span>
                       <div className="pool-card__actions">
@@ -720,6 +725,7 @@ function TeamPanel({
           {sorted.map((id) => (
             <li key={id} className="team-pill">
               <span className="team-pill__name">
+                <PlayerAvatar id={id} />
                 {PLAYERS_BY_ID[id]?.name}
               </span>
               <button

@@ -7,6 +7,7 @@ import {
 import {
   fetchAvatars,
   getAvatarUrl,
+  setAvatarPath,
   updatePlayerName,
   uploadAvatar,
 } from '../lib/avatars';
@@ -72,6 +73,7 @@ export function Jugadores() {
     try {
       const path = await uploadAvatar(playerId, file);
       setAvatars((prev) => ({ ...prev, [playerId]: path }));
+      setAvatarPath(playerId, path);
       // Tras cargar la foto, ofrecemos cambiar el nombre.
       setNameDraft(nameOf(playerId));
       setEditId(playerId);

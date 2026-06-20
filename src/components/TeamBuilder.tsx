@@ -1,3 +1,4 @@
+import { PlayerAvatar } from './PlayerAvatar';
 import { PLAYERS_BY_ID } from '../data/players';
 import { useGame } from '../state/GameContext';
 import type { TeamId } from '../types';
@@ -68,6 +69,7 @@ export function TeamBuilder() {
             {pool.map((id) => (
               <div key={id} className="pool-card">
                 <span className="pool-card__name">
+                  <PlayerAvatar id={id} />
                   {PLAYERS_BY_ID[id]?.name}
                 </span>
                 <div className="pool-card__actions">
@@ -174,6 +176,7 @@ function TeamCard({ team }: { team: TeamId }) {
             .map((id) => (
             <li key={id} className="team-pill">
               <span className="team-pill__name">
+                <PlayerAvatar id={id} />
                 {PLAYERS_BY_ID[id]?.name}
               </span>
               <button

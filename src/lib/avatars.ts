@@ -13,6 +13,25 @@ export function getAvatarUrl(path: string): string {
   return supabase.storage.from(BUCKET).getPublicUrl(path).data.publicUrl;
 }
 
+/** Cache global de rutas de avatar por jugador, para que cualquier vista pueda
+ *  mostrar la foto al lado del nombre sin volver a consultar. */
+const avatarPaths: Record<number, string> = {};
+
+export function setAvatarPaths(map: Record<number, string>): void {
+  for (const k of Object.keys(avatarPaths)) delete avatarPaths[Number(k)];
+  Object.assign(avatarPaths, map);
+}
+
+export function setAvatarPath(id: number, path: string): void {
+  avatarPaths[id] = path;
+}
+
+/** URL pública del avatar del jugador, o null si no tiene foto cargada. */
+export function getPlayerAvatarUrl(id: number): string | null {
+  const path = avatarPaths[id];
+  return path ? getAvatarUrl(path) : null;
+}
+
 /** Mapa playerId -> avatar_path para los jugadores que tienen avatar. */
 export async function fetchAvatars(): Promise<Record<number, string>> {
   if (!supabase) return {};

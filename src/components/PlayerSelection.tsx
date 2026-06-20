@@ -1,4 +1,5 @@
 import { useMemo, useState } from 'react';
+import { PlayerAvatar } from './PlayerAvatar';
 import { PLAYERS_BY_ID, PLAYERS_SORTED } from '../data/players';
 import { useGame } from '../state/GameContext';
 import { normalizeText } from '../utils/text';
@@ -64,6 +65,7 @@ export function PlayerSelection() {
                 }
                 title="Quitar de la selección"
               >
+                <PlayerAvatar id={id} />
                 {PLAYERS_BY_ID[id]?.name}
                 <span className="selected-chip__x" aria-hidden>
                   ×
@@ -90,6 +92,7 @@ export function PlayerSelection() {
               }
               aria-pressed={isSelected}
             >
+              <PlayerAvatar id={player.id} />
               <span className="player-chip__name">{player.name}</span>
               {isSelected && (
                 <span className="player-chip__check" aria-hidden>

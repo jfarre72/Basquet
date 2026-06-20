@@ -14,7 +14,7 @@ import { LoginScreen } from './components/LoginScreen';
 import { PlayerSelection } from './components/PlayerSelection';
 import { TeamBuilder } from './components/TeamBuilder';
 import { applyPlayerNames } from './data/players';
-import { fetchPlayerNames } from './lib/avatars';
+import { fetchAvatars, fetchPlayerNames, setAvatarPaths } from './lib/avatars';
 import { useAuth } from './state/AuthContext';
 import { useGame } from './state/GameContext';
 import type { Section } from './types';
@@ -28,9 +28,11 @@ export default function App() {
   useEffect(() => {
     if (status !== 'authed') return;
     let cancelled = false;
-    fetchPlayerNames()
-      .then((rows) => {
-        if (!cancelled) applyPlayerNames(rows);
+    Promise.all([fetchPlayerNames(), fetchAvatars()])
+      .then(([rows, avatars]) => {
+        if (cancelled) return;
+        applyPlayerNames(rows);
+        setAvatarPaths(avatars);
       })
       .catch(() => {
         /* si falla, se usa el roster local por defecto */

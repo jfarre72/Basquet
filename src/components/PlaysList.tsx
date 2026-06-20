@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { PlayerAvatar } from './PlayerAvatar';
 import { PLAYERS_BY_ID } from '../data/players';
 import { useGame } from '../state/GameContext';
 import { formatTime } from '../utils/format';
@@ -27,6 +28,7 @@ export function PlaysList() {
           return (
             <div key={play.id} className="play-row">
               <span className="play-row__minute">{play.minute}'</span>
+              <PlayerAvatar id={play.playerId} size="md" />
               <div className="play-row__main">
                 <span className="play-row__player">
                   {player?.name ?? `Jugador #${play.playerId}`}
@@ -127,6 +129,7 @@ function EditPlayModal({ play, onClose, onSave }: EditModalProps) {
             >
               {teamPlayers.map((id) => (
                 <option key={id} value={id}>
+                  <PlayerAvatar id={id} />
                   {PLAYERS_BY_ID[id]?.name ?? `#${id}`}
                 </option>
               ))}

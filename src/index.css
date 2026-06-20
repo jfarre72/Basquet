@@ -1895,6 +1895,13 @@ main.app__main {
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.podium-row__name .player-avatar {
+  width: 26px;
+  height: 26px;
 }
 .podium-row__meta {
   font-size: 0.72rem;
@@ -2736,6 +2743,13 @@ main.app__main {
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.hof-honoree__name .player-avatar {
+  width: 20px;
+  height: 20px;
 }
 .hof-honoree__sub {
   font-size: 0.62rem;
@@ -3829,4 +3843,41 @@ main.app__main {
   justify-content: flex-end;
   gap: 8px;
   margin-top: 6px;
+}
+
+/* ===== Foto del jugador al lado del nombre (en podios, tablas, etc.) ===== */
+.player-avatar {
+  border-radius: 50%;
+  object-fit: cover;
+  flex: 0 0 auto;
+  background: var(--surface);
+  border: 1px solid var(--border-strong);
+  vertical-align: middle;
+}
+.player-avatar--sm {
+  width: 22px;
+  height: 22px;
+}
+.player-avatar--md {
+  width: 30px;
+  height: 30px;
+}
+
+/* Alinear la foto del jugador dentro de chips/pills/listas */
+.pool-card__name,
+.team-pill__name,
+.draft-team__chip,
+.modal__player-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+.draft-team__chip .player-avatar {
+  width: 18px;
+  height: 18px;
+}
+.player-chip .player-avatar,
+.selected-chip .player-avatar {
+  width: 20px;
+  height: 20px;
 }
