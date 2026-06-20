@@ -11,7 +11,10 @@ interface CareerStat {
   PE: number;
   PP: number;
   puntos: number;
+  dobles: number;
+  triples: number;
   ppp: number | null;
+  ovr: number;
 }
 
 function computeCareer(mps: DbMatchPlayer[]): Map<number, CareerStat> {
@@ -20,12 +23,24 @@ function computeCareer(mps: DbMatchPlayer[]): Map<number, CareerStat> {
   for (const mp of mps) {
     const s =
       map.get(mp.player_id) ??
-      { PJ: 0, PG: 0, PE: 0, PP: 0, puntos: 0, ppp: null };
+      {
+        PJ: 0,
+        PG: 0,
+        PE: 0,
+        PP: 0,
+        puntos: 0,
+        dobles: 0,
+        triples: 0,
+        ppp: null,
+        ovr: 0,
+      };
     s.PJ += 1;
     if (mp.outcome === 'Gana') s.PG += 1;
     else if (mp.outcome === 'Empate') s.PE += 1;
     else if (mp.outcome === 'Pierde') s.PP += 1;
     s.puntos += mp.points ?? 0;
+    s.dobles += mp.doubles ?? 0;
+    s.triples += mp.triples ?? 0;
     if (mp.points != null) {
       withPoints.set(mp.player_id, (withPoints.get(mp.player_id) ?? 0) + 1);
     }
@@ -34,6 +49,10 @@ function computeCareer(mps: DbMatchPlayer[]): Map<number, CareerStat> {
   for (const [id, s] of map) {
     const n = withPoints.get(id) ?? 0;
     s.ppp = n > 0 ? s.puntos / n : null;
+    // OVR estilo carta: combina puntos por partido y % de victorias.
+    const winRate = s.PJ > 0 ? s.PG / s.PJ : 0;
+    const raw = 52 + (s.ppp ?? 0) * 2.2 + winRate * 30;
+    s.ovr = Math.max(40, Math.min(99, Math.round(raw)));
   }
   return map;
 }
@@ -122,32 +141,46 @@ export function Avatares() {
           {cards.map((p) => {
             const name = PLAYERS_BY_ID[p.id]?.name ?? p.name;
             const st = career.get(p.id);
+            const stats: { label: string; value: string | number }[] = [
+              { label: 'PJ', value: st?.PJ ?? 0 },
+              { label: 'PG', value: st?.PG ?? 0 },
+              { label: 'PP', value: st?.PP ?? 0 },
+              { label: 'PTS', value: st?.puntos ?? 0 },
+              { label: '2P', value: st?.dobles ?? 0 },
+              { label: '3P', value: st?.triples ?? 0 },
+            ];
             return (
-              <article className="pcard" key={p.id}>
-                <div className="pcard__photo">
-                  <img src={getAvatarUrl(avatars[p.id])} alt={name} loading="lazy" />
+              <article className="futcard" key={p.id}>
+                <span className="futcard__rays" aria-hidden />
+                <span className="futcard__shine" aria-hidden />
+
+                <div className="futcard__ovr">
+                  <b>{st?.ovr ?? '—'}</b>
+                  <span>OVR</span>
+                  <i aria-hidden>🏀</i>
                 </div>
-                <span className="pcard__shine" aria-hidden />
-                {st && (
-                  <span className="pcard__rec" aria-hidden>
-                    {st.PG}-{st.PE}-{st.PP}
-                  </span>
-                )}
-                <div className="pcard__info">
-                  <div className="pcard__name">{name}</div>
-                  <div className="pcard__stats">
-                    <div className="pcard__stat">
-                      <b>{st?.PJ ?? 0}</b>
-                      <span>PJ</span>
-                    </div>
-                    <div className="pcard__stat">
-                      <b>{st?.puntos ?? 0}</b>
-                      <span>PTS</span>
-                    </div>
-                    <div className="pcard__stat">
-                      <b>{st?.ppp != null ? st.ppp.toFixed(1) : '—'}</b>
-                      <span>PPP</span>
-                    </div>
+
+                <div className="futcard__photo">
+                  <img
+                    src={getAvatarUrl(avatars[p.id])}
+                    alt={name}
+                    loading="lazy"
+                  />
+                </div>
+
+                <div className="futcard__body">
+                  <div className="futcard__name">{name}</div>
+                  <div className="futcard__line" aria-hidden />
+                  <div className="futcard__stats">
+                    {stats.map((s) => (
+                      <div className="futcard__stat" key={s.label}>
+                        <b>{s.value}</b>
+                        <span>{s.label}</span>
+                      </div>
+                    ))}
+                  </div>
+                  <div className="futcard__club" aria-hidden>
+                    🏀 BASQUET · MARTES
                   </div>
                 </div>
               </article>

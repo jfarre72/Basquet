@@ -4265,132 +4265,185 @@ html.home-locked .app__header {
   height: 20px;
 }
 
-/* ===== Avatares (cartas de jugador) ===== */
+/* ===== Avatares: cartas estilo FUT ===== */
 .pcard-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
-  gap: 14px;
+  grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+  gap: 16px;
 }
 @media (min-width: 640px) {
   .pcard-grid {
-    grid-template-columns: repeat(auto-fill, minmax(170px, 1fr));
+    grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
   }
 }
-.pcard {
+
+.futcard {
   position: relative;
-  aspect-ratio: 3 / 4;
-  border-radius: var(--radius-lg);
+  aspect-ratio: 0.72;
+  border-radius: 14px 14px 18px 18px;
   overflow: hidden;
-  background: linear-gradient(160deg, var(--surface-2), var(--surface));
-  border: 1px solid var(--accent-line);
-  box-shadow: var(--shadow);
   isolation: isolate;
-  transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+  color: #4a3206;
+  /* Dorado base */
+  background:
+    linear-gradient(160deg, #fbe7a1 0%, #e9c45f 30%, #d6a93c 60%, #b8862a 100%);
+  border: 1px solid #b8862a;
+  box-shadow: 0 14px 36px rgba(0, 0, 0, 0.45);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
 }
-.pcard:hover {
-  transform: translateY(-4px);
-  border-color: var(--accent);
-  box-shadow: 0 18px 44px rgba(0, 0, 0, 0.5), 0 0 28px rgba(249, 115, 22, 0.28);
+.futcard:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 20px 48px rgba(0, 0, 0, 0.55), 0 0 30px rgba(216, 169, 60, 0.5);
 }
-.pcard__photo {
+
+/* Rayos de sol detrás de la foto */
+.futcard__rays {
+  position: absolute;
+  top: -28%;
+  left: 50%;
+  width: 150%;
+  height: 95%;
+  transform: translateX(-50%);
+  z-index: 0;
+  pointer-events: none;
+  background: repeating-conic-gradient(
+    from 0deg at 50% 70%,
+    rgba(255, 255, 255, 0.34) 0deg 5deg,
+    rgba(255, 255, 255, 0) 5deg 11deg
+  );
+  -webkit-mask-image: radial-gradient(70% 70% at 50% 40%, #000 55%, transparent 80%);
+  mask-image: radial-gradient(70% 70% at 50% 40%, #000 55%, transparent 80%);
+  opacity: 0.8;
+}
+.futcard__shine {
   position: absolute;
   inset: 0;
-  z-index: 0;
+  z-index: 4;
+  pointer-events: none;
+  background: linear-gradient(
+    120deg,
+    transparent 42%,
+    rgba(255, 255, 255, 0.22) 50%,
+    transparent 58%
+  );
 }
-.pcard__photo img {
+
+/* OVR arriba a la izquierda */
+.futcard__ovr {
+  position: absolute;
+  top: 12px;
+  left: 14px;
+  z-index: 3;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  line-height: 0.92;
+  text-shadow: 0 1px 1px rgba(255, 255, 255, 0.35);
+}
+.futcard__ovr b {
+  font-size: 2.1rem;
+  font-weight: 900;
+  letter-spacing: -0.02em;
+  color: #3a2705;
+}
+.futcard__ovr span {
+  font-size: 0.7rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  color: #4a3206;
+}
+.futcard__ovr i {
+  margin-top: 4px;
+  font-size: 0.85rem;
+  font-style: normal;
+  filter: saturate(1.1);
+}
+
+/* Foto del jugador, recortada al rostro */
+.futcard__photo {
+  position: absolute;
+  top: 4%;
+  left: 0;
+  right: 0;
+  height: 60%;
+  z-index: 1;
+}
+.futcard__photo img {
   width: 100%;
   height: 100%;
   object-fit: cover;
   object-position: center top;
+  -webkit-mask-image: linear-gradient(180deg, #000 78%, transparent 100%);
+  mask-image: linear-gradient(180deg, #000 78%, transparent 100%);
 }
-/* Degradado para que el nombre y stats se lean sobre la foto */
-.pcard::after {
-  content: '';
-  position: absolute;
-  inset: 0;
-  z-index: 1;
-  background: linear-gradient(
-    180deg,
-    rgba(7, 11, 20, 0) 38%,
-    rgba(7, 11, 20, 0.55) 64%,
-    rgba(7, 11, 20, 0.94) 100%
-  );
-  pointer-events: none;
-}
-.pcard__shine {
-  position: absolute;
-  inset: 0;
-  z-index: 2;
-  pointer-events: none;
-  background: linear-gradient(
-    120deg,
-    transparent 40%,
-    rgba(255, 255, 255, 0.10) 50%,
-    transparent 60%
-  );
-}
-.pcard__rec {
-  position: absolute;
-  top: 8px;
-  right: 8px;
-  z-index: 3;
-  padding: 3px 8px;
-  border-radius: 999px;
-  font-size: 0.62rem;
-  font-weight: 800;
-  letter-spacing: 0.04em;
-  color: var(--text);
-  background: rgba(7, 11, 20, 0.6);
-  border: 1px solid var(--accent-line);
-  backdrop-filter: blur(4px);
-}
-.pcard__info {
+
+/* Zona inferior: nombre + stats */
+.futcard__body {
   position: absolute;
   left: 0;
   right: 0;
   bottom: 0;
   z-index: 3;
-  padding: 12px 12px 12px;
+  height: 40%;
+  padding: 4px 12px 12px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 4px;
 }
-.pcard__name {
+.futcard__name {
   font-weight: 900;
-  font-style: italic;
-  font-size: 1.05rem;
-  letter-spacing: -0.01em;
+  font-size: 1.1rem;
+  letter-spacing: 0.01em;
   text-transform: uppercase;
-  color: #fff;
-  text-shadow: 0 2px 8px rgba(0, 0, 0, 0.6);
-  line-height: 1;
-  margin-bottom: 8px;
+  color: #3a2705;
+  max-width: 100%;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
 }
-.pcard__stats {
+.futcard__line {
+  width: 86%;
+  height: 1px;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(74, 50, 6, 0.55),
+    transparent
+  );
+  margin: 2px 0 4px;
+}
+.futcard__stats {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 4px;
+  grid-template-columns: repeat(6, 1fr);
+  gap: 2px;
+  width: 100%;
 }
-.pcard__stat {
+.futcard__stat {
   display: flex;
-  flex-direction: column;
+  flex-direction: column-reverse;
   align-items: center;
-  gap: 1px;
-  padding: 5px 2px;
-  border-radius: var(--radius-sm);
-  background: rgba(7, 11, 20, 0.45);
-  border: 1px solid rgba(255, 255, 255, 0.06);
+  line-height: 1.05;
 }
-.pcard__stat b {
-  font-size: 0.95rem;
+.futcard__stat b {
+  font-size: 0.92rem;
   font-weight: 900;
-  color: var(--accent-strong);
+  color: #2e2004;
   font-variant-numeric: tabular-nums;
 }
-.pcard__stat span {
-  font-size: 0.55rem;
-  font-weight: 700;
-  letter-spacing: 0.06em;
-  color: var(--text-muted);
+.futcard__stat span {
+  font-size: 0.5rem;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  color: #5a3f0a;
   text-transform: uppercase;
+}
+.futcard__club {
+  margin-top: 6px;
+  font-size: 0.58rem;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  color: #4a3206;
+  opacity: 0.9;
 }
