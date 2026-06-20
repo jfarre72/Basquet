@@ -1,6 +1,18 @@
+import { removeBgBlob } from './cutout';
 import { supabase } from './supabase';
 
 const BUCKET = 'avatars';
+
+/** Ruta del recorte sin fondo asociado a una foto de avatar. */
+export function cutoutPathFor(avatarPath: string): string {
+  const base = avatarPath.replace(/\.[^.]+$/, '');
+  return `cutouts/${base}.png`;
+}
+
+/** URL pública del recorte sin fondo (puede no existir todavía). */
+export function getCutoutUrl(avatarPath: string): string {
+  return getAvatarUrl(cutoutPathFor(avatarPath));
+}
 
 export interface DbPlayerAvatar {
   id: number;
@@ -93,5 +105,19 @@ export async function uploadAvatar(
     await supabase.storage.from(BUCKET).remove([path]);
     throw error;
   }
+
+  // Genera y guarda automáticamente la versión sin fondo (silueta). Es
+  // best-effort: si falla, la foto igual queda subida.
+  try {
+    const cutout = await removeBgBlob(file);
+    await supabase.storage.from(BUCKET).upload(cutoutPathFor(path), cutout, {
+      cacheControl: '3600',
+      upsert: true,
+      contentType: 'image/png',
+    });
+  } catch {
+    /* el recorte se intentará en el cliente al ver la tarjeta */
+  }
+
   return path;
 }

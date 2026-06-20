@@ -4324,9 +4324,10 @@ html.home-locked .app__header {
   overflow: hidden;
   isolation: isolate;
   color: #4a3206;
-  /* Contorno tipo FUT (esquinas en ángulo). */
+  /* Contorno tipo FUT con esquinas suaves. */
+  border-radius: 14px;
   clip-path: polygon(
-    7% 0, 93% 0, 100% 5%, 100% 90%, 86% 100%, 14% 100%, 0 90%, 0 5%
+    4% 0, 96% 0, 100% 4%, 100% 93%, 90% 100%, 10% 100%, 0 93%, 0 4%
   );
   /* Dorado base */
   background:
@@ -4346,12 +4347,13 @@ html.home-locked .app__header {
   inset: 7px;
   z-index: 5;
   pointer-events: none;
+  border-radius: 10px;
   clip-path: polygon(
-    7% 0, 93% 0, 100% 5%, 100% 90%, 86% 100%, 14% 100%, 0 90%, 0 5%
+    4% 0, 96% 0, 100% 4%, 100% 93%, 90% 100%, 10% 100%, 0 93%, 0 4%
   );
   box-shadow:
-    inset 0 0 0 1.5px rgba(120, 82, 18, 0.55),
-    inset 0 0 0 3px rgba(255, 240, 190, 0.35);
+    inset 0 0 0 1.5px rgba(120, 82, 18, 0.5),
+    inset 0 0 0 3px rgba(255, 240, 190, 0.3);
 }
 
 /* Facetas de luz/sombra para el dorado low-poly. */
@@ -4360,20 +4362,21 @@ html.home-locked .app__header {
   inset: 0;
   z-index: 0;
   pointer-events: none;
+  filter: blur(6px);
   background:
     linear-gradient(
       118deg,
-      rgba(255, 255, 255, 0.22) 0 16%,
+      rgba(255, 255, 255, 0.14) 0 16%,
       transparent 16% 38%,
-      rgba(0, 0, 0, 0.07) 38% 58%,
+      rgba(0, 0, 0, 0.05) 38% 58%,
       transparent 58% 80%,
-      rgba(255, 255, 255, 0.14) 80%
+      rgba(255, 255, 255, 0.09) 80%
     ),
     linear-gradient(
       242deg,
-      rgba(255, 255, 255, 0.16) 0 20%,
+      rgba(255, 255, 255, 0.10) 0 20%,
       transparent 20% 52%,
-      rgba(0, 0, 0, 0.06) 52% 74%,
+      rgba(0, 0, 0, 0.04) 52% 74%,
       transparent 74%
     );
 }
@@ -4441,13 +4444,13 @@ html.home-locked .app__header {
   filter: saturate(1.1);
 }
 
-/* Foto del jugador */
+/* Foto del jugador (pecho · hombros · cara, alineada abajo) */
 .futcard__photo {
   position: absolute;
-  top: 3%;
+  top: 5%;
   left: 0;
   right: 0;
-  height: 64%;
+  height: 53%;
   z-index: 1;
   display: flex;
   align-items: flex-end;
@@ -4458,33 +4461,18 @@ html.home-locked .app__header {
   height: 100%;
   object-fit: cover;
   object-position: center top;
-  -webkit-mask-image: linear-gradient(180deg, #000 78%, transparent 100%);
-  mask-image: linear-gradient(180deg, #000 78%, transparent 100%);
+  -webkit-mask-image: linear-gradient(180deg, #000 80%, transparent 100%);
+  mask-image: linear-gradient(180deg, #000 80%, transparent 100%);
 }
 /* Silueta recortada: se ve entera, sin recorte, con sombra para destacar. */
 .futcard__photo.is-cut img {
-  width: 96%;
+  width: 98%;
   height: 100%;
   object-fit: contain;
   object-position: center bottom;
   -webkit-mask-image: none;
   mask-image: none;
   filter: drop-shadow(0 8px 10px rgba(0, 0, 0, 0.45));
-}
-.futcard__cutting {
-  position: absolute;
-  bottom: 6px;
-  left: 50%;
-  transform: translateX(-50%);
-  z-index: 2;
-  padding: 3px 9px;
-  border-radius: 999px;
-  font-size: 0.58rem;
-  font-weight: 800;
-  letter-spacing: 0.04em;
-  color: #4a3206;
-  background: rgba(255, 248, 224, 0.8);
-  border: 1px solid rgba(120, 82, 18, 0.4);
 }
 
 /* Zona inferior: nombre + stats */
@@ -4494,18 +4482,20 @@ html.home-locked .app__header {
   right: 0;
   bottom: 0;
   z-index: 3;
-  height: 38%;
-  padding: 4px 12px 11px;
+  height: 40%;
+  padding: 6px 12px 11px;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: flex-end;
   gap: 4px;
+  /* Placa opaca para que la foto no se superponga con el nombre. */
   background: linear-gradient(
     180deg,
-    rgba(150, 104, 28, 0) 0%,
-    rgba(150, 104, 28, 0.25) 40%,
-    rgba(120, 82, 18, 0.45) 100%
+    rgba(220, 176, 78, 0) 0%,
+    rgba(214, 169, 64, 0.85) 26%,
+    rgba(196, 150, 50, 0.96) 52%,
+    #c89a36 100%
   );
 }
 .futcard__name {

@@ -1,6 +1,6 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { PLAYERS_BY_ID, PLAYERS_SORTED } from '../data/players';
-import { fetchAvatars, getAvatarUrl } from '../lib/avatars';
+import { fetchAvatars, getAvatarUrl, getCutoutUrl } from '../lib/avatars';
 import { getCutout } from '../lib/cutout';
 import { fetchSeasonData, type DbMatchPlayer } from '../lib/queries';
 import { SUPABASE_CONFIGURED } from '../lib/supabase';
@@ -57,14 +57,45 @@ function computeCareer(mps: DbMatchPlayer[]): Map<number, CareerStat> {
   return map;
 }
 
+/**
+ * Foto de la tarjeta: usa la silueta sin fondo guardada al subir la foto.
+ * Si todavía no existe (fotos viejas), la recorta en el cliente en silencio;
+ * si todo falla, muestra la foto original.
+ */
+function FutPhoto({ path, name }: { path: string; name: string }) {
+  const [src, setSrc] = useState(() => getCutoutUrl(path));
+  const [stage, setStage] = useState<'stored' | 'client' | 'original'>(
+    'stored',
+  );
+
+  const handleError = async () => {
+    if (stage === 'stored') {
+      setStage('client');
+      try {
+        setSrc(await getCutout(path, getAvatarUrl(path)));
+      } catch {
+        setStage('original');
+        setSrc(getAvatarUrl(path));
+      }
+    } else if (stage === 'client') {
+      setStage('original');
+      setSrc(getAvatarUrl(path));
+    }
+  };
+
+  return (
+    <div className={`futcard__photo${stage === 'original' ? '' : ' is-cut'}`}>
+      <img src={src} alt={name} loading="lazy" onError={() => void handleError()} />
+    </div>
+  );
+}
+
 export function Tarjetas() {
   const [avatars, setAvatars] = useState<Record<number, string>>({});
   const [career, setCareer] = useState<Map<number, CareerStat>>(new Map());
-  const [cutouts, setCutouts] = useState<Record<number, string>>({});
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [search, setSearch] = useState('');
-  const processing = useRef<Set<number>>(new Set());
 
   useEffect(() => {
     if (!SUPABASE_CONFIGURED) {
@@ -98,31 +129,6 @@ export function Tarjetas() {
       !q ? true : normalizeText(PLAYERS_BY_ID[p.id]?.name ?? p.name).includes(q),
     );
   }, [avatars, search]);
-
-  // Recorta el fondo de cada foto (secuencial para no saturar el dispositivo).
-  useEffect(() => {
-    let cancelled = false;
-    (async () => {
-      for (const p of cards) {
-        if (cancelled) return;
-        if (cutouts[p.id] || processing.current.has(p.id)) continue;
-        const path = avatars[p.id];
-        if (!path) continue;
-        processing.current.add(p.id);
-        try {
-          const url = await getCutout(path, getAvatarUrl(path));
-          if (!cancelled) setCutouts((prev) => ({ ...prev, [p.id]: url }));
-        } catch {
-          /* si falla el recorte, la tarjeta usa la foto original */
-        } finally {
-          processing.current.delete(p.id);
-        }
-      }
-    })();
-    return () => {
-      cancelled = true;
-    };
-  }, [cards, avatars, cutouts]);
 
   const totalConFoto = Object.keys(avatars).length;
 
@@ -168,8 +174,6 @@ export function Tarjetas() {
           {cards.map((p) => {
             const name = PLAYERS_BY_ID[p.id]?.name ?? p.name;
             const st = career.get(p.id);
-            const cut = cutouts[p.id];
-            const ready = Boolean(cut);
             const stats: { label: string; value: string | number }[] = [
               { label: 'PJ', value: st?.PJ ?? 0 },
               { label: 'PG', value: st?.PG ?? 0 },
@@ -189,18 +193,7 @@ export function Tarjetas() {
                   <i aria-hidden>🏀</i>
                 </div>
 
-                <div className={`futcard__photo${ready ? ' is-cut' : ''}`}>
-                  <img
-                    src={cut ?? getAvatarUrl(avatars[p.id])}
-                    alt={name}
-                    loading="lazy"
-                  />
-                  {!ready && (
-                    <span className="futcard__cutting" aria-hidden>
-                      recortando…
-                    </span>
-                  )}
-                </div>
+                <FutPhoto path={avatars[p.id]} name={name} />
 
                 <span className="futcard__shine" aria-hidden />
 

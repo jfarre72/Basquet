@@ -7,6 +7,18 @@
 
 const memCache = new Map<string, string>();
 
+/**
+ * Recorta el fondo de una imagen (File/Blob o URL) y devuelve un PNG con
+ * transparencia. Carga perezosa: la librería (y su modelo ~24MB) solo se baja
+ * la primera vez que se usa.
+ */
+export async function removeBgBlob(input: Blob | string): Promise<Blob> {
+  const { removeBackground } = await import('@imgly/background-removal');
+  return removeBackground(input, {
+    output: { format: 'image/png', quality: 0.8 },
+  });
+}
+
 function storageKey(path: string): string {
   return `cutout:${path}`;
 }
@@ -38,11 +50,7 @@ export async function getCutout(path: string, srcUrl: string): Promise<string> {
     /* localStorage no disponible: seguimos sin cache persistente */
   }
 
-  // Carga perezosa: la librería (y su modelo) solo se baja al usar Tarjetas.
-  const { removeBackground } = await import('@imgly/background-removal');
-  const blob = await removeBackground(srcUrl, {
-    output: { format: 'image/png', quality: 0.8 },
-  });
+  const blob = await removeBgBlob(srcUrl);
   const dataUrl = await blobToDataUrl(blob);
   memCache.set(path, dataUrl);
   try {
