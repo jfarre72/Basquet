@@ -4324,6 +4324,8 @@ html.home-locked .app__header {
   overflow: hidden;
   isolation: isolate;
   color: #4a3206;
+  /* Tipografía relativa al ancho de la tarjeta: escala en la vista completa. */
+  container-type: inline-size;
   /* Esquinas suaves; inferiores más redondeadas. */
   border-radius: 16px 16px 24px 24px;
   /* Dorado base */
@@ -4410,41 +4412,43 @@ html.home-locked .app__header {
 /* OVR arriba a la izquierda */
 .futcard__ovr {
   position: absolute;
-  top: 12px;
-  left: 14px;
+  top: 5cqw;
+  left: 6cqw;
   z-index: 3;
   display: flex;
   flex-direction: column;
   align-items: center;
-  line-height: 0.92;
+  line-height: 0.9;
   text-shadow: 0 1px 1px rgba(255, 255, 255, 0.35);
 }
 .futcard__ovr b {
-  font-size: 2.1rem;
+  font-size: 24cqw;
   font-weight: 900;
   letter-spacing: -0.02em;
   color: #3a2705;
 }
 .futcard__ovr span {
-  font-size: 0.7rem;
+  font-size: 7cqw;
   font-weight: 800;
-  letter-spacing: 0.08em;
+  letter-spacing: 0.06em;
   color: #4a3206;
 }
-.futcard__ovr i {
-  margin-top: 4px;
-  font-size: 0.85rem;
+.futcard__ovr em {
+  margin-top: 2.5cqw;
+  font-size: 9cqw;
   font-style: normal;
-  filter: saturate(1.1);
+  font-weight: 900;
+  letter-spacing: 0.02em;
+  color: #2e2004;
 }
 
 /* Foto del jugador (pecho · hombros · cara, alineada abajo) */
 .futcard__photo {
   position: absolute;
-  top: 5%;
+  top: 4%;
   left: 0;
   right: 0;
-  height: 53%;
+  height: 50%;
   z-index: 1;
   display: flex;
   align-items: flex-end;
@@ -4476,13 +4480,13 @@ html.home-locked .app__header {
   right: 0;
   bottom: 0;
   z-index: 3;
-  height: 40%;
+  height: 44%;
   padding: 6px 12px 11px;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: flex-end;
-  gap: 4px;
+  gap: 3px;
   /* Placa opaca para que la foto no se superponga con el nombre. */
   background: linear-gradient(
     180deg,
@@ -4494,7 +4498,7 @@ html.home-locked .app__header {
 }
 .futcard__name {
   font-weight: 900;
-  font-size: 1.1rem;
+  font-size: 11cqw;
   letter-spacing: 0.01em;
   text-transform: uppercase;
   color: #3a2705;
@@ -4502,6 +4506,13 @@ html.home-locked .app__header {
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+}
+.futcard__bio {
+  margin-top: -1cqw;
+  font-size: 5.4cqw;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  color: #5a3f0a;
 }
 .futcard__line {
   width: 86%;
@@ -4527,21 +4538,21 @@ html.home-locked .app__header {
   line-height: 1.05;
 }
 .futcard__stat b {
-  font-size: 0.92rem;
+  font-size: 10cqw;
   font-weight: 900;
   color: #2e2004;
   font-variant-numeric: tabular-nums;
 }
 .futcard__stat span {
-  font-size: 0.5rem;
+  font-size: 5cqw;
   font-weight: 800;
   letter-spacing: 0.04em;
   color: #5a3f0a;
   text-transform: uppercase;
 }
 .futcard__club {
-  margin-top: 6px;
-  font-size: 0.58rem;
+  margin-top: 4cqw;
+  font-size: 5.2cqw;
   font-weight: 800;
   letter-spacing: 0.06em;
   color: #4a3206;
@@ -4584,4 +4595,25 @@ html.home-locked .app__header {
   align-items: center;
   justify-content: center;
   backdrop-filter: blur(6px);
+}
+
+/* Formulario de ficha del jugador (posición/altura/mano) */
+.meta-form {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin: 4px 0 8px;
+  text-align: left;
+}
+.meta-field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.meta-field > span {
+  font-size: 0.78rem;
+  font-weight: 800;
+  letter-spacing: 0.02em;
+  color: var(--text-muted);
+  text-transform: uppercase;
 }

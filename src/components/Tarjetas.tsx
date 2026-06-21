@@ -7,6 +7,12 @@ import {
   getCutoutUrl,
 } from '../lib/avatars';
 import { fetchSeasonData, type DbMatchPlayer } from '../lib/queries';
+import {
+  defaultMeta,
+  fetchMeta,
+  handLabel,
+  type PlayerMeta,
+} from '../lib/playerMeta';
 import { SUPABASE_CONFIGURED } from '../lib/supabase';
 import { normalizeText } from '../utils/text';
 
@@ -105,14 +111,22 @@ interface CardData {
   name: string;
   path: string;
   ovr: number | '—';
+  meta: PlayerMeta;
   stats: { label: string; value: string | number }[];
 }
 
-function toCard(id: number, name: string, path: string, st?: CareerStat): CardData {
+function toCard(
+  id: number,
+  name: string,
+  path: string,
+  meta: PlayerMeta,
+  st?: CareerStat,
+): CardData {
   return {
     id,
     name,
     path,
+    meta,
     ovr: st?.ovr ?? '—',
     stats: [
       { label: 'PJ', value: st?.PJ ?? 0 },
@@ -149,7 +163,7 @@ function FutCard({
       <div className="futcard__ovr">
         <b>{data.ovr}</b>
         <span>OVR</span>
-        <i aria-hidden>🏀</i>
+        <em>{data.meta.position}</em>
       </div>
 
       <FutPhoto path={data.path} name={data.name} />
@@ -158,6 +172,9 @@ function FutCard({
 
       <div className="futcard__body">
         <div className="futcard__name">{data.name}</div>
+        <div className="futcard__bio">
+          {data.meta.heightCm} CM · {handLabel(data.meta.hand)}
+        </div>
         <div className="futcard__line" aria-hidden />
         <div className="futcard__stats">
           {data.stats.map((s) => (
@@ -178,6 +195,7 @@ function FutCard({
 export function Tarjetas() {
   const [avatars, setAvatars] = useState<Record<number, string>>({});
   const [career, setCareer] = useState<Map<number, CareerStat>>(new Map());
+  const [metas, setMetas] = useState<Record<number, PlayerMeta>>({});
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [search, setSearch] = useState('');
@@ -193,11 +211,19 @@ export function Tarjetas() {
     let cancelled = false;
     setLoading(true);
     Promise.all([fetchAvatars(), fetchSeasonData()])
-      .then(([av, season]) => {
+      .then(async ([av, season]) => {
         if (cancelled) return;
         setAvatars(av);
         setCareer(computeCareer(season.matchPlayers));
         setError(null);
+        // Metadatos (posición/altura/mano) de los jugadores con foto.
+        const ids = Object.keys(av).map(Number);
+        const entries = await Promise.all(
+          ids.map(async (id) => [id, await fetchMeta(id)] as const),
+        );
+        if (!cancelled) {
+          setMetas(Object.fromEntries(entries));
+        }
       })
       .catch((e: Error) => {
         if (!cancelled) setError(e.message);
@@ -294,7 +320,13 @@ export function Tarjetas() {
         <div className="pcard-grid">
           {cards.map((p) => {
             const name = PLAYERS_BY_ID[p.id]?.name ?? p.name;
-            const data = toCard(p.id, name, avatars[p.id], career.get(p.id));
+            const data = toCard(
+              p.id,
+              name,
+              avatars[p.id],
+              metas[p.id] ?? defaultMeta(p.id),
+              career.get(p.id),
+            );
             return (
               <FutCard
                 key={p.id}

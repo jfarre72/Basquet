@@ -12,6 +12,14 @@ import {
   uploadAvatar,
 } from '../lib/avatars';
 import { SUPABASE_CONFIGURED } from '../lib/supabase';
+import {
+  defaultMeta,
+  metaExists,
+  POSITIONS,
+  saveMeta,
+  type Hand,
+  type PlayerMeta,
+} from '../lib/playerMeta';
 import { normalizeText } from '../utils/text';
 
 export function Jugadores() {
@@ -24,6 +32,9 @@ export function Jugadores() {
   const [editId, setEditId] = useState<number | null>(null);
   const [nameDraft, setNameDraft] = useState('');
   const [savingName, setSavingName] = useState(false);
+  const [metaId, setMetaId] = useState<number | null>(null);
+  const [metaDraft, setMetaDraft] = useState<PlayerMeta>(() => defaultMeta(0));
+  const [savingMeta, setSavingMeta] = useState(false);
   const fileRef = useRef<HTMLInputElement>(null);
   const pendingPlayerId = useRef<number | null>(null);
 
@@ -85,25 +96,59 @@ export function Jugadores() {
     }
   };
 
+  // Tras confirmar/mantener el nombre, pedimos los datos de ficha (posición,
+  // altura, mano) SOLO la primera vez que el jugador carga su foto.
+  const maybeAskMeta = async (id: number) => {
+    try {
+      if (!(await metaExists(id))) {
+        setMetaDraft(defaultMeta(id));
+        setMetaId(id);
+      }
+    } catch {
+      /* si no se puede chequear, no molestamos */
+    }
+  };
+
+  const closeName = (id: number | null) => {
+    setEditId(null);
+    if (id != null) void maybeAskMeta(id);
+  };
+
   const handleSaveName = async () => {
     if (editId == null) return;
+    const id = editId;
     const next = nameDraft.trim();
-    if (!next || next === nameOf(editId)) {
-      setEditId(null);
+    if (!next || next === nameOf(id)) {
+      closeName(id);
       return;
     }
     setSavingName(true);
     setError(null);
     try {
-      await updatePlayerName(editId, next);
+      await updatePlayerName(id, next);
       // Impacta en todas las tablas: actualizamos el roster en memoria.
-      applyPlayerNames([{ id: editId, name: next }]);
-      setNames((prev) => ({ ...prev, [editId]: next }));
-      setEditId(null);
+      applyPlayerNames([{ id, name: next }]);
+      setNames((prev) => ({ ...prev, [id]: next }));
+      closeName(id);
     } catch (e) {
       setError((e as Error).message);
     } finally {
       setSavingName(false);
+    }
+  };
+
+  const handleSaveMeta = async (skip = false) => {
+    if (metaId == null) return;
+    const id = metaId;
+    setSavingMeta(true);
+    setError(null);
+    try {
+      await saveMeta(id, metaDraft);
+    } catch (e) {
+      if (!skip) setError((e as Error).message);
+    } finally {
+      setSavingMeta(false);
+      setMetaId(null);
     }
   };
 
@@ -187,7 +232,7 @@ export function Jugadores() {
       )}
 
       {editId != null && (
-        <div className="modal-backdrop" onClick={() => setEditId(null)}>
+        <div className="modal-backdrop" onClick={() => closeName(editId)}>
           <div
             className="modal name-modal"
             onClick={(e) => e.stopPropagation()}
@@ -211,7 +256,7 @@ export function Jugadores() {
               <button
                 type="button"
                 className="btn btn--ghost"
-                onClick={() => setEditId(null)}
+                onClick={() => closeName(editId)}
                 disabled={savingName}
               >
                 Mantener
@@ -223,6 +268,91 @@ export function Jugadores() {
                 disabled={savingName || !nameDraft.trim()}
               >
                 {savingName ? 'Guardando…' : 'Guardar nombre'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {metaId != null && (
+        <div className="modal-backdrop" onClick={() => void handleSaveMeta(true)}>
+          <div
+            className="modal name-modal"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <h3 className="name-modal__title">Tu ficha de jugador</h3>
+            <p className="name-modal__sub">
+              Estos datos salen en tu tarjeta. Podés editarlos.
+            </p>
+
+            <div className="meta-form">
+              <label className="meta-field">
+                <span>Posición</span>
+                <select
+                  className="players-search__input"
+                  value={metaDraft.position}
+                  onChange={(e) =>
+                    setMetaDraft((m) => ({ ...m, position: e.target.value }))
+                  }
+                >
+                  {POSITIONS.map((p) => (
+                    <option key={p.code} value={p.code}>
+                      {p.label} ({p.code})
+                    </option>
+                  ))}
+                </select>
+              </label>
+
+              <label className="meta-field">
+                <span>Altura (cm)</span>
+                <input
+                  type="number"
+                  min={150}
+                  max={220}
+                  className="players-search__input"
+                  value={metaDraft.heightCm}
+                  onChange={(e) =>
+                    setMetaDraft((m) => ({
+                      ...m,
+                      heightCm: Number(e.target.value) || m.heightCm,
+                    }))
+                  }
+                />
+              </label>
+
+              <div className="meta-field">
+                <span>Mano hábil</span>
+                <div className="shot-toggle">
+                  {(['derecha', 'izquierda'] as Hand[]).map((h) => (
+                    <button
+                      key={h}
+                      type="button"
+                      className={metaDraft.hand === h ? 'is-active' : ''}
+                      onClick={() => setMetaDraft((m) => ({ ...m, hand: h }))}
+                    >
+                      {h === 'derecha' ? 'Derecha' : 'Izquierda'}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            </div>
+
+            <div className="name-modal__actions">
+              <button
+                type="button"
+                className="btn btn--ghost"
+                onClick={() => void handleSaveMeta(true)}
+                disabled={savingMeta}
+              >
+                Omitir
+              </button>
+              <button
+                type="button"
+                className="btn btn--primary"
+                onClick={() => void handleSaveMeta()}
+                disabled={savingMeta}
+              >
+                {savingMeta ? 'Guardando…' : 'Guardar ficha'}
               </button>
             </div>
           </div>
