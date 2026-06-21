@@ -21,22 +21,10 @@ export function getCutoutUrl(avatarPath: string): string {
  */
 export async function ensureStoredCutout(avatarPath: string): Promise<string> {
   const blob = await removeBgBlob(getAvatarUrl(avatarPath));
-  if (supabase) {
-    try {
-      await supabase.storage
-        .from(BUCKET)
-        .upload(cutoutPathFor(avatarPath), blob, {
-          cacheControl: '3600',
-          upsert: true,
-          contentType: 'image/png',
-        });
-      // Persistido: devolvemos la URL pública (con cache-bust para refrescar).
-      return `${getCutoutUrl(avatarPath)}?t=${Date.now()}`;
-    } catch {
-      /* no se pudo persistir (p. ej. policy): mostramos igual esta sesión */
-    }
-  }
-  return URL.createObjectURL(blob);
+  const ok = await uploadCutout(avatarPath, blob);
+  // Persistido: URL pública con cache-bust. Si no se pudo persistir, se
+  // muestra igual con un objectURL (solo esta sesión).
+  return ok ? `${getCutoutUrl(avatarPath)}?t=${Date.now()}` : URL.createObjectURL(blob);
 }
 
 export interface DbPlayerAvatar {
@@ -131,18 +119,40 @@ export async function uploadAvatar(
     throw error;
   }
 
-  // Genera y guarda automáticamente la versión sin fondo (silueta). Es
-  // best-effort: si falla, la foto igual queda subida.
-  try {
-    const cutout = await removeBgBlob(file);
-    await supabase.storage.from(BUCKET).upload(cutoutPathFor(path), cutout, {
-      cacheControl: '3600',
-      upsert: true,
-      contentType: 'image/png',
-    });
-  } catch {
-    /* el recorte se intentará en el cliente al ver la tarjeta */
-  }
+  // Genera y guarda la silueta sin fondo EN SEGUNDO PLANO (no bloquea el
+  // flujo de subida ni el modal de confirmar nombre).
+  void storeCutoutFromSource(path, file);
 
   return path;
+}
+
+/** Sube un PNG sin fondo a la ruta de cutout. Devuelve true si se persistió. */
+async function uploadCutout(avatarPath: string, blob: Blob): Promise<boolean> {
+  if (!supabase) return false;
+  try {
+    const { error } = await supabase.storage
+      .from(BUCKET)
+      .upload(cutoutPathFor(avatarPath), blob, {
+        cacheControl: '3600',
+        upsert: true,
+        contentType: 'image/png',
+      });
+    return !error;
+  } catch {
+    return false;
+  }
+}
+
+/** Genera la silueta a partir de una foto (File/Blob o URL) y la guarda.
+ *  Best-effort: nunca lanza. */
+export async function storeCutoutFromSource(
+  avatarPath: string,
+  source: Blob | string,
+): Promise<void> {
+  try {
+    const blob = await removeBgBlob(source);
+    await uploadCutout(avatarPath, blob);
+  } catch {
+    /* si falla, la tarjeta lo reintenta al verse */
+  }
 }
