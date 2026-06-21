@@ -14,7 +14,7 @@ import {
 import { SUPABASE_CONFIGURED } from '../lib/supabase';
 import {
   defaultMeta,
-  metaExists,
+  fetchMetaMap,
   POSITIONS,
   saveMeta,
   type Hand,
@@ -22,21 +22,24 @@ import {
 } from '../lib/playerMeta';
 import { normalizeText } from '../utils/text';
 
+interface Draft extends PlayerMeta {
+  name: string;
+}
+
 export function Jugadores() {
   const [avatars, setAvatars] = useState<Record<number, string>>({});
   const [names, setNames] = useState<Record<number, string>>({});
+  const [metas, setMetas] = useState<Record<number, PlayerMeta>>({});
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [search, setSearch] = useState('');
-  const [uploadingId, setUploadingId] = useState<number | null>(null);
+
   const [editId, setEditId] = useState<number | null>(null);
-  const [nameDraft, setNameDraft] = useState('');
-  const [savingName, setSavingName] = useState(false);
-  const [metaId, setMetaId] = useState<number | null>(null);
-  const [metaDraft, setMetaDraft] = useState<PlayerMeta>(() => defaultMeta(0));
-  const [savingMeta, setSavingMeta] = useState(false);
+  const [draft, setDraft] = useState<Draft | null>(null);
+  const [photoFile, setPhotoFile] = useState<File | null>(null);
+  const [photoPreview, setPhotoPreview] = useState<string | null>(null);
+  const [saving, setSaving] = useState(false);
   const fileRef = useRef<HTMLInputElement>(null);
-  const pendingPlayerId = useRef<number | null>(null);
 
   const nameOf = (id: number) =>
     names[id] ?? PLAYERS_BY_ID[id]?.name ?? `#${id}`;
@@ -44,7 +47,9 @@ export function Jugadores() {
   const refresh = async () => {
     try {
       setError(null);
-      setAvatars(await fetchAvatars());
+      const [av, mm] = await Promise.all([fetchAvatars(), fetchMetaMap()]);
+      setAvatars(av);
+      setMetas(mm);
     } catch (e) {
       setError((e as Error).message);
     } finally {
@@ -69,88 +74,73 @@ export function Jugadores() {
     );
   }, [search, names]);
 
-  const openPicker = (playerId: number) => {
-    if (!SUPABASE_CONFIGURED || uploadingId != null) return;
-    pendingPlayerId.current = playerId;
-    fileRef.current?.click();
+  const openEditor = (id: number) => {
+    if (!SUPABASE_CONFIGURED) return;
+    const meta = metas[id] ?? defaultMeta(id);
+    setDraft({ name: nameOf(id), ...meta });
+    setPhotoFile(null);
+    setPhotoPreview(null);
+    setEditId(id);
   };
 
-  const handleFile = async (file: File | null) => {
-    const playerId = pendingPlayerId.current;
-    pendingPlayerId.current = null;
-    if (fileRef.current) fileRef.current.value = '';
-    if (!file || playerId == null) return;
-    setUploadingId(playerId);
-    setError(null);
-    try {
-      const path = await uploadAvatar(playerId, file);
-      setAvatars((prev) => ({ ...prev, [playerId]: path }));
-      setAvatarPath(playerId, path);
-      // Tras cargar la foto, ofrecemos cambiar el nombre.
-      setNameDraft(nameOf(playerId));
-      setEditId(playerId);
-    } catch (e) {
-      setError((e as Error).message);
-    } finally {
-      setUploadingId(null);
-    }
-  };
-
-  // Tras confirmar/mantener el nombre, pedimos los datos de ficha (posición,
-  // altura, mano) SOLO la primera vez que el jugador carga su foto.
-  const maybeAskMeta = async (id: number) => {
-    try {
-      if (!(await metaExists(id))) {
-        setMetaDraft(defaultMeta(id));
-        setMetaId(id);
-      }
-    } catch {
-      /* si no se puede chequear, no molestamos */
-    }
-  };
-
-  const closeName = (id: number | null) => {
+  const closeEditor = () => {
+    if (photoPreview) URL.revokeObjectURL(photoPreview);
+    setPhotoFile(null);
+    setPhotoPreview(null);
+    setDraft(null);
     setEditId(null);
-    if (id != null) void maybeAskMeta(id);
   };
 
-  const handleSaveName = async () => {
-    if (editId == null) return;
+  const pickPhoto = () => fileRef.current?.click();
+
+  const onPhotoPicked = (file: File | null) => {
+    if (fileRef.current) fileRef.current.value = '';
+    if (!file) return;
+    if (photoPreview) URL.revokeObjectURL(photoPreview);
+    setPhotoFile(file);
+    setPhotoPreview(URL.createObjectURL(file));
+  };
+
+  const handleSave = async () => {
+    if (editId == null || draft == null) return;
     const id = editId;
-    const next = nameDraft.trim();
-    if (!next || next === nameOf(id)) {
-      closeName(id);
-      return;
-    }
-    setSavingName(true);
+    setSaving(true);
     setError(null);
     try {
-      await updatePlayerName(id, next);
-      // Impacta en todas las tablas: actualizamos el roster en memoria.
-      applyPlayerNames([{ id, name: next }]);
-      setNames((prev) => ({ ...prev, [id]: next }));
-      closeName(id);
+      // 1) Foto (si se eligió una nueva).
+      if (photoFile) {
+        const path = await uploadAvatar(id, photoFile);
+        setAvatars((prev) => ({ ...prev, [id]: path }));
+        setAvatarPath(id, path);
+      }
+      // 2) Nombre (si cambió).
+      const name = draft.name.trim();
+      if (name && name !== nameOf(id)) {
+        await updatePlayerName(id, name);
+        applyPlayerNames([{ id, name }]);
+        setNames((prev) => ({ ...prev, [id]: name }));
+      }
+      // 3) Ficha (posición / altura / mano).
+      const meta: PlayerMeta = {
+        position: draft.position,
+        heightCm: draft.heightCm,
+        hand: draft.hand,
+      };
+      await saveMeta(id, meta);
+      setMetas((prev) => ({ ...prev, [id]: meta }));
+      closeEditor();
     } catch (e) {
       setError((e as Error).message);
     } finally {
-      setSavingName(false);
+      setSaving(false);
     }
   };
 
-  const handleSaveMeta = async (skip = false) => {
-    if (metaId == null) return;
-    const id = metaId;
-    setSavingMeta(true);
-    setError(null);
-    try {
-      await saveMeta(id, metaDraft);
-    } catch (e) {
-      if (!skip) setError((e as Error).message);
-    } finally {
-      setSavingMeta(false);
-      setMetaId(null);
-    }
-  };
+  const previewSrc = photoPreview
+    ? photoPreview
+    : editId != null && avatars[editId]
+      ? getAvatarUrl(avatars[editId])
+      : null;
 
   return (
     <div className="jugadores">
@@ -158,7 +148,7 @@ export function Jugadores() {
         <div>
           <h2 className="section-head__title">Jugadores</h2>
           <p className="section-head__subtitle">
-            Buscá tu nombre y subí una selfie de tu rostro.
+            Tocá tu nombre para cargar tu ficha y tu foto.
           </p>
         </div>
       </div>
@@ -176,7 +166,7 @@ export function Jugadores() {
         accept="image/*"
         capture="user"
         hidden
-        onChange={(e) => void handleFile(e.target.files?.[0] ?? null)}
+        onChange={(e) => onPhotoPicked(e.target.files?.[0] ?? null)}
       />
 
       <div className="players-search">
@@ -196,20 +186,17 @@ export function Jugadores() {
         <div className="avatars-grid">
           {filtered.map((p) => {
             const path = avatars[p.id];
-            const isUploading = uploadingId === p.id;
             return (
               <button
                 key={p.id}
                 type="button"
                 className="avatar-card"
-                onClick={() => openPicker(p.id)}
-                disabled={!SUPABASE_CONFIGURED || uploadingId != null}
-                title={path ? 'Cambiar foto' : 'Agregar foto'}
+                onClick={() => openEditor(p.id)}
+                disabled={!SUPABASE_CONFIGURED}
+                title={path ? 'Editar ficha' : 'Cargar ficha'}
               >
                 <span className="avatar-card__photo">
-                  {isUploading ? (
-                    <span className="avatar-card__spinner">…</span>
-                  ) : path ? (
+                  {path ? (
                     <img
                       src={getAvatarUrl(path)}
                       alt={nameOf(p.id)}
@@ -231,68 +218,62 @@ export function Jugadores() {
         </div>
       )}
 
-      {editId != null && (
-        <div className="modal-backdrop" onClick={() => closeName(editId)}>
+      {editId != null && draft != null && (
+        <div className="modal-backdrop" onClick={closeEditor}>
           <div
-            className="modal name-modal"
+            className="modal player-edit"
             onClick={(e) => e.stopPropagation()}
           >
-            <h3 className="name-modal__title">¿Querés cambiar el nombre?</h3>
-            <p className="name-modal__sub">
-              El cambio se aplica en todas las tablas y estadísticas.
-            </p>
-            <input
-              type="text"
-              className="players-search__input"
-              value={nameDraft}
-              onChange={(e) => setNameDraft(e.target.value)}
-              autoFocus
-              onKeyDown={(e) => {
-                if (e.key === 'Enter') void handleSaveName();
-              }}
-              aria-label="Nombre del jugador"
-            />
-            <div className="name-modal__actions">
-              <button
-                type="button"
-                className="btn btn--ghost"
-                onClick={() => closeName(editId)}
-                disabled={savingName}
-              >
-                Mantener
-              </button>
-              <button
-                type="button"
-                className="btn btn--primary"
-                onClick={() => void handleSaveName()}
-                disabled={savingName || !nameDraft.trim()}
-              >
-                {savingName ? 'Guardando…' : 'Guardar nombre'}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+            <h3 className="name-modal__title">Ficha del jugador</h3>
 
-      {metaId != null && (
-        <div className="modal-backdrop" onClick={() => void handleSaveMeta(true)}>
-          <div
-            className="modal name-modal"
-            onClick={(e) => e.stopPropagation()}
-          >
-            <h3 className="name-modal__title">Tu ficha de jugador</h3>
-            <p className="name-modal__sub">
-              Estos datos salen en tu tarjeta. Podés editarlos.
-            </p>
+            <button
+              type="button"
+              className="player-edit__photo"
+              onClick={pickPhoto}
+              title="Cargar / cambiar foto"
+            >
+              {previewSrc ? (
+                <img src={previewSrc} alt="" />
+              ) : (
+                <span className="player-edit__photo-plus" aria-hidden>
+                  +
+                </span>
+              )}
+              <span className="player-edit__photo-edit" aria-hidden>
+                📷
+              </span>
+            </button>
+            <button
+              type="button"
+              className="btn btn--ghost player-edit__photo-btn"
+              onClick={pickPhoto}
+            >
+              {avatars[editId] || photoFile ? 'Cambiar foto' : 'Cargar foto'}
+            </button>
 
             <div className="meta-form">
+              <label className="meta-field">
+                <span>Nombre</span>
+                <input
+                  type="text"
+                  className="players-search__input"
+                  value={draft.name}
+                  onChange={(e) =>
+                    setDraft((d) => (d ? { ...d, name: e.target.value } : d))
+                  }
+                  aria-label="Nombre del jugador"
+                />
+              </label>
+
               <label className="meta-field">
                 <span>Posición</span>
                 <select
                   className="players-search__input"
-                  value={metaDraft.position}
+                  value={draft.position}
                   onChange={(e) =>
-                    setMetaDraft((m) => ({ ...m, position: e.target.value }))
+                    setDraft((d) =>
+                      d ? { ...d, position: e.target.value } : d,
+                    )
                   }
                 >
                   {POSITIONS.map((p) => (
@@ -310,12 +291,16 @@ export function Jugadores() {
                   min={150}
                   max={220}
                   className="players-search__input"
-                  value={metaDraft.heightCm}
+                  value={draft.heightCm}
                   onChange={(e) =>
-                    setMetaDraft((m) => ({
-                      ...m,
-                      heightCm: Number(e.target.value) || m.heightCm,
-                    }))
+                    setDraft((d) =>
+                      d
+                        ? {
+                            ...d,
+                            heightCm: Number(e.target.value) || d.heightCm,
+                          }
+                        : d,
+                    )
                   }
                 />
               </label>
@@ -327,8 +312,10 @@ export function Jugadores() {
                     <button
                       key={h}
                       type="button"
-                      className={metaDraft.hand === h ? 'is-active' : ''}
-                      onClick={() => setMetaDraft((m) => ({ ...m, hand: h }))}
+                      className={draft.hand === h ? 'is-active' : ''}
+                      onClick={() =>
+                        setDraft((d) => (d ? { ...d, hand: h } : d))
+                      }
                     >
                       {h === 'derecha' ? 'Derecha' : 'Izquierda'}
                     </button>
@@ -341,18 +328,18 @@ export function Jugadores() {
               <button
                 type="button"
                 className="btn btn--ghost"
-                onClick={() => void handleSaveMeta(true)}
-                disabled={savingMeta}
+                onClick={closeEditor}
+                disabled={saving}
               >
-                Omitir
+                Cancelar
               </button>
               <button
                 type="button"
                 className="btn btn--primary"
-                onClick={() => void handleSaveMeta()}
-                disabled={savingMeta}
+                onClick={() => void handleSave()}
+                disabled={saving || !draft.name.trim()}
               >
-                {savingMeta ? 'Guardando…' : 'Guardar ficha'}
+                {saving ? 'Guardando…' : 'Guardar'}
               </button>
             </div>
           </div>
