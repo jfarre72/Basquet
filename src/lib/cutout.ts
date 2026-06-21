@@ -8,14 +8,53 @@
 const memCache = new Map<string, string>();
 
 /**
- * Recorta el fondo de una imagen (File/Blob o URL) y devuelve un PNG con
- * transparencia. Carga perezosa: la librería (y su modelo ~24MB) solo se baja
- * la primera vez que se usa.
+ * Achica la imagen antes de procesar (mucho más rápido) y la normaliza a un
+ * Blob. Si ya es chica, la deja igual.
  */
-export async function removeBgBlob(input: Blob | string): Promise<Blob> {
+async function downscale(input: Blob | string, max = 640): Promise<Blob> {
+  const blob =
+    typeof input === 'string' ? await (await fetch(input)).blob() : input;
+  try {
+    const bmp = await createImageBitmap(blob);
+    const scale = Math.min(1, max / Math.max(bmp.width, bmp.height));
+    if (scale >= 1) {
+      bmp.close();
+      return blob;
+    }
+    const w = Math.round(bmp.width * scale);
+    const h = Math.round(bmp.height * scale);
+    const canvas = document.createElement('canvas');
+    canvas.width = w;
+    canvas.height = h;
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return blob;
+    ctx.drawImage(bmp, 0, 0, w, h);
+    bmp.close();
+    return await new Promise<Blob>((resolve) =>
+      canvas.toBlob((b) => resolve(b ?? blob), 'image/jpeg', 0.9),
+    );
+  } catch {
+    return blob;
+  }
+}
+
+/**
+ * Recorta el fondo de una imagen (File/Blob o URL) y devuelve un PNG con
+ * transparencia. Optimizado: achica la imagen y usa un modelo más liviano.
+ * Carga perezosa: la librería solo se baja la primera vez que se usa.
+ */
+export async function removeBgBlob(
+  input: Blob | string,
+  onProgress?: (fraction: number) => void,
+): Promise<Blob> {
   const { removeBackground } = await import('@imgly/background-removal');
-  return removeBackground(input, {
+  const small = await downscale(input, 640);
+  return removeBackground(small, {
+    model: 'isnet_fp16', // ~mitad de peso que el modelo por defecto
     output: { format: 'image/png', quality: 0.8 },
+    progress: (_key, current, total) => {
+      if (onProgress && total > 0) onProgress(Math.min(1, current / total));
+    },
   });
 }
 

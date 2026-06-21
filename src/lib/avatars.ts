@@ -119,10 +119,8 @@ export async function uploadAvatar(
     throw error;
   }
 
-  // Genera y guarda la silueta sin fondo EN SEGUNDO PLANO (no bloquea el
-  // flujo de subida ni el modal de confirmar nombre).
-  void storeCutoutFromSource(path, file);
-
+  // La silueta sin fondo se genera aparte (el editor lo hace con barra de
+  // progreso al guardar; las tarjetas hacen backfill si falta).
   return path;
 }
 
@@ -148,9 +146,10 @@ async function uploadCutout(avatarPath: string, blob: Blob): Promise<boolean> {
 export async function storeCutoutFromSource(
   avatarPath: string,
   source: Blob | string,
+  onProgress?: (fraction: number) => void,
 ): Promise<void> {
   try {
-    const blob = await removeBgBlob(source);
+    const blob = await removeBgBlob(source, onProgress);
     await uploadCutout(avatarPath, blob);
   } catch {
     /* si falla, la tarjeta lo reintenta al verse */

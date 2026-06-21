@@ -4620,10 +4620,17 @@ html.home-locked .app__header {
 
 /* Panel de edición de ficha del jugador */
 .player-edit {
+  max-width: 380px;
+  width: calc(100% - 32px);
   display: flex;
   flex-direction: column;
   align-items: center;
   gap: 12px;
+  padding: 20px;
+  overflow-y: auto;
+}
+.player-edit .name-modal__title {
+  margin: 0 0 2px;
 }
 .player-edit__photo {
   position: relative;
@@ -4669,4 +4676,37 @@ html.home-locked .app__header {
 }
 .player-edit .meta-form {
   width: 100%;
+}
+
+/* Barra de progreso al guardar (recorte de fondo) */
+.save-progress {
+  width: 100%;
+  margin-top: 4px;
+}
+.save-progress__label {
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: var(--text-muted);
+  margin-bottom: 6px;
+  text-align: center;
+}
+.save-progress__track {
+  height: 8px;
+  border-radius: 999px;
+  background: var(--surface-3);
+  overflow: hidden;
+}
+.save-progress__bar {
+  height: 100%;
+  border-radius: 999px;
+  background: linear-gradient(90deg, var(--accent), var(--accent-strong));
+  transition: width 0.2s ease;
+}
+.save-progress__bar--indeterminate {
+  width: 40% !important;
+  animation: save-progress-slide 1.1s ease-in-out infinite;
+}
+@keyframes save-progress-slide {
+  0% { margin-left: -40%; }
+  100% { margin-left: 100%; }
 }
