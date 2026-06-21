@@ -302,3 +302,47 @@ export function computeMonthly(
   if (first === -1) return [];
   return buckets.slice(first, last + 1);
 }
+
+export interface TrophyCount {
+  anual: number;
+  apertura: number;
+  clausura: number;
+}
+
+/** ¿Terminó ya el torneo (year, t)? Apertura cierra el 1/jul; clausura y
+ *  anual cierran el 1/ene del año siguiente. Solo entonces hay campeón. */
+function tournamentEnded(year: number, t: Tournament, now: number): boolean {
+  const end =
+    t === 'apertura' ? Date.UTC(year, 6, 1) : Date.UTC(year + 1, 0, 1);
+  return now >= end;
+}
+
+/** Copas por jugador (anual / apertura / clausura), contando solo los
+ *  torneos que ya terminaron. El campeón es el de mayor puntaje. */
+export function computeTrophies(
+  matches: DbMatch[],
+  matchPlayers: DbMatchPlayer[],
+  now: number = Date.now(),
+): Map<number, TrophyCount> {
+  const out = new Map<number, TrophyCount>();
+  const add = (id: number, key: keyof TrophyCount) => {
+    const c = out.get(id) ?? { anual: 0, apertura: 0, clausura: 0 };
+    c[key] += 1;
+    out.set(id, c);
+  };
+  const defs: [Tournament, keyof TrophyCount][] = [
+    ['completo', 'anual'],
+    ['apertura', 'apertura'],
+    ['clausura', 'clausura'],
+  ];
+  for (const year of listAvailableYears(matches)) {
+    for (const [t, key] of defs) {
+      if (!tournamentEnded(year, t, now)) continue;
+      const stats = computeSeasonStats(year, matches, matchPlayers, t);
+      if (stats.length === 0) continue;
+      const champ = sortSeasonStats(stats, 'puntaje', 'desc')[0];
+      if (champ && champ.PJ > 0) add(champ.playerId, key);
+    }
+  }
+  return out;
+}

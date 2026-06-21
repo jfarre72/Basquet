@@ -7,6 +7,7 @@ import {
   getCutoutUrl,
 } from '../lib/avatars';
 import { fetchSeasonData, type DbMatchPlayer } from '../lib/queries';
+import { computeTrophies, type TrophyCount } from '../utils/seasonStats';
 import {
   defaultMeta,
   fetchMetaMap,
@@ -112,14 +113,18 @@ interface CardData {
   path: string;
   ovr: number | '—';
   meta: PlayerMeta;
+  cups: TrophyCount;
   stats: { label: string; value: string | number }[];
 }
+
+const NO_CUPS: TrophyCount = { anual: 0, apertura: 0, clausura: 0 };
 
 function toCard(
   id: number,
   name: string,
   path: string,
   meta: PlayerMeta,
+  cups: TrophyCount,
   st?: CareerStat,
 ): CardData {
   return {
@@ -127,6 +132,7 @@ function toCard(
     name,
     path,
     meta,
+    cups,
     ovr: st?.ovr ?? '—',
     stats: [
       { label: 'PJ', value: st?.PJ ?? 0 },
@@ -184,6 +190,22 @@ function FutCard({
             </div>
           ))}
         </div>
+        {data.cups.anual + data.cups.apertura + data.cups.clausura > 0 && (
+          <div className="futcard__cups">
+            <div className="futcard__cup">
+              <b>🏆 {data.cups.anual}</b>
+              <span>ANUAL</span>
+            </div>
+            <div className="futcard__cup">
+              <b>🏆 {data.cups.apertura}</b>
+              <span>APERT</span>
+            </div>
+            <div className="futcard__cup">
+              <b>🏆 {data.cups.clausura}</b>
+              <span>CLAUS</span>
+            </div>
+          </div>
+        )}
         <div className="futcard__club" aria-hidden>
           🏀 BASQUET · MARTES
         </div>
@@ -196,6 +218,7 @@ export function Tarjetas() {
   const [avatars, setAvatars] = useState<Record<number, string>>({});
   const [career, setCareer] = useState<Map<number, CareerStat>>(new Map());
   const [metas, setMetas] = useState<Record<number, PlayerMeta>>({});
+  const [trophies, setTrophies] = useState<Map<number, TrophyCount>>(new Map());
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [search, setSearch] = useState('');
@@ -215,6 +238,7 @@ export function Tarjetas() {
         if (cancelled) return;
         setAvatars(av);
         setCareer(computeCareer(season.matchPlayers));
+        setTrophies(computeTrophies(season.matches, season.matchPlayers));
         setError(null);
         // Ficha (posición/altura/mano) desde la tabla players.
         const map = await fetchMetaMap();
@@ -320,6 +344,7 @@ export function Tarjetas() {
               name,
               avatars[p.id],
               metas[p.id] ?? defaultMeta(p.id),
+              trophies.get(p.id) ?? NO_CUPS,
               career.get(p.id),
             );
             return (

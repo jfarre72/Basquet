@@ -4448,7 +4448,7 @@ html.home-locked .app__header {
   top: 4%;
   left: 0;
   right: 0;
-  height: 50%;
+  height: 48%;
   z-index: 1;
   display: flex;
   align-items: flex-end;
@@ -4473,26 +4473,27 @@ html.home-locked .app__header {
   filter: drop-shadow(0 8px 10px rgba(0, 0, 0, 0.45));
 }
 
-/* Zona inferior: nombre + stats */
+/* Zona inferior: nombre + stats. Espaciados en cqw para que la grilla
+   chica se vea igual que la vista completa (sin solaparse el nombre). */
 .futcard__body {
   position: absolute;
   left: 0;
   right: 0;
   bottom: 0;
   z-index: 3;
-  height: 44%;
-  padding: 6px 12px 11px;
+  height: 46%;
+  padding: 1.5cqw 5cqw 3.5cqw;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: flex-end;
-  gap: 3px;
+  gap: 1cqw;
   /* Placa opaca para que la foto no se superponga con el nombre. */
   background: linear-gradient(
     180deg,
     rgba(220, 176, 78, 0) 0%,
-    rgba(214, 169, 64, 0.85) 26%,
-    rgba(196, 150, 50, 0.96) 52%,
+    rgba(214, 169, 64, 0.9) 20%,
+    rgba(196, 150, 50, 0.98) 44%,
     #c89a36 100%
   );
 }
@@ -4523,12 +4524,12 @@ html.home-locked .app__header {
     rgba(74, 50, 6, 0.55),
     transparent
   );
-  margin: 2px 0 4px;
+  margin: 0.6cqw 0 1cqw;
 }
 .futcard__stats {
   display: grid;
   grid-template-columns: repeat(6, 1fr);
-  gap: 2px;
+  gap: 0.6cqw;
   width: 100%;
 }
 .futcard__stat {
@@ -4550,8 +4551,35 @@ html.home-locked .app__header {
   color: #5a3f0a;
   text-transform: uppercase;
 }
+/* Segundo renglón: copas (anual / apertura / clausura) */
+.futcard__cups {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 1cqw;
+  width: 86%;
+  margin-top: 1.5cqw;
+  padding-top: 1.5cqw;
+  border-top: 1px solid rgba(74, 50, 6, 0.3);
+}
+.futcard__cup {
+  display: flex;
+  flex-direction: column-reverse;
+  align-items: center;
+  line-height: 1.05;
+}
+.futcard__cup b {
+  font-size: 6.5cqw;
+  font-weight: 900;
+  color: #2e2004;
+}
+.futcard__cup span {
+  font-size: 4.2cqw;
+  font-weight: 800;
+  letter-spacing: 0.03em;
+  color: #5a3f0a;
+}
 .futcard__club {
-  margin-top: 4cqw;
+  margin-top: 2.5cqw;
   font-size: 5.2cqw;
   font-weight: 800;
   letter-spacing: 0.06em;
