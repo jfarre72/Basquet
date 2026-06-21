@@ -4324,11 +4324,8 @@ html.home-locked .app__header {
   overflow: hidden;
   isolation: isolate;
   color: #4a3206;
-  /* Contorno tipo FUT con esquinas suaves. */
-  border-radius: 14px;
-  clip-path: polygon(
-    4% 0, 96% 0, 100% 4%, 100% 93%, 90% 100%, 10% 100%, 0 93%, 0 4%
-  );
+  /* Esquinas suaves; inferiores más redondeadas. */
+  border-radius: 16px 16px 24px 24px;
   /* Dorado base */
   background:
     linear-gradient(160deg, #fdeeb6 0%, #eccb6a 26%, #d8ab40 56%, #b6841f 100%);
@@ -4347,10 +4344,7 @@ html.home-locked .app__header {
   inset: 7px;
   z-index: 5;
   pointer-events: none;
-  border-radius: 10px;
-  clip-path: polygon(
-    4% 0, 96% 0, 100% 4%, 100% 93%, 90% 100%, 10% 100%, 0 93%, 0 4%
-  );
+  border-radius: 11px 11px 18px 18px;
   box-shadow:
     inset 0 0 0 1.5px rgba(120, 82, 18, 0.5),
     inset 0 0 0 3px rgba(255, 240, 190, 0.3);
@@ -4552,4 +4546,42 @@ html.home-locked .app__header {
   letter-spacing: 0.06em;
   color: #4a3206;
   opacity: 0.9;
+}
+
+/* Tarjeta tocable + modal de detalle */
+.futcard--tap {
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+.tarjeta-modal {
+  background: transparent;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+  padding: 8px;
+  position: relative;
+}
+.tarjeta-modal__card {
+  width: min(80vw, 320px);
+}
+.tarjeta-modal__close {
+  position: absolute;
+  top: -8px;
+  right: -8px;
+  z-index: 2;
+  appearance: none;
+  border: 0;
+  width: 40px;
+  height: 40px;
+  border-radius: 999px;
+  background: rgba(0, 0, 0, 0.6);
+  color: #fff;
+  font-size: 1.5rem;
+  font-weight: 800;
+  line-height: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  backdrop-filter: blur(6px);
 }

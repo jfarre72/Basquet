@@ -14,6 +14,31 @@ export function getCutoutUrl(avatarPath: string): string {
   return getAvatarUrl(cutoutPathFor(avatarPath));
 }
 
+/**
+ * Garantiza que exista la silueta sin fondo guardada en Supabase. Si no
+ * existe (fotos viejas), la genera en el cliente UNA vez, la sube y devuelve
+ * su URL pública persistida (para reusarla siempre, sin reprocesar).
+ */
+export async function ensureStoredCutout(avatarPath: string): Promise<string> {
+  const blob = await removeBgBlob(getAvatarUrl(avatarPath));
+  if (supabase) {
+    try {
+      await supabase.storage
+        .from(BUCKET)
+        .upload(cutoutPathFor(avatarPath), blob, {
+          cacheControl: '3600',
+          upsert: true,
+          contentType: 'image/png',
+        });
+      // Persistido: devolvemos la URL pública (con cache-bust para refrescar).
+      return `${getCutoutUrl(avatarPath)}?t=${Date.now()}`;
+    } catch {
+      /* no se pudo persistir (p. ej. policy): mostramos igual esta sesión */
+    }
+  }
+  return URL.createObjectURL(blob);
+}
+
 export interface DbPlayerAvatar {
   id: number;
   name: string;

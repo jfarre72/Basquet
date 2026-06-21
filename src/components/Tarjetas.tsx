@@ -1,7 +1,11 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { PLAYERS_BY_ID, PLAYERS_SORTED } from '../data/players';
-import { fetchAvatars, getAvatarUrl, getCutoutUrl } from '../lib/avatars';
-import { getCutout } from '../lib/cutout';
+import {
+  ensureStoredCutout,
+  fetchAvatars,
+  getAvatarUrl,
+  getCutoutUrl,
+} from '../lib/avatars';
 import { fetchSeasonData, type DbMatchPlayer } from '../lib/queries';
 import { SUPABASE_CONFIGURED } from '../lib/supabase';
 import { normalizeText } from '../utils/text';
@@ -64,20 +68,20 @@ function computeCareer(mps: DbMatchPlayer[]): Map<number, CareerStat> {
  */
 function FutPhoto({ path, name }: { path: string; name: string }) {
   const [src, setSrc] = useState(() => getCutoutUrl(path));
-  const [stage, setStage] = useState<'stored' | 'client' | 'original'>(
-    'stored',
-  );
+  const [stage, setStage] = useState<'stored' | 'gen' | 'original'>('stored');
 
   const handleError = async () => {
     if (stage === 'stored') {
-      setStage('client');
+      // No existe la silueta guardada (foto vieja): la generamos y persistimos
+      // una sola vez, así de acá en más carga directo y para todos.
+      setStage('gen');
       try {
-        setSrc(await getCutout(path, getAvatarUrl(path)));
+        setSrc(await ensureStoredCutout(path));
       } catch {
         setStage('original');
         setSrc(getAvatarUrl(path));
       }
-    } else if (stage === 'client') {
+    } else if (stage === 'gen') {
       setStage('original');
       setSrc(getAvatarUrl(path));
     }
@@ -85,7 +89,88 @@ function FutPhoto({ path, name }: { path: string; name: string }) {
 
   return (
     <div className={`futcard__photo${stage === 'original' ? '' : ' is-cut'}`}>
-      <img src={src} alt={name} loading="lazy" onError={() => void handleError()} />
+      <img
+        src={src}
+        alt={name}
+        crossOrigin="anonymous"
+        loading="lazy"
+        onError={() => void handleError()}
+      />
+    </div>
+  );
+}
+
+interface CardData {
+  id: number;
+  name: string;
+  path: string;
+  ovr: number | '—';
+  stats: { label: string; value: string | number }[];
+}
+
+function toCard(id: number, name: string, path: string, st?: CareerStat): CardData {
+  return {
+    id,
+    name,
+    path,
+    ovr: st?.ovr ?? '—',
+    stats: [
+      { label: 'PJ', value: st?.PJ ?? 0 },
+      { label: 'PG', value: st?.PG ?? 0 },
+      { label: 'PP', value: st?.PP ?? 0 },
+      { label: 'PTS', value: st?.puntos ?? 0 },
+      { label: '2P', value: st?.dobles ?? 0 },
+      { label: '3P', value: st?.triples ?? 0 },
+    ],
+  };
+}
+
+function FutCard({
+  data,
+  onClick,
+  innerRef,
+}: {
+  data: CardData;
+  onClick?: () => void;
+  innerRef?: React.Ref<HTMLDivElement>;
+}) {
+  return (
+    <div
+      className={`futcard${onClick ? ' futcard--tap' : ''}`}
+      ref={innerRef}
+      onClick={onClick}
+      role={onClick ? 'button' : undefined}
+      tabIndex={onClick ? 0 : undefined}
+      title={onClick ? 'Ver tarjeta' : undefined}
+    >
+      <span className="futcard__facets" aria-hidden />
+      <span className="futcard__rays" aria-hidden />
+
+      <div className="futcard__ovr">
+        <b>{data.ovr}</b>
+        <span>OVR</span>
+        <i aria-hidden>🏀</i>
+      </div>
+
+      <FutPhoto path={data.path} name={data.name} />
+
+      <span className="futcard__shine" aria-hidden />
+
+      <div className="futcard__body">
+        <div className="futcard__name">{data.name}</div>
+        <div className="futcard__line" aria-hidden />
+        <div className="futcard__stats">
+          {data.stats.map((s) => (
+            <div className="futcard__stat" key={s.label}>
+              <b>{s.value}</b>
+              <span>{s.label}</span>
+            </div>
+          ))}
+        </div>
+        <div className="futcard__club" aria-hidden>
+          🏀 BASQUET · MARTES
+        </div>
+      </div>
     </div>
   );
 }
@@ -96,6 +181,9 @@ export function Tarjetas() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [search, setSearch] = useState('');
+  const [selected, setSelected] = useState<CardData | null>(null);
+  const [downloading, setDownloading] = useState(false);
+  const cardRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     if (!SUPABASE_CONFIGURED) {
@@ -132,13 +220,46 @@ export function Tarjetas() {
 
   const totalConFoto = Object.keys(avatars).length;
 
+  const downloadCard = async () => {
+    if (!cardRef.current || !selected) return;
+    setDownloading(true);
+    try {
+      const html2canvas = (await import('html2canvas')).default;
+      const canvas = await html2canvas(cardRef.current, {
+        backgroundColor: null,
+        scale: 3,
+        useCORS: true,
+        logging: false,
+      });
+      await new Promise<void>((resolve) =>
+        canvas.toBlob((b) => {
+          if (b) {
+            const url = URL.createObjectURL(b);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `tarjeta-${selected.name}.png`;
+            document.body.appendChild(a);
+            a.click();
+            a.remove();
+            URL.revokeObjectURL(url);
+          }
+          resolve();
+        }, 'image/png'),
+      );
+    } catch (e) {
+      setError((e as Error).message);
+    } finally {
+      setDownloading(false);
+    }
+  };
+
   return (
     <div className="tarjetas">
       <div className="section-head">
         <div>
           <h2 className="section-head__title">🃏 Tarjetas</h2>
           <p className="section-head__subtitle">
-            Las tarjetas de los jugadores que ya subieron su foto.
+            Tocá una tarjeta para verla completa y descargarla.
           </p>
         </div>
       </div>
@@ -173,48 +294,41 @@ export function Tarjetas() {
         <div className="pcard-grid">
           {cards.map((p) => {
             const name = PLAYERS_BY_ID[p.id]?.name ?? p.name;
-            const st = career.get(p.id);
-            const stats: { label: string; value: string | number }[] = [
-              { label: 'PJ', value: st?.PJ ?? 0 },
-              { label: 'PG', value: st?.PG ?? 0 },
-              { label: 'PP', value: st?.PP ?? 0 },
-              { label: 'PTS', value: st?.puntos ?? 0 },
-              { label: '2P', value: st?.dobles ?? 0 },
-              { label: '3P', value: st?.triples ?? 0 },
-            ];
+            const data = toCard(p.id, name, avatars[p.id], career.get(p.id));
             return (
-              <article className="futcard" key={p.id}>
-                <span className="futcard__facets" aria-hidden />
-                <span className="futcard__rays" aria-hidden />
-
-                <div className="futcard__ovr">
-                  <b>{st?.ovr ?? '—'}</b>
-                  <span>OVR</span>
-                  <i aria-hidden>🏀</i>
-                </div>
-
-                <FutPhoto path={avatars[p.id]} name={name} />
-
-                <span className="futcard__shine" aria-hidden />
-
-                <div className="futcard__body">
-                  <div className="futcard__name">{name}</div>
-                  <div className="futcard__line" aria-hidden />
-                  <div className="futcard__stats">
-                    {stats.map((s) => (
-                      <div className="futcard__stat" key={s.label}>
-                        <b>{s.value}</b>
-                        <span>{s.label}</span>
-                      </div>
-                    ))}
-                  </div>
-                  <div className="futcard__club" aria-hidden>
-                    🏀 BASQUET · MARTES
-                  </div>
-                </div>
-              </article>
+              <FutCard
+                key={p.id}
+                data={data}
+                onClick={() => setSelected(data)}
+              />
             );
           })}
+        </div>
+      )}
+
+      {selected && (
+        <div className="modal-backdrop" onClick={() => setSelected(null)}>
+          <div className="tarjeta-modal" onClick={(e) => e.stopPropagation()}>
+            <button
+              type="button"
+              className="tarjeta-modal__close"
+              onClick={() => setSelected(null)}
+              aria-label="Cerrar"
+            >
+              ×
+            </button>
+            <div className="tarjeta-modal__card">
+              <FutCard data={selected} innerRef={cardRef} />
+            </div>
+            <button
+              type="button"
+              className="btn btn--primary"
+              onClick={() => void downloadCard()}
+              disabled={downloading}
+            >
+              {downloading ? 'Generando…' : '🖼️ Descargar tarjeta'}
+            </button>
+          </div>
         </div>
       )}
     </div>
