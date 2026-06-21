@@ -9,7 +9,7 @@ import {
 import { fetchSeasonData, type DbMatchPlayer } from '../lib/queries';
 import {
   defaultMeta,
-  fetchMeta,
+  fetchMetaMap,
   handLabel,
   type PlayerMeta,
 } from '../lib/playerMeta';
@@ -216,14 +216,9 @@ export function Tarjetas() {
         setAvatars(av);
         setCareer(computeCareer(season.matchPlayers));
         setError(null);
-        // Metadatos (posición/altura/mano) de los jugadores con foto.
-        const ids = Object.keys(av).map(Number);
-        const entries = await Promise.all(
-          ids.map(async (id) => [id, await fetchMeta(id)] as const),
-        );
-        if (!cancelled) {
-          setMetas(Object.fromEntries(entries));
-        }
+        // Ficha (posición/altura/mano) desde la tabla players.
+        const map = await fetchMetaMap();
+        if (!cancelled) setMetas(map);
       })
       .catch((e: Error) => {
         if (!cancelled) setError(e.message);

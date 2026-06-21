@@ -16,9 +16,6 @@ export const POSITIONS: { code: string; label: string }[] = [
   { code: 'PIV', label: 'Pívot' },
 ];
 
-const BUCKET = 'avatars';
-const metaPath = (id: number) => `cards/player-${id}.json`;
-
 /** PRNG determinístico por id, para defaults estables (no cambian por load). */
 function seeded(id: number): () => number {
   let s = (id * 2654435761) % 2147483647;
@@ -42,52 +39,58 @@ export function handLabel(hand: Hand): string {
   return hand === 'izquierda' ? 'ZURDO' : 'DIESTRO';
 }
 
-function publicUrl(id: number): string {
-  if (!supabase) return '';
-  return supabase.storage.from(BUCKET).getPublicUrl(metaPath(id)).data.publicUrl;
+interface PlayerMetaRow {
+  id: number;
+  position: string | null;
+  height_cm: number | null;
+  handed: string | null;
 }
 
-/** Lee el meta guardado de un jugador; si no existe, devuelve el default. */
-export async function fetchMeta(id: number): Promise<PlayerMeta> {
-  const fallback = defaultMeta(id);
-  if (!supabase) return fallback;
-  try {
-    const res = await fetch(`${publicUrl(id)}?t=${Date.now()}`);
-    if (!res.ok) return fallback;
-    const json = (await res.json()) as Partial<PlayerMeta>;
-    return {
-      position: json.position ?? fallback.position,
-      heightCm: json.heightCm ?? fallback.heightCm,
-      hand: json.hand ?? fallback.hand,
-    };
-  } catch {
-    return fallback;
+function fromRow(row: PlayerMetaRow): PlayerMeta {
+  const d = defaultMeta(row.id);
+  return {
+    position: row.position ?? d.position,
+    heightCm: row.height_cm ?? d.heightCm,
+    hand: (row.handed as Hand) ?? d.hand,
+  };
+}
+
+/** Lee el meta (posición/altura/mano) de todos los jugadores de una vez. */
+export async function fetchMetaMap(): Promise<Record<number, PlayerMeta>> {
+  if (!supabase) return {};
+  const { data, error } = await supabase
+    .from('players')
+    .select('id, position, height_cm, handed');
+  if (error) throw error;
+  const out: Record<number, PlayerMeta> = {};
+  for (const row of (data ?? []) as PlayerMetaRow[]) {
+    out[row.id] = fromRow(row);
   }
+  return out;
 }
 
-/** ¿El jugador ya tiene meta guardado? (para preguntar solo la primera vez). */
+/** ¿El jugador ya tiene ficha cargada? (para preguntar solo la primera vez). */
 export async function metaExists(id: number): Promise<boolean> {
   if (!supabase) return false;
-  try {
-    const res = await fetch(`${publicUrl(id)}?t=${Date.now()}`, {
-      method: 'HEAD',
-    });
-    return res.ok;
-  } catch {
-    return false;
-  }
+  const { data, error } = await supabase
+    .from('players')
+    .select('position')
+    .eq('id', id)
+    .maybeSingle();
+  if (error) return false;
+  return Boolean((data as { position: string | null } | null)?.position);
 }
 
-/** Guarda el meta del jugador en Supabase. */
+/** Guarda la ficha del jugador en la tabla players. */
 export async function saveMeta(id: number, meta: PlayerMeta): Promise<void> {
   if (!supabase) throw new Error('Sin conexión a Supabase.');
-  const blob = new Blob([JSON.stringify(meta)], { type: 'application/json' });
-  const { error } = await supabase.storage
-    .from(BUCKET)
-    .upload(metaPath(id), blob, {
-      cacheControl: '3600',
-      upsert: true,
-      contentType: 'application/json',
-    });
+  const { error } = await supabase
+    .from('players')
+    .update({
+      position: meta.position,
+      height_cm: meta.heightCm,
+      handed: meta.hand,
+    })
+    .eq('id', id);
   if (error) throw error;
 }

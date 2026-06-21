@@ -1,10 +1,9 @@
 -- =============================================================
 -- Basquet — Almacenamiento para la sección "Tarjetas"
--- Siluetas sin fondo  -> avatars/cutouts/player-<id>.png
--- Ficha del jugador    -> avatars/cards/player-<id>.json
+-- Siluetas sin fondo -> avatars/cutouts/player-<id>.png
 --
--- Ambos viven en el bucket público "avatars", así que con estas policies
--- (a nivel de TODO el bucket) ya quedan habilitados.
+-- (La ficha del jugador —posición/altura/mano— se guarda en la tabla
+--  players; ver supabase/player-ficha.sql.)
 --
 -- Correr UNA VEZ en Supabase Dashboard -> SQL Editor.
 -- Idempotente: se puede re-correr sin romper nada.
