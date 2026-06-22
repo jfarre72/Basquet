@@ -4756,27 +4756,27 @@ html.home-locked .app__header {
   --photo-h: 48%;
   /* OVR (número) */
   --ovr-x: 19%;
-  --ovr-y: 11%;
+  --ovr-y: 13%;
   --ovr-size: 12cqw;
   /* Posición */
   --pos-x: 19%;
-  --pos-y: 34%;
+  --pos-y: 32%;
   --pos-size: 8cqw;
   /* Nombre */
   --name-x: 50%;
   --name-y: 57%;
   --name-size: 11cqw;
   /* Línea altura · mano (flanquean el "CM ·" del marco, en ~44%) */
-  --bio-y: 64.5%;
+  --bio-y: 62.5%;
   --bio-size: 4.6cqw;
   --h-right: 64%;
   --hand-left: 52%;
-  /* Fila de 6 números */
-  --nums-y: 83%;
+  /* Fila de 6 números (banda vacía bajo las etiquetas) */
+  --nums-y: 78%;
   --nums-size: 6.5cqw;
-  /* Fila de 3 copas */
-  --cups-y: 91.5%;
-  --cups-size: 6cqw;
+  /* Fila de 3 copas (a la derecha de cada trofeo) */
+  --cups-y: 85.5%;
+  --cups-size: 5.5cqw;
 }
 .legcard--tap {
   cursor: pointer;

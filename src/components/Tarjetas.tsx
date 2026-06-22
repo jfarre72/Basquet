@@ -248,7 +248,7 @@ function useFrameStatus() {
 
 // Centros X (en % del marco) medidos sobre el PNG.
 const NUM_X = [16.5, 31, 46, 60, 73, 85.4];
-const CUP_X = [30, 56, 82];
+const CUP_X = [30, 56, 81];
 
 function LegendCard({
   data,
