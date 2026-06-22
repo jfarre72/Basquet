@@ -311,7 +311,11 @@ export interface TrophyCount {
 
 /** ¿Terminó ya el torneo (year, t)? Apertura cierra el 1/jul; clausura y
  *  anual cierran el 1/ene del año siguiente. Solo entonces hay campeón. */
-function tournamentEnded(year: number, t: Tournament, now: number): boolean {
+export function tournamentEnded(
+  year: number,
+  t: Tournament,
+  now: number = Date.now(),
+): boolean {
   const end =
     t === 'apertura' ? Date.UTC(year, 6, 1) : Date.UTC(year + 1, 0, 1);
   return now >= end;

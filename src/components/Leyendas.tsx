@@ -8,6 +8,7 @@ import {
 import {
   computeSeasonStats,
   listAvailableYears,
+  tournamentEnded,
   type PlayerSeasonStat,
   type Tournament,
 } from '../utils/seasonStats';
@@ -31,6 +32,8 @@ interface YearVitrina {
   year: number;
   totalMatches: number;
   byTournament: Record<Tournament, HofData>;
+  /** Torneos a mostrar (solo los que ya terminaron). */
+  tournaments: { key: Tournament; label: string }[];
 }
 
 const TOURNAMENTS: { key: Tournament; label: string }[] = [
@@ -69,26 +72,36 @@ export function Leyendas() {
   const years = useMemo(() => listAvailableYears(matches), [matches]);
 
   const vitrinas: YearVitrina[] = useMemo(() => {
-    return years.map((year) => {
-      const seasonMatches = matches.filter(
-        (m) => new Date(m.played_at).getUTCFullYear() === year,
-      );
-      const byTournament: Record<Tournament, HofData> = {
-        completo: { hasData: false, matchCount: 0, awards: [] },
-        apertura: { hasData: false, matchCount: 0, awards: [] },
-        clausura: { hasData: false, matchCount: 0, awards: [] },
-      };
-      for (const t of TOURNAMENTS) {
-        const stats = computeSeasonStats(
-          year,
-          matches,
-          matchPlayers,
-          t.key,
+    const now = Date.now();
+    return years
+      .map((year) => {
+        // Solo los torneos que ya terminaron (apertura cierra 1/jul; clausura
+        // y anual cierran 1/ene del año siguiente).
+        const tournaments = TOURNAMENTS.filter((t) =>
+          tournamentEnded(year, t.key, now),
         );
-        byTournament[t.key] = computeAwards(stats, year, matches, t.key);
-      }
-      return { year, totalMatches: seasonMatches.length, byTournament };
-    });
+        if (tournaments.length === 0) return null;
+
+        const seasonMatches = matches.filter(
+          (m) => new Date(m.played_at).getUTCFullYear() === year,
+        );
+        const byTournament: Record<Tournament, HofData> = {
+          completo: { hasData: false, matchCount: 0, awards: [] },
+          apertura: { hasData: false, matchCount: 0, awards: [] },
+          clausura: { hasData: false, matchCount: 0, awards: [] },
+        };
+        for (const t of tournaments) {
+          const stats = computeSeasonStats(year, matches, matchPlayers, t.key);
+          byTournament[t.key] = computeAwards(stats, year, matches, t.key);
+        }
+        return {
+          year,
+          totalMatches: seasonMatches.length,
+          byTournament,
+          tournaments,
+        };
+      })
+      .filter((v): v is YearVitrina => v !== null);
   }, [years, matches, matchPlayers]);
 
   return (
@@ -126,7 +139,7 @@ export function Leyendas() {
 }
 
 function YearShowcase({ vitrina }: { vitrina: YearVitrina }) {
-  const { year, totalMatches, byTournament } = vitrina;
+  const { year, totalMatches, byTournament, tournaments } = vitrina;
   return (
     <section className="vitrina-year">
       <header className="vitrina-year__head">
@@ -138,7 +151,7 @@ function YearShowcase({ vitrina }: { vitrina: YearVitrina }) {
         {totalMatches} partidos jugados
       </div>
       <div className="vitrina-cards">
-        {TOURNAMENTS.map((t) => (
+        {tournaments.map((t) => (
           <HofCard
             key={t.key}
             tournament={t.key}
