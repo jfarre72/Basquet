@@ -459,25 +459,27 @@ export function Tarjetas() {
       {selected && (
         <div className="modal-backdrop" onClick={() => setSelected(null)}>
           <div className="tarjeta-modal" onClick={(e) => e.stopPropagation()}>
-            <button
-              type="button"
-              className="tarjeta-modal__close"
-              onClick={() => setSelected(null)}
-              aria-label="Cerrar"
-            >
-              ×
-            </button>
             <div className="tarjeta-modal__card">
               <PlayerCard data={selected} innerRef={cardRef} />
             </div>
-            <button
-              type="button"
-              className="btn btn--primary"
-              onClick={() => void downloadCard()}
-              disabled={downloading}
-            >
-              {downloading ? 'Generando…' : '🖼️ Descargar tarjeta'}
-            </button>
+            <div className="tarjeta-modal__actions">
+              <button
+                type="button"
+                className="btn btn--ghost"
+                onClick={() => setSelected(null)}
+                disabled={downloading}
+              >
+                ← Volver
+              </button>
+              <button
+                type="button"
+                className="btn btn--primary"
+                onClick={() => void downloadCard()}
+                disabled={downloading}
+              >
+                {downloading ? 'Generando…' : '🖼️ Descargar'}
+              </button>
+            </div>
           </div>
         </div>
       )}

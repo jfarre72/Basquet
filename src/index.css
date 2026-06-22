@@ -4604,6 +4604,14 @@ html.home-locked .app__header {
 .tarjeta-modal__card {
   width: min(80vw, 320px);
 }
+.tarjeta-modal__actions {
+  display: flex;
+  gap: 10px;
+  width: min(80vw, 320px);
+}
+.tarjeta-modal__actions .btn {
+  flex: 1;
+}
 .tarjeta-modal__close {
   position: absolute;
   top: -8px;
@@ -4775,7 +4783,7 @@ html.home-locked .app__header {
   --nums-y: 78%;
   --nums-size: 6.5cqw;
   /* Fila de 3 copas (a la derecha de cada trofeo) */
-  --cups-y: 85.5%;
+  --cups-y: 87%;
   --cups-size: 5.5cqw;
 }
 .legcard--tap {
