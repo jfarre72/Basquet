@@ -283,6 +283,11 @@ function LegendCard({
           <span key={s.label}>{s.value}</span>
         ))}
       </div>
+      <div className="legcard__cups">
+        <span>{data.cups.anual}</span>
+        <span>{data.cups.apertura}</span>
+        <span>{data.cups.clausura}</span>
+      </div>
     </div>
   );
 }
