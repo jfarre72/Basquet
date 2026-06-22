@@ -4754,6 +4754,8 @@ html.home-locked .app__header {
 .legcard {
   position: relative;
   width: 100%;
+  /* Reserva el alto del marco aunque la imagen aún no haya cargado. */
+  aspect-ratio: 896 / 1200;
   container-type: inline-size;
   color: #fcebb0;
 

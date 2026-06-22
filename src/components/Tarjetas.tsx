@@ -233,6 +233,9 @@ function probeFrame() {
   };
   img.src = FRAME_SRC;
 }
+// Precarga el marco apenas se carga el módulo (al iniciar la app), así para
+// cuando se entra a Tarjetas ya suele estar listo y no se ve la tarjeta vieja.
+if (typeof window !== 'undefined') probeFrame();
 function useFrameStatus() {
   const [, force] = useState(0);
   useEffect(() => {
@@ -309,7 +312,9 @@ function PlayerCard(props: {
   innerRef?: React.Ref<HTMLDivElement>;
 }) {
   const status = useFrameStatus();
-  return status === 'ok' ? <LegendCard {...props} /> : <FutCard {...props} />;
+  // Optimista: mostramos la tarjeta Legends salvo que el marco falle de verdad.
+  // Así nunca se ve la tarjeta dorada vieja mientras carga el marco.
+  return status === 'fail' ? <FutCard {...props} /> : <LegendCard {...props} />;
 }
 
 export function Tarjetas() {
