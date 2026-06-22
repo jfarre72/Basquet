@@ -1418,6 +1418,11 @@ main.app__main {
     padding: 16px;
   }
 }
+/* Variante centrada (tarjetas): centrada en pantalla también en mobile. */
+.modal-backdrop--center {
+  align-items: center;
+  padding: 16px;
+}
 
 .modal {
   background: var(--surface);

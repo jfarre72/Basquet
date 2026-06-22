@@ -462,7 +462,10 @@ export function Tarjetas() {
       )}
 
       {selected && (
-        <div className="modal-backdrop" onClick={() => setSelected(null)}>
+        <div
+          className="modal-backdrop modal-backdrop--center"
+          onClick={() => setSelected(null)}
+        >
           <div className="tarjeta-modal" onClick={(e) => e.stopPropagation()}>
             <div className="tarjeta-modal__card">
               <PlayerCard data={selected} innerRef={cardRef} />
