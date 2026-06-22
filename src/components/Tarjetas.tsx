@@ -214,6 +214,88 @@ function FutCard({
   );
 }
 
+// ===== Tarjeta "Legends" (marco PNG con la ventana del arco) =====
+// El marco se coloca en public/legends-frame.png. Si no existe, se usa la
+// tarjeta dorada (FutCard) como fallback, así nada se rompe.
+const FRAME_SRC = '/legends-frame.png';
+let frameStatus: 'unknown' | 'ok' | 'fail' = 'unknown';
+const frameListeners = new Set<() => void>();
+function probeFrame() {
+  if (frameStatus !== 'unknown') return;
+  const img = new Image();
+  img.onload = () => {
+    frameStatus = 'ok';
+    frameListeners.forEach((f) => f());
+  };
+  img.onerror = () => {
+    frameStatus = 'fail';
+    frameListeners.forEach((f) => f());
+  };
+  img.src = FRAME_SRC;
+}
+function useFrameStatus() {
+  const [, force] = useState(0);
+  useEffect(() => {
+    probeFrame();
+    const cb = () => force((x) => x + 1);
+    frameListeners.add(cb);
+    return () => {
+      frameListeners.delete(cb);
+    };
+  }, []);
+  return frameStatus;
+}
+
+function LegendCard({
+  data,
+  onClick,
+  innerRef,
+}: {
+  data: CardData;
+  onClick?: () => void;
+  innerRef?: React.Ref<HTMLDivElement>;
+}) {
+  return (
+    <div
+      className={`legcard${onClick ? ' legcard--tap' : ''}`}
+      ref={innerRef}
+      onClick={onClick}
+      role={onClick ? 'button' : undefined}
+      tabIndex={onClick ? 0 : undefined}
+      title={onClick ? 'Ver tarjeta' : undefined}
+    >
+      <img
+        className="legcard__photo"
+        src={getAvatarUrl(data.path)}
+        alt={data.name}
+        crossOrigin="anonymous"
+        loading="lazy"
+      />
+      <img className="legcard__frame" src={FRAME_SRC} alt="" aria-hidden />
+      <div className="legcard__ovr">{data.ovr}</div>
+      <div className="legcard__pos">{data.meta.position}</div>
+      <div className="legcard__name">{data.name}</div>
+      <div className="legcard__bio">
+        {data.meta.heightCm} CM · {handLabel(data.meta.hand)}
+      </div>
+      <div className="legcard__nums">
+        {data.stats.map((s) => (
+          <span key={s.label}>{s.value}</span>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function PlayerCard(props: {
+  data: CardData;
+  onClick?: () => void;
+  innerRef?: React.Ref<HTMLDivElement>;
+}) {
+  const status = useFrameStatus();
+  return status === 'ok' ? <LegendCard {...props} /> : <FutCard {...props} />;
+}
+
 export function Tarjetas() {
   const [avatars, setAvatars] = useState<Record<number, string>>({});
   const [career, setCareer] = useState<Map<number, CareerStat>>(new Map());
@@ -348,7 +430,7 @@ export function Tarjetas() {
               career.get(p.id),
             );
             return (
-              <FutCard
+              <PlayerCard
                 key={p.id}
                 data={data}
                 onClick={() => setSelected(data)}
@@ -370,7 +452,7 @@ export function Tarjetas() {
               ×
             </button>
             <div className="tarjeta-modal__card">
-              <FutCard data={selected} innerRef={cardRef} />
+              <PlayerCard data={selected} innerRef={cardRef} />
             </div>
             <button
               type="button"

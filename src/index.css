@@ -4738,3 +4738,96 @@ html.home-locked .app__header {
   0% { margin-left: -40%; }
   100% { margin-left: 100%; }
 }
+
+/* ===== Tarjeta "Legends" (marco PNG) ===== */
+.legcard {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 1024 / 1536;
+  container-type: inline-size;
+  color: #fbe7a1;
+  /* Posiciones ajustables (porcentajes del marco). */
+  --photo-left: 34%;
+  --photo-top: 8.5%;
+  --photo-w: 53%;
+  --photo-h: 43%;
+}
+.legcard--tap {
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+.legcard__photo {
+  position: absolute;
+  left: var(--photo-left);
+  top: var(--photo-top);
+  width: var(--photo-w);
+  height: var(--photo-h);
+  object-fit: cover;
+  object-position: center top;
+  z-index: 1;
+}
+.legcard__frame {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 2;
+  pointer-events: none;
+}
+.legcard__ovr,
+.legcard__pos,
+.legcard__name,
+.legcard__bio,
+.legcard__nums span {
+  z-index: 3;
+  font-weight: 900;
+  color: #fcebb0;
+  text-shadow: 0 1px 1px rgba(0, 0, 0, 0.55), 0 0 2px rgba(120, 82, 18, 0.5);
+}
+.legcard__ovr {
+  position: absolute;
+  left: 18.5%;
+  top: 8%;
+  transform: translateX(-50%);
+  font-size: 15cqw;
+  letter-spacing: -0.02em;
+}
+.legcard__pos {
+  position: absolute;
+  left: 18.5%;
+  top: 28.5%;
+  transform: translateX(-50%);
+  font-size: 9cqw;
+}
+.legcard__name {
+  position: absolute;
+  left: 56%;
+  top: 57.5%;
+  transform: translate(-50%, -50%);
+  font-size: 12cqw;
+  letter-spacing: 0.01em;
+  white-space: nowrap;
+}
+.legcard__bio {
+  position: absolute;
+  left: 56%;
+  top: 66.5%;
+  transform: translate(-50%, -50%);
+  font-size: 5cqw;
+  letter-spacing: 0.04em;
+  color: #ecd79a;
+}
+.legcard__nums {
+  position: absolute;
+  left: 7%;
+  right: 7%;
+  top: 83.5%;
+  z-index: 3;
+  display: grid;
+  grid-template-columns: repeat(6, 1fr);
+}
+.legcard__nums span {
+  position: static;
+  text-align: center;
+  font-size: 7cqw;
+}
