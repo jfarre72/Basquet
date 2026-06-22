@@ -4715,6 +4715,13 @@ html.home-locked .app__header {
 .player-edit__photo-btn {
   width: auto;
 }
+.player-edit__photo-actions {
+  display: flex;
+  gap: 8px;
+}
+.player-edit__photo-actions .btn {
+  flex: 1;
+}
 .player-edit .meta-form {
   width: 100%;
 }

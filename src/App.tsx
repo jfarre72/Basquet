@@ -59,14 +59,8 @@ export default function App() {
     }
   }, [state.stage, state.plays.length]);
 
-  if (status === 'loading' || (status === 'authed' && !namesReady)) {
-    return (
-      <div className="app">
-        <main className="app__main">
-          <div className="empty-state">Cargando...</div>
-        </main>
-      </div>
-    );
+  if (status === 'loading') {
+    return <div className="app" />;
   }
 
   if (status === 'guest') {
@@ -74,7 +68,7 @@ export default function App() {
   }
 
   return (
-    <div className="app">
+    <div className="app" data-names-ready={namesReady}>
       <Header onHome={() => setSection('home')} showHome={section !== 'home'} />
       <main className="app__main">
         {section === 'home' && <Home onNavigate={setSection} />}

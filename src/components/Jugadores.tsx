@@ -41,7 +41,8 @@ export function Jugadores() {
   const [photoPreview, setPhotoPreview] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
   const [progress, setProgress] = useState<number | null>(null);
-  const fileRef = useRef<HTMLInputElement>(null);
+  const galleryRef = useRef<HTMLInputElement>(null);
+  const cameraRef = useRef<HTMLInputElement>(null);
 
   const nameOf = (id: number) =>
     names[id] ?? PLAYERS_BY_ID[id]?.name ?? `#${id}`;
@@ -93,10 +94,12 @@ export function Jugadores() {
     setEditId(null);
   };
 
-  const pickPhoto = () => fileRef.current?.click();
+  const pickGallery = () => galleryRef.current?.click();
+  const pickCamera = () => cameraRef.current?.click();
 
   const onPhotoPicked = (file: File | null) => {
-    if (fileRef.current) fileRef.current.value = '';
+    if (galleryRef.current) galleryRef.current.value = '';
+    if (cameraRef.current) cameraRef.current.value = '';
     if (!file) return;
     if (photoPreview) URL.revokeObjectURL(photoPreview);
     setPhotoFile(file);
@@ -170,7 +173,14 @@ export function Jugadores() {
       {error && <div className="warning-banner">No se pudo: {error}</div>}
 
       <input
-        ref={fileRef}
+        ref={galleryRef}
+        type="file"
+        accept="image/*"
+        hidden
+        onChange={(e) => onPhotoPicked(e.target.files?.[0] ?? null)}
+      />
+      <input
+        ref={cameraRef}
         type="file"
         accept="image/*"
         capture="user"
@@ -238,8 +248,8 @@ export function Jugadores() {
             <button
               type="button"
               className="player-edit__photo"
-              onClick={pickPhoto}
-              title="Cargar / cambiar foto"
+              onClick={pickGallery}
+              title="Elegir de la galería"
             >
               {previewSrc ? (
                 <img src={previewSrc} alt="" />
@@ -252,13 +262,22 @@ export function Jugadores() {
                 📷
               </span>
             </button>
-            <button
-              type="button"
-              className="btn btn--ghost player-edit__photo-btn"
-              onClick={pickPhoto}
-            >
-              {avatars[editId] || photoFile ? 'Cambiar foto' : 'Cargar foto'}
-            </button>
+            <div className="player-edit__photo-actions">
+              <button
+                type="button"
+                className="btn btn--ghost"
+                onClick={pickGallery}
+              >
+                🖼️ Galería
+              </button>
+              <button
+                type="button"
+                className="btn btn--ghost"
+                onClick={pickCamera}
+              >
+                📷 Cámara
+              </button>
+            </div>
 
             <div className="meta-form">
               <label className="meta-field">
