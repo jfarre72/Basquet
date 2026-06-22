@@ -4749,32 +4749,33 @@ html.home-locked .app__header {
   container-type: inline-size;
   color: #fcebb0;
 
-  /* Foto dentro del arco */
-  --photo-left: 33%;
-  --photo-top: 5%;
-  --photo-w: 55%;
-  --photo-h: 43%;
+  /* Foto dentro del arco (ventana L35–R86 / T5–B51) */
+  --photo-left: 34%;
+  --photo-top: 4%;
+  --photo-w: 53%;
+  --photo-h: 48%;
   /* OVR (número) */
-  --ovr-x: 18%;
-  --ovr-y: 12.5%;
-  --ovr-size: 14cqw;
+  --ovr-x: 19%;
+  --ovr-y: 11%;
+  --ovr-size: 12cqw;
   /* Posición */
-  --pos-x: 18%;
-  --pos-y: 38%;
-  --pos-size: 8.5cqw;
+  --pos-x: 19%;
+  --pos-y: 34%;
+  --pos-size: 8cqw;
   /* Nombre */
   --name-x: 50%;
-  --name-y: 56.5%;
-  --name-size: 12cqw;
-  /* Línea altura · mano */
-  --bio-x: 50%;
+  --name-y: 57%;
+  --name-size: 11cqw;
+  /* Línea altura · mano (flanquean el "CM ·" del marco, en ~44%) */
   --bio-y: 64.5%;
-  --bio-size: 5cqw;
+  --bio-size: 4.6cqw;
+  --h-right: 64%;
+  --hand-left: 52%;
   /* Fila de 6 números */
-  --nums-top: 83%;
-  --nums-size: 7cqw;
+  --nums-y: 83%;
+  --nums-size: 6.5cqw;
   /* Fila de 3 copas */
-  --cups-top: 92%;
+  --cups-y: 91.5%;
   --cups-size: 6cqw;
 }
 .legcard--tap {
@@ -4804,9 +4805,10 @@ html.home-locked .app__header {
 .legcard__ovr,
 .legcard__pos,
 .legcard__name,
-.legcard__bio,
-.legcard__nums span,
-.legcard__cups span {
+.legcard__h,
+.legcard__hand,
+.legcard__num,
+.legcard__cup {
   position: absolute;
   z-index: 3;
   font-weight: 900;
@@ -4815,7 +4817,6 @@ html.home-locked .app__header {
   -webkit-background-clip: text;
   background-clip: text;
   color: transparent;
-  text-shadow: 0 1px 1px rgba(0, 0, 0, 0.35);
   filter: drop-shadow(0 1px 0 rgba(60, 40, 6, 0.6));
 }
 .legcard__ovr {
@@ -4839,45 +4840,30 @@ html.home-locked .app__header {
   letter-spacing: 0.01em;
   white-space: nowrap;
 }
-.legcard__bio {
-  left: var(--bio-x);
+/* Altura y mano flanquean el "CM ·" que ya viene en el marco. */
+.legcard__h {
+  right: var(--h-right);
   top: var(--bio-y);
-  transform: translate(-50%, -50%);
+  transform: translateY(-50%);
   font-size: var(--bio-size);
   font-weight: 800;
-  letter-spacing: 0.03em;
-  white-space: nowrap;
 }
-/* Filas (6 números y 3 copas): grilla a lo ancho, cada valor centrado en su
-   columna para caer sobre la caja correspondiente. */
-.legcard__nums,
-.legcard__cups {
-  position: absolute;
-  left: 0;
-  right: 0;
-  z-index: 3;
-  display: grid;
-  pointer-events: none;
-}
-.legcard__nums {
-  top: var(--nums-top);
-  padding: 0 7%;
-  grid-template-columns: repeat(6, 1fr);
-}
-.legcard__cups {
-  top: var(--cups-top);
-  padding: 0 9%;
-  grid-template-columns: repeat(3, 1fr);
-}
-.legcard__nums span {
-  position: static;
+.legcard__hand {
+  left: var(--hand-left);
+  top: var(--bio-y);
   transform: translateY(-50%);
+  font-size: var(--bio-size);
+  font-weight: 800;
+}
+.legcard__num {
+  top: var(--nums-y);
+  transform: translate(-50%, -50%);
   text-align: center;
   font-size: var(--nums-size);
 }
-.legcard__cups span {
-  position: static;
-  transform: translateY(-50%);
+.legcard__cup {
+  top: var(--cups-y);
+  transform: translate(-50%, -50%);
   text-align: center;
   font-size: var(--cups-size);
 }

@@ -246,6 +246,10 @@ function useFrameStatus() {
   return frameStatus;
 }
 
+// Centros X (en % del marco) medidos sobre el PNG.
+const NUM_X = [16.5, 31, 46, 60, 73, 85.4];
+const CUP_X = [30, 56, 82];
+
 function LegendCard({
   data,
   onClick,
@@ -275,19 +279,26 @@ function LegendCard({
       <div className="legcard__ovr">{data.ovr}</div>
       <div className="legcard__pos">{data.meta.position}</div>
       <div className="legcard__name">{data.name}</div>
-      <div className="legcard__bio">
-        {data.meta.heightCm} CM · {handLabel(data.meta.hand)}
-      </div>
-      <div className="legcard__nums">
-        {data.stats.map((s) => (
-          <span key={s.label}>{s.value}</span>
-        ))}
-      </div>
-      <div className="legcard__cups">
-        <span>{data.cups.anual}</span>
-        <span>{data.cups.apertura}</span>
-        <span>{data.cups.clausura}</span>
-      </div>
+      <div className="legcard__h">{data.meta.heightCm}</div>
+      <div className="legcard__hand">{handLabel(data.meta.hand)}</div>
+      {data.stats.map((s, i) => (
+        <span
+          key={s.label}
+          className="legcard__num"
+          style={{ left: `${NUM_X[i]}%` }}
+        >
+          {s.value}
+        </span>
+      ))}
+      {[data.cups.anual, data.cups.apertura, data.cups.clausura].map((v, i) => (
+        <span
+          key={i}
+          className="legcard__cup"
+          style={{ left: `${CUP_X[i]}%` }}
+        >
+          {v}
+        </span>
+      ))}
     </div>
   );
 }
