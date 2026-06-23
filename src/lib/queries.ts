@@ -165,17 +165,19 @@ export async function fetchHistoricos(): Promise<DbHistoric[]> {
 export interface DbCajaMovimiento {
   id: string;
   fecha: string;
-  tipo: 'recaudado' | 'pagado';
+  jugadores: number;
+  recaudado: number;
+  pagado: number;
   concepto: string | null;
-  monto: number;
   created_at: string;
 }
 
 export interface CajaMovimientoInput {
   fecha: string;
-  tipo: 'recaudado' | 'pagado';
+  jugadores: number;
+  recaudado: number;
+  pagado: number;
   concepto: string | null;
-  monto: number;
 }
 
 /** Saldo inicial seteado desde la base (por defecto $15000). */
@@ -194,14 +196,19 @@ export async function fetchCajaMovimientos(): Promise<DbCajaMovimiento[]> {
   if (!supabase) return [];
   const { data, error } = await supabase
     .from('caja_movimientos')
-    .select('id, fecha, tipo, concepto, monto, created_at')
+    .select('id, fecha, jugadores, recaudado, pagado, concepto, created_at')
     .order('fecha', { ascending: true })
     .order('created_at', { ascending: true });
   if (error) throw error;
-  return (data ?? []).map((m) => ({
-    ...(m as DbCajaMovimiento),
-    monto: Number((m as DbCajaMovimiento).monto),
-  }));
+  return (data ?? []).map((m) => {
+    const row = m as DbCajaMovimiento;
+    return {
+      ...row,
+      jugadores: Number(row.jugadores),
+      recaudado: Number(row.recaudado),
+      pagado: Number(row.pagado),
+    };
+  });
 }
 
 export async function addCajaMovimiento(
@@ -211,10 +218,16 @@ export async function addCajaMovimiento(
   const { data, error } = await supabase
     .from('caja_movimientos')
     .insert(input)
-    .select('id, fecha, tipo, concepto, monto, created_at')
+    .select('id, fecha, jugadores, recaudado, pagado, concepto, created_at')
     .single();
   if (error) throw error;
-  return { ...(data as DbCajaMovimiento), monto: Number((data as DbCajaMovimiento).monto) };
+  const row = data as DbCajaMovimiento;
+  return {
+    ...row,
+    jugadores: Number(row.jugadores),
+    recaudado: Number(row.recaudado),
+    pagado: Number(row.pagado),
+  };
 }
 
 export async function deleteCajaMovimiento(id: string): Promise<void> {

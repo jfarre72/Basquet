@@ -5229,3 +5229,17 @@ html.home-locked .app__header {
     grid-column: 1 / -1;
   }
 }
+
+.caja-day__players {
+  margin-left: auto;
+  font-size: 0.82rem;
+  font-weight: 700;
+  color: var(--text-muted);
+}
+.caja-day__head .caja-mov__del {
+  margin-left: 8px;
+}
+.caja-day__concepto {
+  font-size: 0.86rem;
+  color: var(--text-muted);
+}

@@ -20,13 +20,9 @@ function formatFecha(iso: string): string {
   return `${d}/${m}/${y}`;
 }
 
-interface DayGroup {
-  fecha: string;
-  recaudado: number;
-  pagado: number;
+interface Row extends DbCajaMovimiento {
   saldoDia: number;
   acumulado: number;
-  movimientos: DbCajaMovimiento[];
 }
 
 const todayISO = () => new Date().toISOString().slice(0, 10);
@@ -38,11 +34,12 @@ export function Caja() {
   const [error, setError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
 
-  // Formulario
+  // Formulario: un registro por partido/día.
   const [fecha, setFecha] = useState(todayISO());
-  const [tipo, setTipo] = useState<'recaudado' | 'pagado'>('recaudado');
+  const [jugadores, setJugadores] = useState('');
+  const [recaudado, setRecaudado] = useState('');
+  const [pagado, setPagado] = useState('');
   const [concepto, setConcepto] = useState('');
-  const [monto, setMonto] = useState('');
 
   useEffect(() => {
     if (!SUPABASE_CONFIGURED) {
@@ -69,62 +66,47 @@ export function Caja() {
     };
   }, []);
 
-  // Agrupar por día (orden ascendente) y calcular saldo acumulado corrido.
-  const days = useMemo<DayGroup[]>(() => {
-    const byFecha = new Map<string, DbCajaMovimiento[]>();
-    for (const m of movimientos) {
-      const arr = byFecha.get(m.fecha) ?? [];
-      arr.push(m);
-      byFecha.set(m.fecha, arr);
-    }
-    const fechas = [...byFecha.keys()].sort();
+  // Saldo acumulado corrido (movimientos vienen ordenados ascendente por fecha).
+  // Mostramos el más reciente arriba.
+  const rows = useMemo<Row[]>(() => {
     let acumulado = saldoInicial;
-    const out: DayGroup[] = [];
-    for (const f of fechas) {
-      const movs = byFecha.get(f)!;
-      const recaudado = movs
-        .filter((m) => m.tipo === 'recaudado')
-        .reduce((s, m) => s + m.monto, 0);
-      const pagado = movs
-        .filter((m) => m.tipo === 'pagado')
-        .reduce((s, m) => s + m.monto, 0);
-      const saldoDia = recaudado - pagado;
+    const out: Row[] = movimientos.map((m) => {
+      const saldoDia = m.recaudado - m.pagado;
       acumulado += saldoDia;
-      out.push({ fecha: f, recaudado, pagado, saldoDia, acumulado, movimientos: movs });
-    }
-    // Más reciente arriba.
+      return { ...m, saldoDia, acumulado };
+    });
     return out.reverse();
   }, [movimientos, saldoInicial]);
 
   const saldoAcumulado = useMemo(
     () =>
       movimientos.reduce(
-        (s, m) => s + (m.tipo === 'recaudado' ? m.monto : -m.monto),
+        (s, m) => s + m.recaudado - m.pagado,
         saldoInicial,
       ),
     [movimientos, saldoInicial],
   );
 
   const totalRecaudado = useMemo(
-    () =>
-      movimientos
-        .filter((m) => m.tipo === 'recaudado')
-        .reduce((s, m) => s + m.monto, 0),
+    () => movimientos.reduce((s, m) => s + m.recaudado, 0),
     [movimientos],
   );
   const totalPagado = useMemo(
-    () =>
-      movimientos
-        .filter((m) => m.tipo === 'pagado')
-        .reduce((s, m) => s + m.monto, 0),
+    () => movimientos.reduce((s, m) => s + m.pagado, 0),
     [movimientos],
   );
 
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
-    const valor = Number(monto);
-    if (!Number.isFinite(valor) || valor <= 0) {
-      setError('Ingresá un monto válido.');
+    const rec = Number(recaudado || 0);
+    const pag = Number(pagado || 0);
+    const jug = Number(jugadores || 0);
+    if (!Number.isFinite(rec) || !Number.isFinite(pag) || rec < 0 || pag < 0) {
+      setError('Ingresá montos válidos.');
+      return;
+    }
+    if (rec === 0 && pag === 0) {
+      setError('Cargá al menos lo recaudado o lo pagado.');
       return;
     }
     setSaving(true);
@@ -132,13 +114,23 @@ export function Caja() {
     try {
       const nuevo = await addCajaMovimiento({
         fecha,
-        tipo,
+        jugadores: jug,
+        recaudado: rec,
+        pagado: pag,
         concepto: concepto.trim() || null,
-        monto: valor,
       });
-      setMovimientos((cur) => [...cur, nuevo]);
+      // Reinsertar manteniendo orden ascendente por fecha.
+      setMovimientos((cur) =>
+        [...cur, nuevo].sort(
+          (a, b) =>
+            a.fecha.localeCompare(b.fecha) ||
+            a.created_at.localeCompare(b.created_at),
+        ),
+      );
+      setJugadores('');
+      setRecaudado('');
+      setPagado('');
       setConcepto('');
-      setMonto('');
     } catch (err) {
       setError((err as Error).message);
     } finally {
@@ -163,7 +155,7 @@ export function Caja() {
         <div>
           <h2 className="section-head__title">💵 Caja</h2>
           <p className="section-head__subtitle">
-            Cuánta plata tenemos según lo que se recauda y se paga.
+            Un registro por partido: cuántos fuimos, lo recaudado y lo pagado.
           </p>
         </div>
       </div>
@@ -215,28 +207,41 @@ export function Caja() {
                 />
               </label>
               <label className="caja-form__field">
-                <span>Tipo</span>
-                <select
-                  value={tipo}
-                  onChange={(e) =>
-                    setTipo(e.target.value as 'recaudado' | 'pagado')
-                  }
-                >
-                  <option value="recaudado">Recaudado</option>
-                  <option value="pagado">Pagado</option>
-                </select>
+                <span>Fuimos</span>
+                <input
+                  type="number"
+                  inputMode="numeric"
+                  min="0"
+                  step="1"
+                  placeholder="12"
+                  value={jugadores}
+                  onChange={(e) => setJugadores(e.target.value)}
+                />
               </label>
+            </div>
+            <div className="caja-form__row">
               <label className="caja-form__field">
-                <span>Monto</span>
+                <span>Recaudado</span>
                 <input
                   type="number"
                   inputMode="numeric"
                   min="0"
                   step="any"
-                  placeholder="0"
-                  value={monto}
-                  onChange={(e) => setMonto(e.target.value)}
-                  required
+                  placeholder="50000"
+                  value={recaudado}
+                  onChange={(e) => setRecaudado(e.target.value)}
+                />
+              </label>
+              <label className="caja-form__field">
+                <span>Pagado</span>
+                <input
+                  type="number"
+                  inputMode="numeric"
+                  min="0"
+                  step="any"
+                  placeholder="4500"
+                  value={pagado}
+                  onChange={(e) => setPagado(e.target.value)}
                 />
               </label>
             </div>
@@ -244,7 +249,7 @@ export function Caja() {
               <span>Concepto (opcional)</span>
               <input
                 type="text"
-                placeholder="Ej: cuota del martes, alquiler cancha…"
+                placeholder="Ej: alquiler cancha, pelota nueva…"
                 value={concepto}
                 onChange={(e) => setConcepto(e.target.value)}
               />
@@ -254,69 +259,55 @@ export function Caja() {
               className="btn btn--primary"
               disabled={saving || !SUPABASE_CONFIGURED}
             >
-              {saving ? 'Guardando…' : '+ Agregar movimiento'}
+              {saving ? 'Guardando…' : '+ Agregar registro'}
             </button>
           </form>
 
-          {days.length === 0 ? (
-            <div className="lb-empty">
-              Todavía no hay movimientos cargados.
-            </div>
+          {rows.length === 0 ? (
+            <div className="lb-empty">Todavía no hay registros cargados.</div>
           ) : (
             <div className="caja-days">
-              {days.map((d) => (
-                <section key={d.fecha} className="caja-day">
+              {rows.map((r) => (
+                <section key={r.id} className="caja-day">
                   <header className="caja-day__head">
-                    <span className="caja-day__date">{formatFecha(d.fecha)}</span>
-                    <span className="caja-day__totals">
-                      <span className="caja-day__rec">
-                        +{money.format(d.recaudado)}
+                    <span className="caja-day__date">{formatFecha(r.fecha)}</span>
+                    {r.jugadores > 0 && (
+                      <span className="caja-day__players">
+                        👥 {r.jugadores}
                       </span>
-                      <span className="caja-day__pag">
-                        −{money.format(d.pagado)}
-                      </span>
-                    </span>
+                    )}
+                    <button
+                      type="button"
+                      className="caja-mov__del"
+                      onClick={() => void remove(r.id)}
+                      aria-label="Eliminar registro"
+                      title="Eliminar"
+                    >
+                      ×
+                    </button>
                   </header>
+                  {r.concepto && (
+                    <div className="caja-day__concepto">{r.concepto}</div>
+                  )}
+                  <div className="caja-day__totals">
+                    <span className="caja-day__rec">
+                      Recaudado +{money.format(r.recaudado)}
+                    </span>
+                    <span className="caja-day__pag">
+                      Pagado −{money.format(r.pagado)}
+                    </span>
+                  </div>
                   <div className="caja-day__balances">
                     <span>
                       Saldo del día:{' '}
-                      <b className={d.saldoDia >= 0 ? 'is-pos' : 'is-neg'}>
-                        {money.format(d.saldoDia)}
+                      <b className={r.saldoDia >= 0 ? 'is-pos' : 'is-neg'}>
+                        {money.format(r.saldoDia)}
                       </b>
                     </span>
                     <span>
-                      Acumulado: <b>{money.format(d.acumulado)}</b>
+                      Acumulado: <b>{money.format(r.acumulado)}</b>
                     </span>
                   </div>
-                  <ul className="caja-mov-list">
-                    {d.movimientos.map((m) => (
-                      <li
-                        key={m.id}
-                        className={`caja-mov caja-mov--${m.tipo}`}
-                      >
-                        <span className="caja-mov__tipo">
-                          {m.tipo === 'recaudado' ? '↑' : '↓'}
-                        </span>
-                        <span className="caja-mov__concepto">
-                          {m.concepto ||
-                            (m.tipo === 'recaudado' ? 'Recaudado' : 'Pagado')}
-                        </span>
-                        <span className="caja-mov__monto">
-                          {m.tipo === 'recaudado' ? '+' : '−'}
-                          {money.format(m.monto)}
-                        </span>
-                        <button
-                          type="button"
-                          className="caja-mov__del"
-                          onClick={() => void remove(m.id)}
-                          aria-label="Eliminar movimiento"
-                          title="Eliminar"
-                        >
-                          ×
-                        </button>
-                      </li>
-                    ))}
-                  </ul>
                 </section>
               ))}
             </div>

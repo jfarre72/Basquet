@@ -16,16 +16,44 @@ insert into public.caja_config (id, saldo_inicial)
 values (1, 15000)
 on conflict (id) do nothing;
 
--- Movimientos: cada vez que se recauda o se paga plata.
+-- Movimientos: un registro por partido/día.
+-- Cada registro guarda cuántos fuimos, lo recaudado y lo pagado (gasto);
+-- el neto (recaudado - pagado) suma o resta al saldo acumulado.
 create table if not exists public.caja_movimientos (
     id         uuid primary key default gen_random_uuid(),
     fecha      date not null default current_date,
-    tipo       text not null check (tipo in ('recaudado','pagado')),
+    jugadores  integer not null default 0,
+    recaudado  numeric not null default 0 check (recaudado >= 0),
+    pagado     numeric not null default 0 check (pagado >= 0),
     concepto   text,
-    monto      numeric not null check (monto >= 0),
     created_at timestamptz not null default now()
 );
 create index if not exists idx_caja_mov_fecha on public.caja_movimientos(fecha);
+
+-- Compat: si la tabla venía del esquema viejo (tipo/monto), adaptarla.
+alter table public.caja_movimientos
+    add column if not exists jugadores integer not null default 0,
+    add column if not exists recaudado numeric not null default 0,
+    add column if not exists pagado    numeric not null default 0;
+do $$
+begin
+    if exists (
+        select 1 from information_schema.columns
+        where table_schema = 'public'
+          and table_name = 'caja_movimientos'
+          and column_name = 'monto'
+    ) then
+        alter table public.caja_movimientos alter column monto drop not null;
+    end if;
+    if exists (
+        select 1 from information_schema.columns
+        where table_schema = 'public'
+          and table_name = 'caja_movimientos'
+          and column_name = 'tipo'
+    ) then
+        alter table public.caja_movimientos alter column tipo drop not null;
+    end if;
+end $$;
 
 -- =============================================================
 -- Row Level Security: cualquier user autenticado lee y escribe.
