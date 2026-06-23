@@ -21,7 +21,7 @@ function formatFecha(iso: string): string {
 }
 
 interface Row extends DbCajaMovimiento {
-  saldoDia: number;
+  dif: number;
   acumulado: number;
 }
 
@@ -37,9 +37,12 @@ export function Caja() {
   // Formulario: un registro por partido/día.
   const [fecha, setFecha] = useState(todayISO());
   const [jugadores, setJugadores] = useState('');
-  const [recaudado, setRecaudado] = useState('');
+  const [precio, setPrecio] = useState('');
   const [pagado, setPagado] = useState('');
-  const [concepto, setConcepto] = useState('');
+
+  // Recaudado = fuimos × $ por persona (automático).
+  const recaudado = (Number(jugadores) || 0) * (Number(precio) || 0);
+  const dif = recaudado - (Number(pagado) || 0);
 
   useEffect(() => {
     if (!SUPABASE_CONFIGURED) {
@@ -71,41 +74,30 @@ export function Caja() {
   const rows = useMemo<Row[]>(() => {
     let acumulado = saldoInicial;
     const out: Row[] = movimientos.map((m) => {
-      const saldoDia = m.recaudado - m.pagado;
-      acumulado += saldoDia;
-      return { ...m, saldoDia, acumulado };
+      const d = m.recaudado - m.pagado;
+      acumulado += d;
+      return { ...m, dif: d, acumulado };
     });
     return out.reverse();
   }, [movimientos, saldoInicial]);
 
-  const saldoAcumulado = useMemo(
+  // Saldo acumulado total = CAJA.
+  const caja = useMemo(
     () =>
-      movimientos.reduce(
-        (s, m) => s + m.recaudado - m.pagado,
-        saldoInicial,
-      ),
+      movimientos.reduce((s, m) => s + m.recaudado - m.pagado, saldoInicial),
     [movimientos, saldoInicial],
-  );
-
-  const totalRecaudado = useMemo(
-    () => movimientos.reduce((s, m) => s + m.recaudado, 0),
-    [movimientos],
-  );
-  const totalPagado = useMemo(
-    () => movimientos.reduce((s, m) => s + m.pagado, 0),
-    [movimientos],
   );
 
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
-    const rec = Number(recaudado || 0);
-    const pag = Number(pagado || 0);
-    const jug = Number(jugadores || 0);
-    if (!Number.isFinite(rec) || !Number.isFinite(pag) || rec < 0 || pag < 0) {
-      setError('Ingresá montos válidos.');
+    const jug = Number(jugadores) || 0;
+    const pre = Number(precio) || 0;
+    const pag = Number(pagado) || 0;
+    if (jug < 0 || pre < 0 || pag < 0) {
+      setError('Ingresá valores válidos.');
       return;
     }
-    if (rec === 0 && pag === 0) {
+    if (recaudado === 0 && pag === 0) {
       setError('Cargá al menos lo recaudado o lo pagado.');
       return;
     }
@@ -115,11 +107,10 @@ export function Caja() {
       const nuevo = await addCajaMovimiento({
         fecha,
         jugadores: jug,
-        recaudado: rec,
+        precio: pre,
+        recaudado,
         pagado: pag,
-        concepto: concepto.trim() || null,
       });
-      // Reinsertar manteniendo orden ascendente por fecha.
       setMovimientos((cur) =>
         [...cur, nuevo].sort(
           (a, b) =>
@@ -128,9 +119,8 @@ export function Caja() {
         ),
       );
       setJugadores('');
-      setRecaudado('');
+      setPrecio('');
       setPagado('');
-      setConcepto('');
     } catch (err) {
       setError((err as Error).message);
     } finally {
@@ -171,29 +161,13 @@ export function Caja() {
         <div className="lb-loading">Cargando caja…</div>
       ) : (
         <>
-          <div className="kpis kpis--3">
-            <div className="kpi">
-              <span className="kpi__label">Recaudado</span>
-              <span className="kpi__value kpi__value--win">
-                {money.format(totalRecaudado)}
-              </span>
-            </div>
-            <div className="kpi">
-              <span className="kpi__label">Pagado</span>
-              <span className="kpi__value kpi__value--loss">
-                {money.format(totalPagado)}
-              </span>
-            </div>
-            <div className="kpi">
-              <span className="kpi__label">Saldo acumulado</span>
-              <span className="kpi__value kpi__value--accent">
-                {money.format(saldoAcumulado)}
-              </span>
-            </div>
+          <div className="caja-total">
+            <span className="caja-total__label">CAJA</span>
+            <span className="caja-total__value">{money.format(caja)}</span>
+            <span className="caja-total__hint">
+              Saldo inicial {money.format(saldoInicial)}
+            </span>
           </div>
-          <p className="caja__base">
-            Saldo inicial: {money.format(saldoInicial)}
-          </p>
 
           <form className="caja-form" onSubmit={submit}>
             <div className="caja-form__row">
@@ -221,15 +195,15 @@ export function Caja() {
             </div>
             <div className="caja-form__row">
               <label className="caja-form__field">
-                <span>Recaudado</span>
+                <span>$ por persona</span>
                 <input
                   type="number"
                   inputMode="numeric"
                   min="0"
                   step="any"
-                  placeholder="50000"
-                  value={recaudado}
-                  onChange={(e) => setRecaudado(e.target.value)}
+                  placeholder="4500"
+                  value={precio}
+                  onChange={(e) => setPrecio(e.target.value)}
                 />
               </label>
               <label className="caja-form__field">
@@ -239,21 +213,23 @@ export function Caja() {
                   inputMode="numeric"
                   min="0"
                   step="any"
-                  placeholder="4500"
+                  placeholder="50000"
                   value={pagado}
                   onChange={(e) => setPagado(e.target.value)}
                 />
               </label>
             </div>
-            <label className="caja-form__field caja-form__field--full">
-              <span>Concepto (opcional)</span>
-              <input
-                type="text"
-                placeholder="Ej: alquiler cancha, pelota nueva…"
-                value={concepto}
-                onChange={(e) => setConcepto(e.target.value)}
-              />
-            </label>
+            <div className="caja-form__calc">
+              <span>
+                Recaudado <b>{money.format(recaudado)}</b>
+              </span>
+              <span>
+                Diferencia{' '}
+                <b className={dif >= 0 ? 'is-pos' : 'is-neg'}>
+                  {money.format(dif)}
+                </b>
+              </span>
+            </div>
             <button
               type="submit"
               className="btn btn--primary"
@@ -273,7 +249,7 @@ export function Caja() {
                     <span className="caja-day__date">{formatFecha(r.fecha)}</span>
                     {r.jugadores > 0 && (
                       <span className="caja-day__players">
-                        👥 {r.jugadores}
+                        👥 {r.jugadores} × {money.format(r.precio)}
                       </span>
                     )}
                     <button
@@ -286,9 +262,6 @@ export function Caja() {
                       ×
                     </button>
                   </header>
-                  {r.concepto && (
-                    <div className="caja-day__concepto">{r.concepto}</div>
-                  )}
                   <div className="caja-day__totals">
                     <span className="caja-day__rec">
                       Recaudado +{money.format(r.recaudado)}
@@ -299,13 +272,13 @@ export function Caja() {
                   </div>
                   <div className="caja-day__balances">
                     <span>
-                      Saldo del día:{' '}
-                      <b className={r.saldoDia >= 0 ? 'is-pos' : 'is-neg'}>
-                        {money.format(r.saldoDia)}
+                      Diferencia:{' '}
+                      <b className={r.dif >= 0 ? 'is-pos' : 'is-neg'}>
+                        {money.format(r.dif)}
                       </b>
                     </span>
                     <span>
-                      Acumulado: <b>{money.format(r.acumulado)}</b>
+                      Caja: <b>{money.format(r.acumulado)}</b>
                     </span>
                   </div>
                 </section>

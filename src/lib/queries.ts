@@ -166,18 +166,18 @@ export interface DbCajaMovimiento {
   id: string;
   fecha: string;
   jugadores: number;
+  precio: number;
   recaudado: number;
   pagado: number;
-  concepto: string | null;
   created_at: string;
 }
 
 export interface CajaMovimientoInput {
   fecha: string;
   jugadores: number;
+  precio: number;
   recaudado: number;
   pagado: number;
-  concepto: string | null;
 }
 
 /** Saldo inicial seteado desde la base (por defecto $15000). */
@@ -196,7 +196,7 @@ export async function fetchCajaMovimientos(): Promise<DbCajaMovimiento[]> {
   if (!supabase) return [];
   const { data, error } = await supabase
     .from('caja_movimientos')
-    .select('id, fecha, jugadores, recaudado, pagado, concepto, created_at')
+    .select('id, fecha, jugadores, precio, recaudado, pagado, created_at')
     .order('fecha', { ascending: true })
     .order('created_at', { ascending: true });
   if (error) throw error;
@@ -205,6 +205,7 @@ export async function fetchCajaMovimientos(): Promise<DbCajaMovimiento[]> {
     return {
       ...row,
       jugadores: Number(row.jugadores),
+      precio: Number(row.precio),
       recaudado: Number(row.recaudado),
       pagado: Number(row.pagado),
     };
@@ -218,13 +219,14 @@ export async function addCajaMovimiento(
   const { data, error } = await supabase
     .from('caja_movimientos')
     .insert(input)
-    .select('id, fecha, jugadores, recaudado, pagado, concepto, created_at')
+    .select('id, fecha, jugadores, precio, recaudado, pagado, created_at')
     .single();
   if (error) throw error;
   const row = data as DbCajaMovimiento;
   return {
     ...row,
     jugadores: Number(row.jugadores),
+    precio: Number(row.precio),
     recaudado: Number(row.recaudado),
     pagado: Number(row.pagado),
   };

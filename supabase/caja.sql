@@ -19,13 +19,14 @@ on conflict (id) do nothing;
 -- Movimientos: un registro por partido/día.
 -- Cada registro guarda cuántos fuimos, lo recaudado y lo pagado (gasto);
 -- el neto (recaudado - pagado) suma o resta al saldo acumulado.
+-- recaudado = jugadores * precio (se calcula en la app y se guarda).
 create table if not exists public.caja_movimientos (
     id         uuid primary key default gen_random_uuid(),
     fecha      date not null default current_date,
     jugadores  integer not null default 0,
+    precio     numeric not null default 0 check (precio >= 0),
     recaudado  numeric not null default 0 check (recaudado >= 0),
     pagado     numeric not null default 0 check (pagado >= 0),
-    concepto   text,
     created_at timestamptz not null default now()
 );
 create index if not exists idx_caja_mov_fecha on public.caja_movimientos(fecha);
@@ -33,6 +34,7 @@ create index if not exists idx_caja_mov_fecha on public.caja_movimientos(fecha);
 -- Compat: si la tabla venía del esquema viejo (tipo/monto), adaptarla.
 alter table public.caja_movimientos
     add column if not exists jugadores integer not null default 0,
+    add column if not exists precio    numeric not null default 0,
     add column if not exists recaudado numeric not null default 0,
     add column if not exists pagado    numeric not null default 0;
 do $$
