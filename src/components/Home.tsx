@@ -34,18 +34,31 @@ const ITEMS: RadialItem[] = [
     ),
   },
   {
-    id: 'contador',
-    label: 'Contador',
-    hint: 'Control y seguimiento de partidos',
+    id: 'resultados',
+    label: 'Resultados',
+    hint: 'Listado de partidos jugados',
     icon: (
-      <svg viewBox="0 0 24 24" aria-hidden>
-        <rect x="3" y="6" width="18" height="12" rx="2"
-          fill="none" stroke="currentColor" strokeWidth="2" />
-        <line x1="12" y1="6" x2="12" y2="18" stroke="currentColor" strokeWidth="2" />
-        <text x="7.5" y="14.5" textAnchor="middle" fontSize="6" fontWeight="900"
-          fill="currentColor">88</text>
-        <text x="16.5" y="14.5" textAnchor="middle" fontSize="6" fontWeight="900"
-          fill="currentColor">88</text>
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"
+        strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+        <line x1="8" y1="6" x2="21" y2="6" />
+        <line x1="8" y1="12" x2="21" y2="12" />
+        <line x1="8" y1="18" x2="21" y2="18" />
+        <line x1="3" y1="6" x2="3.01" y2="6" />
+        <line x1="3" y1="12" x2="3.01" y2="12" />
+        <line x1="3" y1="18" x2="3.01" y2="18" />
+      </svg>
+    ),
+  },
+  {
+    id: 'caja',
+    label: 'Caja',
+    hint: 'Plata recaudada y pagada',
+    icon: (
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"
+        strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+        <path d="M3 7h18v12H3z" />
+        <path d="M3 7l3-4h12l3 4" />
+        <path d="M9 12a3 3 0 0 0 6 0" />
       </svg>
     ),
   },

@@ -160,6 +160,69 @@ export async function fetchHistoricos(): Promise<DbHistoric[]> {
   return (data ?? []) as DbHistoric[];
 }
 
+// ===== Caja (movimientos de plata) =====
+
+export interface DbCajaMovimiento {
+  id: string;
+  fecha: string;
+  tipo: 'recaudado' | 'pagado';
+  concepto: string | null;
+  monto: number;
+  created_at: string;
+}
+
+export interface CajaMovimientoInput {
+  fecha: string;
+  tipo: 'recaudado' | 'pagado';
+  concepto: string | null;
+  monto: number;
+}
+
+/** Saldo inicial seteado desde la base (por defecto $15000). */
+export async function fetchSaldoInicial(): Promise<number> {
+  if (!supabase) return 15000;
+  const { data, error } = await supabase
+    .from('caja_config')
+    .select('saldo_inicial')
+    .eq('id', 1)
+    .maybeSingle();
+  if (error) throw error;
+  return Number(data?.saldo_inicial ?? 15000);
+}
+
+export async function fetchCajaMovimientos(): Promise<DbCajaMovimiento[]> {
+  if (!supabase) return [];
+  const { data, error } = await supabase
+    .from('caja_movimientos')
+    .select('id, fecha, tipo, concepto, monto, created_at')
+    .order('fecha', { ascending: true })
+    .order('created_at', { ascending: true });
+  if (error) throw error;
+  return (data ?? []).map((m) => ({
+    ...(m as DbCajaMovimiento),
+    monto: Number((m as DbCajaMovimiento).monto),
+  }));
+}
+
+export async function addCajaMovimiento(
+  input: CajaMovimientoInput,
+): Promise<DbCajaMovimiento> {
+  if (!supabase) throw new Error('Sin conexión a Supabase.');
+  const { data, error } = await supabase
+    .from('caja_movimientos')
+    .insert(input)
+    .select('id, fecha, tipo, concepto, monto, created_at')
+    .single();
+  if (error) throw error;
+  return { ...(data as DbCajaMovimiento), monto: Number((data as DbCajaMovimiento).monto) };
+}
+
+export async function deleteCajaMovimiento(id: string): Promise<void> {
+  if (!supabase) throw new Error('Sin conexión a Supabase.');
+  const { error } = await supabase.from('caja_movimientos').delete().eq('id', id);
+  if (error) throw error;
+}
+
 export async function fetchIndicadoresData(): Promise<{
   matches: DbMatch[];
   matchPlayers: DbMatchPlayer[];

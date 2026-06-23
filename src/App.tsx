@@ -1,7 +1,9 @@
 import { useEffect, useState } from 'react';
 import { Armado } from './components/Armado';
+import { Caja } from './components/Caja';
 import { Tarjetas } from './components/Tarjetas';
 import { ContadorEntry } from './components/ContadorEntry';
+import { Resultados } from './components/Resultados';
 import { Galeria } from './components/Galeria';
 import { GameScreen } from './components/GameScreen';
 import { Header } from './components/Header';
@@ -77,6 +79,8 @@ export default function App() {
         {section === 'leyendas' && <Leyendas />}
         {section === 'jugadores' && <Jugadores />}
         {section === 'tarjetas' && <Tarjetas />}
+        {section === 'resultados' && <Resultados />}
+        {section === 'caja' && <Caja />}
         {section === 'armado' && (
           <Armado onStartMatch={() => setSection('contador')} />
         )}

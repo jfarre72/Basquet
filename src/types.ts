@@ -14,6 +14,8 @@ export type Section =
   | 'jugadas'
   | 'armado'
   | 'contador'
+  | 'resultados'
+  | 'caja'
   | 'galeria';
 
 export interface Player {

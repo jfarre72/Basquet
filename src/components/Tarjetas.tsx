@@ -296,8 +296,6 @@ export function Tarjetas() {
   const [error, setError] = useState<string | null>(null);
   const [search, setSearch] = useState('');
   const [selected, setSelected] = useState<CardData | null>(null);
-  const [downloading, setDownloading] = useState(false);
-  const cardRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     if (!SUPABASE_CONFIGURED) {
@@ -399,46 +397,13 @@ export function Tarjetas() {
     scrollerRef.current?.scrollTo({ left: 0 });
   }, [search, cardDatas.length]);
 
-  const downloadCard = async () => {
-    if (!cardRef.current || !selected) return;
-    setDownloading(true);
-    try {
-      const html2canvas = (await import('html2canvas')).default;
-      const canvas = await html2canvas(cardRef.current, {
-        backgroundColor: null,
-        scale: 3,
-        useCORS: true,
-        logging: false,
-      });
-      await new Promise<void>((resolve) =>
-        canvas.toBlob((b) => {
-          if (b) {
-            const url = URL.createObjectURL(b);
-            const a = document.createElement('a');
-            a.href = url;
-            a.download = `tarjeta-${selected.name}.png`;
-            document.body.appendChild(a);
-            a.click();
-            a.remove();
-            URL.revokeObjectURL(url);
-          }
-          resolve();
-        }, 'image/png'),
-      );
-    } catch (e) {
-      setError((e as Error).message);
-    } finally {
-      setDownloading(false);
-    }
-  };
-
   return (
     <div className="tarjetas">
       <div className="section-head">
         <div>
           <h2 className="section-head__title">🃏 Tarjetas</h2>
           <p className="section-head__subtitle">
-            Tocá una tarjeta para verla completa y descargarla.
+            Tocá una tarjeta para verla en grande.
           </p>
         </div>
       </div>
@@ -515,24 +480,15 @@ export function Tarjetas() {
         >
           <div className="tarjeta-modal" onClick={(e) => e.stopPropagation()}>
             <div className="tarjeta-modal__card">
-              <PlayerCard data={selected} innerRef={cardRef} />
+              <PlayerCard data={selected} />
             </div>
             <div className="tarjeta-modal__actions">
               <button
                 type="button"
                 className="btn btn--ghost"
                 onClick={() => setSelected(null)}
-                disabled={downloading}
               >
                 ← Volver
-              </button>
-              <button
-                type="button"
-                className="btn btn--primary"
-                onClick={() => void downloadCard()}
-                disabled={downloading}
-              >
-                {downloading ? 'Generando…' : '🖼️ Descargar'}
               </button>
             </div>
           </div>
