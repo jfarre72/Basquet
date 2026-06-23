@@ -5289,3 +5289,136 @@ html.home-locked .app__header {
 .caja-form__calc .is-neg {
   color: #f87171;
 }
+
+/* ===== Resultados — detalle desplegable ===== */
+
+.result-card {
+  padding: 0;
+  overflow: hidden;
+}
+.result-card__btn {
+  width: 100%;
+  background: none;
+  border: none;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+  padding: 12px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.result-card__caret {
+  margin-left: 8px;
+  color: var(--text-muted);
+}
+.result-detail {
+  border-top: 1px solid var(--border);
+  padding: 12px 14px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+.result-podium {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.result-podium__title {
+  margin: 0;
+  font-size: 0.78rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--text-subtle);
+}
+.result-podium__list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.result-podium__row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.result-podium__medal {
+  font-size: 1.1rem;
+}
+.result-podium__name {
+  font-weight: 700;
+}
+.result-podium__pts {
+  margin-left: auto;
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+  color: var(--accent-strong);
+}
+.result-teams {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+.result-team {
+  min-width: 0;
+}
+.result-team__head {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 6px;
+}
+.result-team__badge {
+  width: 20px;
+  height: 20px;
+  display: grid;
+  place-items: center;
+  border-radius: 6px;
+  font-size: 0.7rem;
+  font-weight: 900;
+  background: var(--border);
+}
+.result-team__name {
+  font-weight: 800;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.result-team__table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.82rem;
+}
+.result-team__table th {
+  font-size: 0.6rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text-subtle);
+  font-weight: 700;
+  text-align: right;
+  padding: 3px 4px;
+}
+.result-team__table th:first-child {
+  text-align: left;
+}
+.result-team__table td {
+  padding: 4px;
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+  border-top: 1px solid var(--border);
+}
+.result-team__player {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  text-align: left !important;
+}
+.result-team__hl {
+  font-weight: 800;
+  color: var(--accent-strong);
+}
+@media (max-width: 560px) {
+  .result-teams {
+    grid-template-columns: 1fr;
+  }
+}

@@ -148,6 +148,30 @@ export async function fetchAllPlays(): Promise<{
   };
 }
 
+export async function fetchResultados(): Promise<{
+  matches: DbHistoric[];
+  matchPlayers: DbMatchPlayer[];
+}> {
+  if (!supabase) return { matches: [], matchPlayers: [] };
+  const [mRes, mpRes] = await Promise.all([
+    supabase
+      .from('matches')
+      .select(
+        'id, played_at, finished_at, team_a_name, team_b_name, score_a, score_b, winner, partial',
+      )
+      .order('played_at', { ascending: false }),
+    supabase
+      .from('match_players')
+      .select('match_id, player_id, team, outcome, points, doubles, triples'),
+  ]);
+  if (mRes.error) throw mRes.error;
+  if (mpRes.error) throw mpRes.error;
+  return {
+    matches: (mRes.data ?? []) as DbHistoric[],
+    matchPlayers: (mpRes.data ?? []) as DbMatchPlayer[],
+  };
+}
+
 export async function fetchHistoricos(): Promise<DbHistoric[]> {
   if (!supabase) return [];
   const { data, error } = await supabase
