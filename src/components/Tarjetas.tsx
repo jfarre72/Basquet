@@ -338,6 +338,67 @@ export function Tarjetas() {
 
   const totalConFoto = Object.keys(avatars).length;
 
+  const cardDatas = useMemo(
+    () =>
+      cards.map((p) =>
+        toCard(
+          p.id,
+          PLAYERS_BY_ID[p.id]?.name ?? p.name,
+          avatars[p.id],
+          metas[p.id] ?? defaultMeta(p.id),
+          trophies.get(p.id) ?? NO_CUPS,
+          career.get(p.id),
+        ),
+      ),
+    [cards, avatars, metas, trophies, career],
+  );
+
+  // ----- Carrusel -----
+  const scrollerRef = useRef<HTMLDivElement>(null);
+  const [active, setActive] = useState(0);
+  const rafRef = useRef(0);
+
+  const recomputeActive = () => {
+    const el = scrollerRef.current;
+    if (!el) return;
+    const center = el.scrollLeft + el.clientWidth / 2;
+    let best = 0;
+    let bestD = Infinity;
+    Array.from(el.children).forEach((ch, i) => {
+      const c = (ch as HTMLElement).offsetLeft + (ch as HTMLElement).offsetWidth / 2;
+      const d = Math.abs(c - center);
+      if (d < bestD) {
+        bestD = d;
+        best = i;
+      }
+    });
+    setActive(best);
+  };
+
+  const onScroll = () => {
+    cancelAnimationFrame(rafRef.current);
+    rafRef.current = requestAnimationFrame(recomputeActive);
+  };
+
+  const scrollToIndex = (i: number) => {
+    const el = scrollerRef.current;
+    if (!el) return;
+    const n = el.children.length;
+    const idx = Math.max(0, Math.min(n - 1, i));
+    const ch = el.children[idx] as HTMLElement | undefined;
+    if (!ch) return;
+    el.scrollTo({
+      left: ch.offsetLeft - (el.clientWidth - ch.offsetWidth) / 2,
+      behavior: 'smooth',
+    });
+  };
+
+  // Al cambiar el filtro/lista, volvemos al inicio.
+  useEffect(() => {
+    setActive(0);
+    scrollerRef.current?.scrollTo({ left: 0 });
+  }, [search, cardDatas.length]);
+
   const downloadCard = async () => {
     if (!cardRef.current || !selected) return;
     setDownloading(true);
@@ -409,25 +470,41 @@ export function Tarjetas() {
             : 'Ningún jugador coincide con el filtro.'}
         </div>
       ) : (
-        <div className="pcard-grid">
-          {cards.map((p) => {
-            const name = PLAYERS_BY_ID[p.id]?.name ?? p.name;
-            const data = toCard(
-              p.id,
-              name,
-              avatars[p.id],
-              metas[p.id] ?? defaultMeta(p.id),
-              trophies.get(p.id) ?? NO_CUPS,
-              career.get(p.id),
-            );
-            return (
-              <PlayerCard
-                key={p.id}
-                data={data}
-                onClick={() => setSelected(data)}
-              />
-            );
-          })}
+        <div className="tcar-wrap">
+          <button
+            type="button"
+            className="tcar__nav tcar__nav--prev"
+            onClick={() => scrollToIndex(active - 1)}
+            disabled={active === 0}
+            aria-label="Anterior"
+          >
+            ‹
+          </button>
+
+          <div className="tcar" ref={scrollerRef} onScroll={onScroll}>
+            {cardDatas.map((data, i) => (
+              <div
+                key={data.id}
+                className={`tcar__slide${i === active ? ' is-active' : ''}`}
+              >
+                <PlayerCard data={data} onClick={() => setSelected(data)} />
+              </div>
+            ))}
+          </div>
+
+          <button
+            type="button"
+            className="tcar__nav tcar__nav--next"
+            onClick={() => scrollToIndex(active + 1)}
+            disabled={active >= cardDatas.length - 1}
+            aria-label="Siguiente"
+          >
+            ›
+          </button>
+
+          <div className="tcar__counter">
+            {active + 1} / {cardDatas.length}
+          </div>
         </div>
       )}
 
