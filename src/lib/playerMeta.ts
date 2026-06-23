@@ -6,6 +6,7 @@ export interface PlayerMeta {
   position: string; // código de 3 letras (BAS, ESC, ALE, ALP, PIV)
   heightCm: number;
   hand: Hand;
+  frase: string; // frase emblemática que va abajo de la tarjeta
 }
 
 export const POSITIONS: { code: string; label: string }[] = [
@@ -32,7 +33,7 @@ export function defaultMeta(id: number): PlayerMeta {
   const position = POSITIONS[Math.floor(r() * POSITIONS.length)].code;
   const heightCm = 168 + Math.floor(r() * 33); // 168–200
   const hand: Hand = r() < 0.82 ? 'derecha' : 'izquierda';
-  return { position, heightCm, hand };
+  return { position, heightCm, hand, frase: '' };
 }
 
 export function handLabel(hand: Hand): string {
@@ -44,6 +45,7 @@ interface PlayerMetaRow {
   position: string | null;
   height_cm: number | null;
   handed: string | null;
+  frase: string | null;
 }
 
 function fromRow(row: PlayerMetaRow): PlayerMeta {
@@ -52,6 +54,7 @@ function fromRow(row: PlayerMetaRow): PlayerMeta {
     position: row.position ?? d.position,
     heightCm: row.height_cm ?? d.heightCm,
     hand: (row.handed as Hand) ?? d.hand,
+    frase: row.frase ?? '',
   };
 }
 
@@ -60,7 +63,7 @@ export async function fetchMetaMap(): Promise<Record<number, PlayerMeta>> {
   if (!supabase) return {};
   const { data, error } = await supabase
     .from('players')
-    .select('id, position, height_cm, handed');
+    .select('id, position, height_cm, handed, frase');
   if (error) throw error;
   const out: Record<number, PlayerMeta> = {};
   for (const row of (data ?? []) as PlayerMetaRow[]) {
@@ -90,6 +93,7 @@ export async function saveMeta(id: number, meta: PlayerMeta): Promise<void> {
       position: meta.position,
       height_cm: meta.heightCm,
       handed: meta.hand,
+      frase: meta.frase.trim() || null,
     })
     .eq('id', id);
   if (error) throw error;

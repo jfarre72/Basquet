@@ -453,6 +453,9 @@ export function Tarjetas() {
                 className={`tcar__slide${i === active ? ' is-active' : ''}`}
               >
                 <PlayerCard data={data} onClick={() => setSelected(data)} />
+                {data.meta.frase && (
+                  <p className="card-phrase">“{data.meta.frase}”</p>
+                )}
               </div>
             ))}
           </div>
@@ -482,6 +485,11 @@ export function Tarjetas() {
             <div className="tarjeta-modal__card">
               <PlayerCard data={selected} />
             </div>
+            {selected.meta.frase && (
+              <p className="card-phrase card-phrase--modal">
+                “{selected.meta.frase}”
+              </p>
+            )}
             <div className="tarjeta-modal__actions">
               <button
                 type="button"

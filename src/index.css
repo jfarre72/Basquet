@@ -5422,3 +5422,26 @@ html.home-locked .app__header {
     grid-template-columns: 1fr;
   }
 }
+
+/* ===== Frase emblemática debajo de la tarjeta ===== */
+
+.card-phrase {
+  margin: 12px auto 0;
+  max-width: 18em;
+  text-align: center;
+  font-family: Georgia, 'Times New Roman', serif;
+  font-style: italic;
+  font-weight: 600;
+  font-size: 0.98rem;
+  line-height: 1.3;
+  letter-spacing: 0.01em;
+  color: #f4d58d;
+  background: linear-gradient(180deg, #ffe9a8, #d4af37 60%, #b8860b);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+.card-phrase--modal {
+  font-size: 1.1rem;
+  margin-top: 14px;
+}

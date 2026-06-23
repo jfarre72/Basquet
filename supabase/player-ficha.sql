@@ -8,7 +8,8 @@
 alter table public.players
     add column if not exists position  text,   -- BAS / ESC / ALE / ALP / PIV
     add column if not exists height_cm integer, -- altura en centímetros
-    add column if not exists handed    text;   -- 'derecha' | 'izquierda'
+    add column if not exists handed    text,   -- 'derecha' | 'izquierda'
+    add column if not exists frase     text;   -- frase emblemática de la tarjeta
 
 -- Nota: la lectura/escritura usa las policies existentes de la tabla players.
 -- Si actualizar la ficha diera error de permisos, asegurate de tener una

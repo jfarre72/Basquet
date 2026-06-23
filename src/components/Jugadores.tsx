@@ -128,6 +128,7 @@ export function Jugadores() {
         position: draft.position,
         heightCm: draft.heightCm,
         hand: draft.hand,
+        frase: draft.frase,
       };
       await saveMeta(id, meta);
       setMetas((prev) => ({ ...prev, [id]: meta }));
@@ -341,6 +342,21 @@ export function Jugadores() {
                   ))}
                 </div>
               </div>
+
+              <label className="meta-field">
+                <span>Frase (va abajo de la tarjeta)</span>
+                <input
+                  type="text"
+                  className="players-search__input"
+                  maxLength={40}
+                  placeholder="Ej: El rey del triple"
+                  value={draft.frase}
+                  onChange={(e) =>
+                    setDraft((d) => (d ? { ...d, frase: e.target.value } : d))
+                  }
+                  aria-label="Frase de la tarjeta"
+                />
+              </label>
             </div>
 
             <div className="name-modal__actions">
