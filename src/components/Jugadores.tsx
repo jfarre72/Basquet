@@ -8,7 +8,6 @@ import {
   fetchAvatars,
   getAvatarUrl,
   setAvatarPath,
-  storeCutoutFromSource,
   updatePlayerName,
   uploadAvatar,
 } from '../lib/avatars';
@@ -40,7 +39,6 @@ export function Jugadores() {
   const [photoFile, setPhotoFile] = useState<File | null>(null);
   const [photoPreview, setPhotoPreview] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
-  const [progress, setProgress] = useState<number | null>(null);
   const galleryRef = useRef<HTMLInputElement>(null);
   const cameraRef = useRef<HTMLInputElement>(null);
 
@@ -112,17 +110,11 @@ export function Jugadores() {
     setSaving(true);
     setError(null);
     try {
-      // 1) Foto (si se eligió una nueva): se sube y se recorta el fondo
-      //    mostrando una barra de progreso.
+      // 1) Foto (si se eligió una nueva).
       if (photoFile) {
-        setProgress(0);
         const path = await uploadAvatar(id, photoFile);
         setAvatars((prev) => ({ ...prev, [id]: path }));
         setAvatarPath(id, path);
-        await storeCutoutFromSource(path, photoFile, (f) =>
-          setProgress(Math.round(f * 100)),
-        );
-        setProgress(100);
       }
       // 2) Nombre (si cambió).
       const name = draft.name.trim();
@@ -144,7 +136,6 @@ export function Jugadores() {
       setError((e as Error).message);
     } finally {
       setSaving(false);
-      setProgress(null);
     }
   };
 
@@ -336,7 +327,7 @@ export function Jugadores() {
               <div className="meta-field">
                 <span>Mano hábil</span>
                 <div className="shot-toggle">
-                  {(['derecha', 'izquierda'] as Hand[]).map((h) => (
+                  {(['izquierda', 'derecha'] as Hand[]).map((h) => (
                     <button
                       key={h}
                       type="button"
@@ -345,26 +336,12 @@ export function Jugadores() {
                         setDraft((d) => (d ? { ...d, hand: h } : d))
                       }
                     >
-                      {h === 'derecha' ? 'Derecha' : 'Izquierda'}
+                      {h === 'izquierda' ? 'Izquierda' : 'Derecha'}
                     </button>
                   ))}
                 </div>
               </div>
             </div>
-
-            {saving && progress != null && (
-              <div className="save-progress">
-                <div className="save-progress__label">
-                  Preparando tu tarjeta… {progress}%
-                </div>
-                <div className="save-progress__track">
-                  <div
-                    className="save-progress__bar"
-                    style={{ width: `${progress}%` }}
-                  />
-                </div>
-              </div>
-            )}
 
             <div className="name-modal__actions">
               <button

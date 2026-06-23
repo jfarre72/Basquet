@@ -1,11 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { PLAYERS_BY_ID, PLAYERS_SORTED } from '../data/players';
-import {
-  ensureStoredCutout,
-  fetchAvatars,
-  getAvatarUrl,
-  getCutoutUrl,
-} from '../lib/avatars';
+import { fetchAvatars, getAvatarUrl } from '../lib/avatars';
 import { fetchSeasonData, type DbMatchPlayer } from '../lib/queries';
 import { computeTrophies, type TrophyCount } from '../utils/seasonStats';
 import {
@@ -68,40 +63,15 @@ function computeCareer(mps: DbMatchPlayer[]): Map<number, CareerStat> {
   return map;
 }
 
-/**
- * Foto de la tarjeta: usa la silueta sin fondo guardada al subir la foto.
- * Si todavía no existe (fotos viejas), la recorta en el cliente en silencio;
- * si todo falla, muestra la foto original.
- */
+/** Foto de la tarjeta dorada de respaldo (usa la foto original). */
 function FutPhoto({ path, name }: { path: string; name: string }) {
-  const [src, setSrc] = useState(() => getCutoutUrl(path));
-  const [stage, setStage] = useState<'stored' | 'gen' | 'original'>('stored');
-
-  const handleError = async () => {
-    if (stage === 'stored') {
-      // No existe la silueta guardada (foto vieja): la generamos y persistimos
-      // una sola vez, así de acá en más carga directo y para todos.
-      setStage('gen');
-      try {
-        setSrc(await ensureStoredCutout(path));
-      } catch {
-        setStage('original');
-        setSrc(getAvatarUrl(path));
-      }
-    } else if (stage === 'gen') {
-      setStage('original');
-      setSrc(getAvatarUrl(path));
-    }
-  };
-
   return (
-    <div className={`futcard__photo${stage === 'original' ? '' : ' is-cut'}`}>
+    <div className="futcard__photo">
       <img
-        src={src}
+        src={getAvatarUrl(path)}
         alt={name}
         crossOrigin="anonymous"
         loading="lazy"
-        onError={() => void handleError()}
       />
     </div>
   );

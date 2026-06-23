@@ -1,31 +1,6 @@
-import { removeBgBlob } from './cutout';
 import { supabase } from './supabase';
 
 const BUCKET = 'avatars';
-
-/** Ruta del recorte sin fondo asociado a una foto de avatar. */
-export function cutoutPathFor(avatarPath: string): string {
-  const base = avatarPath.replace(/\.[^.]+$/, '');
-  return `cutouts/${base}.png`;
-}
-
-/** URL pública del recorte sin fondo (puede no existir todavía). */
-export function getCutoutUrl(avatarPath: string): string {
-  return getAvatarUrl(cutoutPathFor(avatarPath));
-}
-
-/**
- * Garantiza que exista la silueta sin fondo guardada en Supabase. Si no
- * existe (fotos viejas), la genera en el cliente UNA vez, la sube y devuelve
- * su URL pública persistida (para reusarla siempre, sin reprocesar).
- */
-export async function ensureStoredCutout(avatarPath: string): Promise<string> {
-  const blob = await removeBgBlob(getAvatarUrl(avatarPath));
-  const ok = await uploadCutout(avatarPath, blob);
-  // Persistido: URL pública con cache-bust. Si no se pudo persistir, se
-  // muestra igual con un objectURL (solo esta sesión).
-  return ok ? `${getCutoutUrl(avatarPath)}?t=${Date.now()}` : URL.createObjectURL(blob);
-}
 
 export interface DbPlayerAvatar {
   id: number;
@@ -118,40 +93,5 @@ export async function uploadAvatar(
     await supabase.storage.from(BUCKET).remove([path]);
     throw error;
   }
-
-  // La silueta sin fondo se genera aparte (el editor lo hace con barra de
-  // progreso al guardar; las tarjetas hacen backfill si falta).
   return path;
-}
-
-/** Sube un PNG sin fondo a la ruta de cutout. Devuelve true si se persistió. */
-async function uploadCutout(avatarPath: string, blob: Blob): Promise<boolean> {
-  if (!supabase) return false;
-  try {
-    const { error } = await supabase.storage
-      .from(BUCKET)
-      .upload(cutoutPathFor(avatarPath), blob, {
-        cacheControl: '3600',
-        upsert: true,
-        contentType: 'image/png',
-      });
-    return !error;
-  } catch {
-    return false;
-  }
-}
-
-/** Genera la silueta a partir de una foto (File/Blob o URL) y la guarda.
- *  Best-effort: nunca lanza. */
-export async function storeCutoutFromSource(
-  avatarPath: string,
-  source: Blob | string,
-  onProgress?: (fraction: number) => void,
-): Promise<void> {
-  try {
-    const blob = await removeBgBlob(source, onProgress);
-    await uploadCutout(avatarPath, blob);
-  } catch {
-    /* si falla, la tarjeta lo reintenta al verse */
-  }
 }
