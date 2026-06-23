@@ -121,15 +121,6 @@ export function Resultados() {
                       <span className="result-card__name">{m.team_b_name}</span>
                     </span>
                   </div>
-                  <div className="result-card__tag">
-                    {m.winner === 'tie'
-                      ? 'Empate'
-                      : aWin
-                        ? `Ganó ${m.team_a_name}`
-                        : bWin
-                          ? `Ganó ${m.team_b_name}`
-                          : 'Sin resultado'}
-                  </div>
                 </button>
 
                 {isOpen && (

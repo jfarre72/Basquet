@@ -192,8 +192,6 @@ export function Caja() {
                   onChange={(e) => setJugadores(e.target.value)}
                 />
               </label>
-            </div>
-            <div className="caja-form__row">
               <label className="caja-form__field">
                 <span>$ por persona</span>
                 <input

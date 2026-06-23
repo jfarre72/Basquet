@@ -4760,6 +4760,7 @@ html.home-locked .app__header {
   position: relative;
   width: 120px;
   height: 120px;
+  flex-shrink: 0;
   border-radius: 50%;
   overflow: hidden;
   border: 2px solid var(--border-strong);
@@ -5029,7 +5030,7 @@ html.home-locked .app__header {
 }
 .result-card__team--win .result-card__pts,
 .result-card__team--win .result-card__name {
-  color: #4ade80;
+  color: var(--accent-strong);
 }
 .result-card__vs {
   font-size: 0.7rem;
@@ -5075,7 +5076,7 @@ html.home-locked .app__header {
 }
 .caja-form__row {
   display: grid;
-  grid-template-columns: 1fr 1fr 1fr;
+  grid-template-columns: repeat(4, 1fr);
   gap: 10px;
 }
 .caja-form__field {
@@ -5402,16 +5403,26 @@ html.home-locked .app__header {
   text-align: left;
 }
 .result-team__table td {
-  padding: 4px;
+  padding: 0 4px;
+  height: 34px;
   text-align: right;
   font-variant-numeric: tabular-nums;
   border-top: 1px solid var(--border);
+  vertical-align: middle;
 }
 .result-team__player {
   display: flex;
   align-items: center;
   gap: 6px;
   text-align: left !important;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.result-team__player .player-avatar {
+  width: 22px;
+  height: 22px;
+  flex-shrink: 0;
 }
 .result-team__hl {
   font-weight: 800;
