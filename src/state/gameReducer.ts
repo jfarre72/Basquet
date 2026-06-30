@@ -24,6 +24,8 @@ export type GameAction =
   | { type: 'BACK_TO_SELECTION' }
   | { type: 'ASSIGN_PLAYER_TO_TEAM'; playerId: number; team: TeamId }
   | { type: 'UNASSIGN_PLAYER'; playerId: number }
+  | { type: 'ADD_PLAYER_TO_GAME'; playerId: number; team: TeamId }
+  | { type: 'REMOVE_PLAYER_FROM_GAME'; playerId: number }
   | { type: 'CLEAR_TEAMS' }
   | { type: 'SHUFFLE_TEAMS' }
   | { type: 'SET_TEAM_NAME'; team: TeamId; name: string }
@@ -152,6 +154,57 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
           },
         },
       };
+
+    case 'ADD_PLAYER_TO_GAME': {
+      // Suma un jugador durante el partido: lo mete al equipo elegido, lo saca
+      // del otro y lo agrega a la selección para mantener todo consistente.
+      const other: TeamId = action.team === 'A' ? 'B' : 'A';
+      const target = state.teams[action.team];
+      const opposite = state.teams[other];
+      const selectedPlayerIds = state.selectedPlayerIds.includes(action.playerId)
+        ? state.selectedPlayerIds
+        : [...state.selectedPlayerIds, action.playerId];
+      return {
+        ...state,
+        selectedPlayerIds,
+        teams: {
+          ...state.teams,
+          [action.team]: {
+            ...target,
+            playerIds: target.playerIds.includes(action.playerId)
+              ? target.playerIds
+              : [...target.playerIds, action.playerId],
+          },
+          [other]: {
+            ...opposite,
+            playerIds: withoutPlayer(opposite.playerIds, action.playerId),
+          },
+        },
+      };
+    }
+
+    case 'REMOVE_PLAYER_FROM_GAME': {
+      // Quita un jugador del partido: lo saca de ambos equipos, de la selección
+      // y elimina sus jugadas para que no le cuente goles ni resultado.
+      return {
+        ...state,
+        selectedPlayerIds: withoutPlayer(
+          state.selectedPlayerIds,
+          action.playerId,
+        ),
+        teams: {
+          A: {
+            ...state.teams.A,
+            playerIds: withoutPlayer(state.teams.A.playerIds, action.playerId),
+          },
+          B: {
+            ...state.teams.B,
+            playerIds: withoutPlayer(state.teams.B.playerIds, action.playerId),
+          },
+        },
+        plays: state.plays.filter((play) => play.playerId !== action.playerId),
+      };
+    }
 
     case 'CLEAR_TEAMS':
       return {

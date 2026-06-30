@@ -1,6 +1,7 @@
 import { useCallback, useState } from 'react';
 import { useGame } from '../state/GameContext';
 import { PlayerPickerModal } from './PlayerPickerModal';
+import { RosterModal } from './RosterModal';
 import { PlaysList } from './PlaysList';
 import { PlayerStats } from './PlayerStats';
 import { Podium } from './Podium';
@@ -19,6 +20,7 @@ export function GameScreen() {
     null,
   );
   const [tab, setTab] = useState<Tab>('plays');
+  const [rosterOpen, setRosterOpen] = useState(false);
   const finished = state.stage === 'finished';
   const { winner, scoreA, scoreB } = getWinner(state);
 
@@ -150,6 +152,16 @@ export function GameScreen() {
         {!finished && (
           <button
             type="button"
+            className="btn btn--ghost"
+            onClick={() => setRosterOpen(true)}
+          >
+            👥 Jugadores
+          </button>
+        )}
+
+        {!finished && (
+          <button
+            type="button"
             className="btn btn--danger"
             onClick={() => {
               if (
@@ -173,6 +185,8 @@ export function GameScreen() {
           onClose={() => setPicker(null)}
         />
       )}
+
+      {rosterOpen && <RosterModal onClose={() => setRosterOpen(false)} />}
     </>
   );
 }
