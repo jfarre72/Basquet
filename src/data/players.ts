@@ -106,8 +106,34 @@ export const PLAYERS_ACTIVE_SORTED: Player[] = PLAYERS_SORTED.filter(
  */
 export function applyPlayerNames(rows: { id: number; name: string }[]): void {
   for (const r of rows) {
+    if (!r.name || !r.name.trim()) continue;
+    const name = r.name.trim();
     const p = PLAYERS_BY_ID[r.id];
-    if (p && r.name && r.name.trim()) p.name = r.name.trim();
+    if (p) {
+      // Jugador ya conocido: solo actualizar el nombre.
+      p.name = name;
+    } else {
+      // Jugador nuevo dado de alta en la base desde otro dispositivo/sesión:
+      // sumarlo al roster local para que aparezca en toda la app.
+      addPlayerToRoster({ id: r.id, name });
+    }
   }
   PLAYERS_SORTED.sort((a, b) => a.name.localeCompare(b.name));
+}
+
+/**
+ * Agrega un jugador al roster local en runtime (recién dado de alta). Muta los
+ * arrays exportados en su lugar para que las vistas que ya los referencian vean
+ * al nuevo jugador tras un re-render. Es idempotente por id.
+ */
+export function addPlayerToRoster(player: Player): void {
+  if (PLAYERS_BY_ID[player.id]) return;
+  PLAYERS.push(player);
+  PLAYERS_BY_ID[player.id] = player;
+  PLAYERS_SORTED.push(player);
+  PLAYERS_SORTED.sort((a, b) => a.name.localeCompare(b.name));
+  if (!INACTIVE_PLAYER_IDS.has(player.id)) {
+    PLAYERS_ACTIVE_SORTED.push(player);
+    PLAYERS_ACTIVE_SORTED.sort((a, b) => a.name.localeCompare(b.name));
+  }
 }
