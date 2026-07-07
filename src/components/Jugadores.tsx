@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import {
+  addPlayerToRoster,
   applyPlayerNames,
   PLAYERS_ACTIVE_SORTED,
   PLAYERS_BY_ID,
@@ -7,6 +8,7 @@ import {
 import {
   fetchAvatars,
   getAvatarUrl,
+  insertPlayer,
   setAvatarPath,
   updatePlayerName,
   uploadAvatar,
@@ -33,6 +35,10 @@ export function Jugadores() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [search, setSearch] = useState('');
+
+  const [creating, setCreating] = useState(false);
+  const [newName, setNewName] = useState('');
+  const [savingNew, setSavingNew] = useState(false);
 
   const [editId, setEditId] = useState<number | null>(null);
   const [draft, setDraft] = useState<Draft | null>(null);
@@ -104,6 +110,35 @@ export function Jugadores() {
     setPhotoPreview(URL.createObjectURL(file));
   };
 
+  const openCreate = () => {
+    if (!SUPABASE_CONFIGURED) return;
+    setNewName('');
+    setCreating(true);
+  };
+
+  const closeCreate = () => {
+    setCreating(false);
+    setNewName('');
+  };
+
+  const handleCreate = async () => {
+    const name = newName.trim();
+    if (!name) return;
+    setSavingNew(true);
+    setError(null);
+    try {
+      const row = await insertPlayer(name);
+      addPlayerToRoster({ id: row.id, name: row.name });
+      // Forzar re-render de la grilla (el memo depende de `names`).
+      setNames((prev) => ({ ...prev, [row.id]: row.name }));
+      closeCreate();
+    } catch (e) {
+      setError((e as Error).message);
+    } finally {
+      setSavingNew(false);
+    }
+  };
+
   const handleSave = async () => {
     if (editId == null || draft == null) return;
     const id = editId;
@@ -155,6 +190,15 @@ export function Jugadores() {
             Tocá tu nombre para cargar tu ficha y tu foto.
           </p>
         </div>
+        <button
+          type="button"
+          className="btn btn--primary"
+          onClick={openCreate}
+          disabled={!SUPABASE_CONFIGURED}
+          title="Dar de alta un jugador nuevo"
+        >
+          + Nuevo jugador
+        </button>
       </div>
 
       {!SUPABASE_CONFIGURED && (
@@ -226,6 +270,56 @@ export function Jugadores() {
           {filtered.length === 0 && (
             <div className="lb-empty">Sin jugadores que coincidan.</div>
           )}
+        </div>
+      )}
+
+      {creating && (
+        <div className="modal-backdrop" onClick={closeCreate}>
+          <div
+            className="modal player-edit"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <h3 className="name-modal__title">Nuevo jugador</h3>
+            <div className="meta-form">
+              <label className="meta-field">
+                <span>Nombre</span>
+                <input
+                  type="text"
+                  className="players-search__input"
+                  value={newName}
+                  autoFocus
+                  placeholder="Nombre del jugador"
+                  onChange={(e) => setNewName(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' && newName.trim() && !savingNew)
+                      void handleCreate();
+                  }}
+                  aria-label="Nombre del nuevo jugador"
+                />
+              </label>
+              <p className="section-head__subtitle">
+                Después podés cargarle la foto y la ficha tocando su tarjeta.
+              </p>
+            </div>
+            <div className="name-modal__actions">
+              <button
+                type="button"
+                className="btn btn--ghost"
+                onClick={closeCreate}
+                disabled={savingNew}
+              >
+                Cancelar
+              </button>
+              <button
+                type="button"
+                className="btn btn--primary"
+                onClick={() => void handleCreate()}
+                disabled={savingNew || !newName.trim()}
+              >
+                {savingNew ? 'Creando…' : 'Dar de alta'}
+              </button>
+            </div>
+          </div>
         </div>
       )}
 

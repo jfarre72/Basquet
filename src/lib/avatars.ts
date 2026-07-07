@@ -71,6 +71,32 @@ export async function updatePlayerName(
   if (error) throw error;
 }
 
+/** Da de alta un jugador nuevo. Calcula el próximo id libre (los ids son
+ *  enteros estables asignados a mano) e inserta la fila en players. */
+export async function insertPlayer(
+  name: string,
+): Promise<{ id: number; name: string }> {
+  if (!supabase) throw new Error('Sin conexión a Supabase.');
+  const trimmed = name.trim();
+  if (!trimmed) throw new Error('El nombre no puede estar vacío.');
+
+  const { data: maxRows, error: maxErr } = await supabase
+    .from('players')
+    .select('id')
+    .order('id', { ascending: false })
+    .limit(1);
+  if (maxErr) throw maxErr;
+  const nextId = ((maxRows?.[0]?.id as number | undefined) ?? 0) + 1;
+
+  const { data, error } = await supabase
+    .from('players')
+    .insert({ id: nextId, name: trimmed })
+    .select('id, name')
+    .single();
+  if (error) throw error;
+  return data as { id: number; name: string };
+}
+
 /** Sube la selfie de un jugador y guarda la ruta en la tabla players. */
 export async function uploadAvatar(
   playerId: number,
