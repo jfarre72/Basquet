@@ -2845,8 +2845,20 @@ html.home-locked .app__header {
 }
 .armado-editor__teams {
   display: grid;
-  grid-template-columns: 1fr 1fr;
+  /* Mobile: equipos apilados a ancho completo para que ambos se vean enteros
+     y se puedan mover/quitar jugadores sin que se corte la pantalla. */
+  grid-template-columns: 1fr;
   gap: 8px;
+}
+/* Evita que el contenido (nombres largos + botones) fuerce columnas más
+   anchas que el viewport y quede recortado por el overflow-x del contenedor. */
+.armado-editor__teams > .team-card {
+  min-width: 0;
+}
+@media (min-width: 640px) {
+  .armado-editor__teams {
+    grid-template-columns: 1fr 1fr;
+  }
 }
 .armado-hint {
   margin: 0;
