@@ -15,8 +15,15 @@ import {
   type DraftInput,
 } from '../lib/queries';
 import { SUPABASE_CONFIGURED } from '../lib/supabase';
+import { fetchMetaMap, type PlayerMeta } from '../lib/playerMeta';
 import { useGame } from '../state/GameContext';
 import { normalizeText } from '../utils/text';
+import {
+  balanceTeams,
+  computeRatings,
+  summarize,
+  type PlayerRating,
+} from '../utils/teamBalance';
 import { FlyerModal } from './FlyerModal';
 
 type View = 'list' | 'edit';
@@ -28,6 +35,7 @@ export function Armado({ onStartMatch }: { onStartMatch: () => void }) {
   const [historicos, setHistoricos] = useState<DbHistoric[]>([]);
   const [matchPlayers, setMatchPlayers] = useState<DbMatchPlayer[]>([]);
   const [seasonMatches, setSeasonMatches] = useState<DbMatch[]>([]);
+  const [metaMap, setMetaMap] = useState<Record<number, PlayerMeta>>({});
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [view, setView] = useState<View>('list');
@@ -41,13 +49,19 @@ export function Armado({ onStartMatch }: { onStartMatch: () => void }) {
       return;
     }
     let cancelled = false;
-    Promise.all([fetchDrafts(), fetchHistoricos(), fetchSeasonData()])
-      .then(([d, h, season]) => {
+    Promise.all([
+      fetchDrafts(),
+      fetchHistoricos(),
+      fetchSeasonData(),
+      fetchMetaMap().catch(() => ({}) as Record<number, PlayerMeta>),
+    ])
+      .then(([d, h, season, meta]) => {
         if (cancelled) return;
         setDrafts(d);
         setHistoricos(h);
         setSeasonMatches(season.matches);
         setMatchPlayers(season.matchPlayers);
+        setMetaMap(meta);
       })
       .catch((e: Error) => {
         if (!cancelled) setError(e.message);
@@ -59,6 +73,12 @@ export function Armado({ onStartMatch }: { onStartMatch: () => void }) {
       cancelled = true;
     };
   }, []);
+
+  /** Rating (OVR + ppp + altura) por jugador, para armar equipos parejos. */
+  const ratingById = useMemo(
+    () => computeRatings(matchPlayers, metaMap),
+    [matchPlayers, metaMap],
+  );
 
   /** Jugadores que estuvieron en alguno de los últimos 10 partidos. */
   const recentPlayerIds = useMemo(() => {
@@ -221,6 +241,8 @@ export function Armado({ onStartMatch }: { onStartMatch: () => void }) {
         <DraftEditor
           initial={editing}
           recentIds={recentPlayerIds}
+          ratingById={ratingById}
+          metaMap={metaMap}
           onCancel={() => {
             setView('list');
             setEditing(null);
@@ -333,12 +355,16 @@ function DraftTeam({
 function DraftEditor({
   initial,
   recentIds,
+  ratingById,
+  metaMap,
   onCancel,
   onSaved,
   onSavedAndStart,
 }: {
   initial: DbDraft | null;
   recentIds: Set<number>;
+  ratingById: Map<number, PlayerRating>;
+  metaMap: Record<number, PlayerMeta>;
   onCancel: () => void;
   onSaved: (d: DbDraft, isNew: boolean) => void;
   onSavedAndStart: (d: DbDraft) => void;
@@ -418,16 +444,24 @@ function DraftEditor({
     setTeamB((arr) => arr.filter((x) => x !== id));
   };
 
-  const shuffle = () => {
-    const arr = [...selected];
-    for (let i = arr.length - 1; i > 0; i--) {
-      const j = Math.floor(Math.random() * (i + 1));
-      [arr[i], arr[j]] = [arr[j], arr[i]];
-    }
-    const half = Math.ceil(arr.length / 2);
-    setTeamA(arr.slice(0, half));
-    setTeamB(arr.slice(half));
+  const balance = () => {
+    const { teamA: a, teamB: b } = balanceTeams(
+      [...selected],
+      ratingById,
+      metaMap,
+    );
+    setTeamA(a);
+    setTeamB(b);
   };
+
+  const summaryA = useMemo(
+    () => summarize(teamA, ratingById, metaMap),
+    [teamA, ratingById, metaMap],
+  );
+  const summaryB = useMemo(
+    () => summarize(teamB, ratingById, metaMap),
+    [teamB, ratingById, metaMap],
+  );
 
   const canSave = !saving && teamA.length > 0 && teamB.length > 0;
   const canContinue = selected.size >= 2;
@@ -586,11 +620,12 @@ function DraftEditor({
           <div className="page-head__actions">
             <button
               type="button"
-              className="btn btn--ghost btn--sm"
-              onClick={shuffle}
+              className="btn btn--blue btn--sm"
+              onClick={balance}
               disabled={selected.size < 2}
+              title="Reparte por OVR, altura y puntos"
             >
-              🎲 Sortear
+              ⚖️ Equilibrar
             </button>
             <button
               type="button"
@@ -604,6 +639,26 @@ function DraftEditor({
               Limpiar equipos
             </button>
           </div>
+
+          {teamA.length > 0 && teamB.length > 0 && (
+            <div className="balance-summary">
+              <div className="balance-summary__col">
+                <span className="balance-summary__team">{teamAName}</span>
+                <span className="balance-summary__metrics">
+                  OVR {summaryA.ovr} · {summaryA.heightAvg.toFixed(0)} cm ·{' '}
+                  {summaryA.ppp.toFixed(1)} pts
+                </span>
+              </div>
+              <div className="balance-summary__vs">vs</div>
+              <div className="balance-summary__col">
+                <span className="balance-summary__team">{teamBName}</span>
+                <span className="balance-summary__metrics">
+                  OVR {summaryB.ovr} · {summaryB.heightAvg.toFixed(0)} cm ·{' '}
+                  {summaryB.ppp.toFixed(1)} pts
+                </span>
+              </div>
+            </div>
+          )}
 
           <section className={`pool-section${pool.length === 0 ? ' is-empty' : ''}`}>
             <div className="pool-section__head">
