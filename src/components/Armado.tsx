@@ -768,9 +768,12 @@ function TeamPanel({
   onRemove: (id: number) => void;
 }) {
   const otherSide = side === 'A' ? 'B' : 'A';
-  const sorted = [...ids].sort((a, b) =>
-    (PLAYERS_BY_ID[a]?.name ?? '').localeCompare(PLAYERS_BY_ID[b]?.name ?? ''),
-  );
+  // Ordenados de mayor a menor promedio de puntos; a igual ppp, alfabético.
+  const sorted = [...ids].sort((a, b) => {
+    const diff = ratingOf(b, ratingById).ppp - ratingOf(a, ratingById).ppp;
+    if (diff !== 0) return diff;
+    return (PLAYERS_BY_ID[a]?.name ?? '').localeCompare(PLAYERS_BY_ID[b]?.name ?? '');
+  });
   return (
     <div className={`team-card team-card--${side}`}>
       <div className="team-card__head">

@@ -63,12 +63,15 @@ export function FlyerModal({ draft, ratingById, onClose }: Props) {
     }
   };
 
+  // Ordenados de mayor a menor promedio de puntos; a igual ppp, alfabético.
   const sorted = (ids: number[]) =>
-    [...ids].sort((a, b) =>
-      (PLAYERS_BY_ID[a]?.name ?? '').localeCompare(
+    [...ids].sort((a, b) => {
+      const diff = ratingOf(b, ratingById).ppp - ratingOf(a, ratingById).ppp;
+      if (diff !== 0) return diff;
+      return (PLAYERS_BY_ID[a]?.name ?? '').localeCompare(
         PLAYERS_BY_ID[b]?.name ?? '',
-      ),
-    );
+      );
+    });
 
   return (
     <div className="modal-backdrop" onClick={onClose}>
