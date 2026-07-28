@@ -444,17 +444,6 @@ function DraftEditor({
     setTeamB((arr) => arr.filter((x) => x !== id));
   };
 
-  const shuffle = () => {
-    const arr = [...selected];
-    for (let i = arr.length - 1; i > 0; i--) {
-      const j = Math.floor(Math.random() * (i + 1));
-      [arr[i], arr[j]] = [arr[j], arr[i]];
-    }
-    const half = Math.ceil(arr.length / 2);
-    setTeamA(arr.slice(0, half));
-    setTeamB(arr.slice(half));
-  };
-
   const balance = () => {
     const { teamA: a, teamB: b } = balanceTeams(
       [...selected],
@@ -637,14 +626,6 @@ function DraftEditor({
               title="Reparte por OVR, altura y puntos"
             >
               ⚖️ Equilibrar
-            </button>
-            <button
-              type="button"
-              className="btn btn--ghost btn--sm"
-              onClick={shuffle}
-              disabled={selected.size < 2}
-            >
-              🎲 Sortear
             </button>
             <button
               type="button"
