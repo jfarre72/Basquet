@@ -3,13 +3,24 @@ import html2canvas from 'html2canvas';
 import { PLAYERS_BY_ID } from '../data/players';
 import { getPlayerAvatarUrl } from '../lib/avatars';
 import type { DbDraft } from '../lib/queries';
+import {
+  ratingOf,
+  summarize,
+  type PlayerRating,
+} from '../utils/teamBalance';
 
 interface Props {
   draft: DbDraft;
+  ratingById: Map<number, PlayerRating>;
   onClose: () => void;
 }
 
-export function FlyerModal({ draft, onClose }: Props) {
+/** Promedio de puntos por partido de un jugador, formateado (ej "12.5"). */
+function pppText(id: number, ratingById: Map<number, PlayerRating>): string {
+  return ratingOf(id, ratingById).ppp.toFixed(1);
+}
+
+export function FlyerModal({ draft, ratingById, onClose }: Props) {
   const stageRef = useRef<HTMLDivElement>(null);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -94,9 +105,12 @@ export function FlyerModal({ draft, onClose }: Props) {
             <div className="flyer__vs">
               <div className="flyer__team flyer__team--a">
                 <div className="flyer__team-name">{draft.team_a_name}</div>
+                <div className="flyer__team-ppp">
+                  {summarize(draft.team_a_ids, ratingById).ppp.toFixed(1)} pts/partido
+                </div>
                 <ul className="flyer__list">
                   {sorted(draft.team_a_ids).map((id) => (
-                    <FlyerPlayer key={id} id={id} />
+                    <FlyerPlayer key={id} id={id} ppp={pppText(id, ratingById)} />
                   ))}
                 </ul>
               </div>
@@ -105,9 +119,12 @@ export function FlyerModal({ draft, onClose }: Props) {
               </div>
               <div className="flyer__team flyer__team--b">
                 <div className="flyer__team-name">{draft.team_b_name}</div>
+                <div className="flyer__team-ppp">
+                  {summarize(draft.team_b_ids, ratingById).ppp.toFixed(1)} pts/partido
+                </div>
                 <ul className="flyer__list">
                   {sorted(draft.team_b_ids).map((id) => (
-                    <FlyerPlayer key={id} id={id} />
+                    <FlyerPlayer key={id} id={id} ppp={pppText(id, ratingById)} />
                   ))}
                 </ul>
               </div>
@@ -134,7 +151,7 @@ export function FlyerModal({ draft, onClose }: Props) {
   );
 }
 
-function FlyerPlayer({ id }: { id: number }) {
+function FlyerPlayer({ id, ppp }: { id: number; ppp: string }) {
   const name = PLAYERS_BY_ID[id]?.name ?? `#${id}`;
   const url = getPlayerAvatarUrl(id);
   return (
@@ -149,6 +166,9 @@ function FlyerPlayer({ id }: { id: number }) {
         )}
       </span>
       <span className="flyer__player-name">{name}</span>
+      <span className="flyer__player-ppp" title="Promedio de puntos por partido">
+        {ppp}
+      </span>
     </li>
   );
 }

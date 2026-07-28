@@ -255,7 +255,13 @@ export function Armado({ onStartMatch }: { onStartMatch: () => void }) {
         />
       )}
 
-      {flyer && <FlyerModal draft={flyer} onClose={() => setFlyer(null)} />}
+      {flyer && (
+        <FlyerModal
+          draft={flyer}
+          ratingById={ratingById}
+          onClose={() => setFlyer(null)}
+        />
+      )}
     </div>
   );
 }
