@@ -813,6 +813,46 @@ main.app__main {
 
 /* ===== Pool (sin asignar) ===== */
 
+.balance-summary {
+  display: flex;
+  align-items: stretch;
+  gap: 10px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: 12px 14px;
+}
+.balance-summary__col {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  min-width: 0;
+}
+.balance-summary__col:last-child {
+  text-align: right;
+}
+.balance-summary__team {
+  font-size: 0.82rem;
+  font-weight: 800;
+  color: var(--text);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.balance-summary__metrics {
+  font-size: 0.78rem;
+  color: var(--text-subtle);
+  font-variant-numeric: tabular-nums;
+}
+.balance-summary__vs {
+  align-self: center;
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: var(--text-muted);
+  text-transform: uppercase;
+}
+
 .pool-section {
   background: var(--surface);
   border: 1px solid var(--border);
