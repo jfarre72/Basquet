@@ -3336,10 +3336,32 @@ html.home-locked .app__header {
   color: var(--accent-strong);
 }
 .flyer__player-name {
+  flex: 1;
   min-width: 0;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+.flyer__player-ppp {
+  flex: 0 0 auto;
+  min-width: 34px;
+  text-align: center;
+  padding: 2px 7px;
+  border-radius: 999px;
+  background: var(--accent-line);
+  color: var(--accent-strong);
+  font-weight: 900;
+  font-size: 0.8rem;
+  font-variant-numeric: tabular-nums;
+}
+.flyer__team-ppp {
+  text-align: center;
+  margin-bottom: 10px;
+  font-weight: 800;
+  font-size: 0.78rem;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+  color: var(--accent-strong);
 }
 .flyer__center {
   display: flex;
