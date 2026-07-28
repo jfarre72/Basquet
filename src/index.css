@@ -783,6 +783,22 @@ main.app__main {
   overflow: hidden;
   text-overflow: ellipsis;
 }
+.team-pill__ppp {
+  flex: 0 0 auto;
+  min-width: 34px;
+  text-align: center;
+  padding: 3px 8px;
+  border-radius: 999px;
+  background: var(--accent-line);
+  color: var(--accent-strong);
+  font-weight: 800;
+  font-size: 0.8rem;
+  font-variant-numeric: tabular-nums;
+}
+.team-card--B .team-pill__ppp {
+  background: rgba(10, 10, 10, 0.08);
+  color: #0a0a0a;
+}
 .team-pill__icon {
   appearance: none;
   border: 1px solid var(--border);
@@ -3230,6 +3246,7 @@ html.home-locked .app__header {
   gap: 16px;
   border: 1px solid rgba(249, 115, 22, 0.4);
   overflow: hidden;
+  flex-shrink: 0;
 }
 .flyer__brand {
   display: flex;
@@ -3288,6 +3305,14 @@ html.home-locked .app__header {
   color: #0a0a0a;
   border: 1px solid #94a3b8;
 }
+/* En el equipo blanco el naranja no contrasta: ppp y total en negro. */
+.flyer__team--b .flyer__player-ppp {
+  background: rgba(10, 10, 10, 0.1);
+  color: #0a0a0a;
+}
+.flyer__team--b .flyer__team-ppp {
+  color: #0a0a0a;
+}
 .flyer__team-name {
   font-weight: 900;
   font-size: 1rem;
@@ -3336,10 +3361,32 @@ html.home-locked .app__header {
   color: var(--accent-strong);
 }
 .flyer__player-name {
+  flex: 1;
   min-width: 0;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+.flyer__player-ppp {
+  flex: 0 0 auto;
+  min-width: 34px;
+  text-align: center;
+  padding: 2px 7px;
+  border-radius: 999px;
+  background: var(--accent-line);
+  color: var(--accent-strong);
+  font-weight: 900;
+  font-size: 0.8rem;
+  font-variant-numeric: tabular-nums;
+}
+.flyer__team-ppp {
+  text-align: center;
+  margin-bottom: 10px;
+  font-weight: 800;
+  font-size: 0.78rem;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+  color: var(--accent-strong);
 }
 .flyer__center {
   display: flex;

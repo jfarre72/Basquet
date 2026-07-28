@@ -21,6 +21,7 @@ import { normalizeText } from '../utils/text';
 import {
   balanceTeams,
   computeRatings,
+  ratingOf,
   summarize,
   type PlayerRating,
 } from '../utils/teamBalance';
@@ -255,7 +256,13 @@ export function Armado({ onStartMatch }: { onStartMatch: () => void }) {
         />
       )}
 
-      {flyer && <FlyerModal draft={flyer} onClose={() => setFlyer(null)} />}
+      {flyer && (
+        <FlyerModal
+          draft={flyer}
+          ratingById={ratingById}
+          onClose={() => setFlyer(null)}
+        />
+      )}
     </div>
   );
 }
@@ -603,6 +610,7 @@ function DraftEditor({
               side="A"
               name={teamAName}
               ids={teamA}
+              ratingById={ratingById}
               onName={setTeamAName}
               onMove={(id) => assign(id, 'B')}
               onRemove={unassign}
@@ -611,6 +619,7 @@ function DraftEditor({
               side="B"
               name={teamBName}
               ids={teamB}
+              ratingById={ratingById}
               onName={setTeamBName}
               onMove={(id) => assign(id, 'A')}
               onRemove={unassign}
@@ -745,6 +754,7 @@ function TeamPanel({
   side,
   name,
   ids,
+  ratingById,
   onName,
   onMove,
   onRemove,
@@ -752,14 +762,18 @@ function TeamPanel({
   side: 'A' | 'B';
   name: string;
   ids: number[];
+  ratingById: Map<number, PlayerRating>;
   onName: (s: string) => void;
   onMove: (id: number) => void;
   onRemove: (id: number) => void;
 }) {
   const otherSide = side === 'A' ? 'B' : 'A';
-  const sorted = [...ids].sort((a, b) =>
-    (PLAYERS_BY_ID[a]?.name ?? '').localeCompare(PLAYERS_BY_ID[b]?.name ?? ''),
-  );
+  // Ordenados de mayor a menor promedio de puntos; a igual ppp, alfabético.
+  const sorted = [...ids].sort((a, b) => {
+    const diff = ratingOf(b, ratingById).ppp - ratingOf(a, ratingById).ppp;
+    if (diff !== 0) return diff;
+    return (PLAYERS_BY_ID[a]?.name ?? '').localeCompare(PLAYERS_BY_ID[b]?.name ?? '');
+  });
   return (
     <div className={`team-card team-card--${side}`}>
       <div className="team-card__head">
@@ -782,6 +796,12 @@ function TeamPanel({
               <span className="team-pill__name">
                 <PlayerAvatar id={id} />
                 {PLAYERS_BY_ID[id]?.name}
+              </span>
+              <span
+                className="team-pill__ppp"
+                title="Promedio de puntos por partido"
+              >
+                {ratingOf(id, ratingById).ppp.toFixed(1)}
               </span>
               <button
                 type="button"
