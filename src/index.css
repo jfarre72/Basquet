@@ -3230,6 +3230,7 @@ html.home-locked .app__header {
   gap: 16px;
   border: 1px solid rgba(249, 115, 22, 0.4);
   overflow: hidden;
+  flex-shrink: 0;
 }
 .flyer__brand {
   display: flex;
@@ -3287,6 +3288,14 @@ html.home-locked .app__header {
   background: linear-gradient(180deg, #f1f5f9, #cbd5e1);
   color: #0a0a0a;
   border: 1px solid #94a3b8;
+}
+/* En el equipo blanco el naranja no contrasta: ppp y total en negro. */
+.flyer__team--b .flyer__player-ppp {
+  background: rgba(10, 10, 10, 0.1);
+  color: #0a0a0a;
+}
+.flyer__team--b .flyer__team-ppp {
+  color: #0a0a0a;
 }
 .flyer__team-name {
   font-weight: 900;
