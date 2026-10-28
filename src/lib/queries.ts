@@ -1,5 +1,32 @@
 import { supabase } from './supabase';
 
+const PAGE_SIZE = 1000;
+
+/** Supabase devuelve como máximo 1000 filas por consulta: pagina hasta traer
+ *  todas para que las estadísticas no queden cortadas. */
+async function fetchAllRows<T>(
+  table: string,
+  columns: string,
+  order: { column: string; ascending?: boolean }[] = [
+    { column: 'match_id' },
+    { column: 'player_id' },
+  ],
+): Promise<T[]> {
+  if (!supabase) return [];
+  const out: T[] = [];
+  for (let from = 0; ; from += PAGE_SIZE) {
+    let query = supabase.from(table).select(columns);
+    for (const o of order) {
+      query = query.order(o.column, { ascending: o.ascending ?? true });
+    }
+    const { data, error } = await query.range(from, from + PAGE_SIZE - 1);
+    if (error) throw error;
+    const rows = (data ?? []) as T[];
+    out.push(...rows);
+    if (rows.length < PAGE_SIZE) return out;
+  }
+}
+
 export interface DbMatch {
   id: string;
   played_at: string;
@@ -40,15 +67,15 @@ export async function fetchSeasonData(): Promise<{
   }
   const [matchesRes, mpRes] = await Promise.all([
     supabase.from('matches').select('id, played_at'),
-    supabase
-      .from('match_players')
-      .select('match_id, player_id, outcome, points, doubles, triples'),
+    fetchAllRows<DbMatchPlayer>(
+      'match_players',
+      'match_id, player_id, outcome, points, doubles, triples',
+    ),
   ]);
   if (matchesRes.error) throw matchesRes.error;
-  if (mpRes.error) throw mpRes.error;
   return {
     matches: (matchesRes.data ?? []) as DbMatch[],
-    matchPlayers: (mpRes.data ?? []) as DbMatchPlayer[],
+    matchPlayers: mpRes,
   };
 }
 
@@ -132,18 +159,18 @@ export async function fetchAllPlays(): Promise<{
 }> {
   if (!supabase) return { plays: [], matches: [] };
   const [pRes, mRes] = await Promise.all([
-    supabase
-      .from('plays')
-      .select('match_id, ts, minute, team, player_id, shot_type, points')
-      .order('ts', { ascending: false }),
+    fetchAllRows<DbPlay>(
+      'plays',
+      'match_id, ts, minute, team, player_id, shot_type, points',
+      [{ column: 'ts', ascending: false }, { column: 'id' }],
+    ),
     supabase
       .from('matches')
       .select('id, played_at, team_a_name, team_b_name'),
   ]);
-  if (pRes.error) throw pRes.error;
   if (mRes.error) throw mRes.error;
   return {
-    plays: (pRes.data ?? []) as DbPlay[],
+    plays: pRes,
     matches: (mRes.data ?? []) as DbMatch[],
   };
 }
@@ -160,15 +187,15 @@ export async function fetchResultados(): Promise<{
         'id, played_at, finished_at, team_a_name, team_b_name, score_a, score_b, winner, partial',
       )
       .order('played_at', { ascending: false }),
-    supabase
-      .from('match_players')
-      .select('match_id, player_id, team, outcome, points, doubles, triples'),
+    fetchAllRows<DbMatchPlayer>(
+      'match_players',
+      'match_id, player_id, team, outcome, points, doubles, triples',
+    ),
   ]);
   if (mRes.error) throw mRes.error;
-  if (mpRes.error) throw mpRes.error;
   return {
     matches: (mRes.data ?? []) as DbHistoric[],
-    matchPlayers: (mpRes.data ?? []) as DbMatchPlayer[],
+    matchPlayers: mpRes,
   };
 }
 
@@ -272,19 +299,20 @@ export async function fetchIndicadoresData(): Promise<{
     supabase
       .from('matches')
       .select('id, played_at, team_a_name, team_b_name, score_a, score_b, winner, partial'),
-    supabase
-      .from('match_players')
-      .select('match_id, player_id, team, outcome, points, doubles, triples'),
-    supabase
-      .from('plays')
-      .select('match_id, ts, minute, team, player_id, shot_type, points'),
+    fetchAllRows<DbMatchPlayer>(
+      'match_players',
+      'match_id, player_id, team, outcome, points, doubles, triples',
+    ),
+    fetchAllRows<DbPlay>(
+      'plays',
+      'match_id, ts, minute, team, player_id, shot_type, points',
+      [{ column: 'id' }],
+    ),
   ]);
   if (matchesRes.error) throw matchesRes.error;
-  if (mpRes.error) throw mpRes.error;
-  if (playsRes.error) throw playsRes.error;
   return {
     matches: (matchesRes.data ?? []) as DbMatch[],
-    matchPlayers: (mpRes.data ?? []) as DbMatchPlayer[],
-    plays: (playsRes.data ?? []) as DbPlay[],
+    matchPlayers: mpRes,
+    plays: playsRes,
   };
 }

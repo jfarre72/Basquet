@@ -1,10 +1,8 @@
 import { Fragment, useEffect, useMemo, useState } from 'react';
 import { PlayerAvatar } from './PlayerAvatar';
-import { PLAYERS_BY_ID } from '../data/players';
 import { fetchIndicadoresData,
   type DbMatch,
   type DbMatchPlayer,
-  type DbPlay,
 } from '../lib/queries';
 import {
   computeMonthly,
@@ -53,7 +51,6 @@ const COLUMNS: ColumnDef[] = [
 export function Informe() {
   const [matches, setMatches] = useState<DbMatch[]>([]);
   const [matchPlayers, setMatchPlayers] = useState<DbMatchPlayer[]>([]);
-  const [plays, setPlays] = useState<DbPlay[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [year, setYear] = useState<number | null>(null);
@@ -78,7 +75,6 @@ export function Informe() {
         if (cancelled) return;
         setMatches(data.matches);
         setMatchPlayers(data.matchPlayers);
-        setPlays(data.plays);
         const years = listAvailableYears(data.matches);
         const currentYear = new Date().getFullYear();
         setYear(years.includes(currentYear) ? currentYear : (years[0] ?? null));
@@ -120,24 +116,6 @@ export function Informe() {
     [year, matches, tournament],
   );
 
-  const seasonMatchIds = useMemo(() => {
-    if (year == null) return new Set<string>();
-    return new Set(
-      matches
-        .filter(
-          (m) =>
-            getMatchYear(m) === year &&
-            isMonthInTournament(getMatchMonth(m), tournament),
-        )
-        .map((m) => m.id),
-    );
-  }, [year, matches, tournament]);
-
-  const seasonPlays = useMemo(
-    () => plays.filter((p) => seasonMatchIds.has(p.match_id)),
-    [plays, seasonMatchIds],
-  );
-
   const pointsRanking = useMemo(
     () =>
       sortSeasonStats(baseStats, 'puntos', 'desc')
@@ -146,14 +124,10 @@ export function Informe() {
     [baseStats],
   );
 
-  const topTriples = useMemo(
-    () => topShots(seasonPlays, 'triple'),
-    [seasonPlays],
-  );
-  const topDobles = useMemo(
-    () => topShots(seasonPlays, 'double'),
-    [seasonPlays],
-  );
+  // Dobles/triples salen de match_players (igual que la tabla), no de la
+  // tabla plays: los partidos históricos no tienen jugada por jugada.
+  const topTriples = useMemo(() => topShots(baseStats, 'triples'), [baseStats]);
+  const topDobles = useMemo(() => topShots(baseStats, 'dobles'), [baseStats]);
 
   const totals = useMemo(() => {
     if (year == null) return { jugados: 0, faltantes: 0 };
@@ -359,17 +333,16 @@ interface ShotPodiumItem {
   count: number;
 }
 
-function topShots(plays: DbPlay[], shot: 'double' | 'triple'): ShotPodiumItem[] {
-  const counts = new Map<number, number>();
-  for (const p of plays) {
-    if (p.shot_type !== shot) continue;
-    counts.set(p.player_id, (counts.get(p.player_id) ?? 0) + 1);
-  }
-  return [...counts.entries()]
-    .map(([playerId, count]) => ({
-      playerId,
-      playerName: PLAYERS_BY_ID[playerId]?.name ?? `#${playerId}`,
-      count,
+function topShots(
+  stats: PlayerSeasonStat[],
+  shot: 'dobles' | 'triples',
+): ShotPodiumItem[] {
+  return stats
+    .filter((s) => s[shot] > 0)
+    .map((s) => ({
+      playerId: s.playerId,
+      playerName: s.playerName,
+      count: s[shot],
     }))
     .sort((a, b) => b.count - a.count || a.playerName.localeCompare(b.playerName))
     .slice(0, 3);
