@@ -190,7 +190,9 @@ function computeAwards(
     (a, b) => b.PJ - a.PJ || a.playerName.localeCompare(b.playerName),
   )[0];
   const topScorer = [...stats]
-    .filter((s) => s.puntos > 0 || s.dobles > 0 || s.triples > 0)
+    .filter(
+      (s) => s.puntos > 0 || s.simples > 0 || s.dobles > 0 || s.triples > 0,
+    )
     .sort(
       (a, b) => b.puntos - a.puntos || a.playerName.localeCompare(b.playerName),
     )[0];
@@ -220,7 +222,9 @@ function computeAwards(
       player: topScorer.playerName,
       playerId: topScorer.playerId,
       primary: `${topScorer.puntos} pts`,
-      secondary: `${topScorer.dobles}× 2pt · ${topScorer.triples}× 3pt`,
+      secondary: `${
+        topScorer.simples > 0 ? `${topScorer.simples}× 1pt · ` : ''
+      }${topScorer.dobles}× 2pt · ${topScorer.triples}× 3pt`,
     });
   }
 
@@ -251,6 +255,21 @@ function computeAwards(
       player: topDobles.playerName,
       playerId: topDobles.playerId,
       primary: `${topDobles.dobles}× 2pt`,
+    });
+  }
+
+  const topLibres = [...stats]
+    .filter((s) => s.simples > 0)
+    .sort(
+      (a, b) => b.simples - a.simples || a.playerName.localeCompare(b.playerName),
+    )[0];
+  if (topLibres) {
+    awards.push({
+      label: 'Primero en libres',
+      icon: '☝️',
+      player: topLibres.playerName,
+      playerId: topLibres.playerId,
+      primary: `${topLibres.simples}× 1pt`,
     });
   }
 

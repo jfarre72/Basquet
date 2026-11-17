@@ -239,6 +239,7 @@ function TeamColumn({
             <tr>
               <th>Jugador</th>
               <th>Pts</th>
+              <th>1pt</th>
               <th>2pt</th>
               <th>3pt</th>
             </tr>
@@ -251,6 +252,7 @@ function TeamColumn({
                   {playerName(p.player_id)}
                 </td>
                 <td className="result-team__hl">{p.points ?? 0}</td>
+                <td>{p.singles ?? 0}</td>
                 <td>{p.doubles ?? 0}</td>
                 <td>{p.triples ?? 0}</td>
               </tr>

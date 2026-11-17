@@ -25,6 +25,7 @@ interface MatchBreakdown {
   matchId: string;
   date: string;
   dateLabel: string;
+  singlesPts: number;
   doublesPts: number;
   triplesPts: number;
   total: number;
@@ -212,10 +213,15 @@ function computeMatchBreakdown(
   matches: DbMatch[],
   plays: DbPlay[],
 ): MatchBreakdown[] {
-  const byMatch = new Map<string, { doubles: number; triples: number }>();
+  const byMatch = new Map<
+    string,
+    { singles: number; doubles: number; triples: number }
+  >();
   for (const p of plays) {
-    const cur = byMatch.get(p.match_id) ?? { doubles: 0, triples: 0 };
-    if (p.shot_type === 'double') cur.doubles += p.points;
+    const cur =
+      byMatch.get(p.match_id) ?? { singles: 0, doubles: 0, triples: 0 };
+    if (p.shot_type === 'single') cur.singles += p.points;
+    else if (p.shot_type === 'double') cur.doubles += p.points;
     else cur.triples += p.points;
     byMatch.set(p.match_id, cur);
   }
@@ -228,9 +234,10 @@ function computeMatchBreakdown(
         matchId: id,
         date,
         dateLabel: date ? formatShortDate(date) : '',
+        singlesPts: v.singles,
         doublesPts: v.doubles,
         triplesPts: v.triples,
-        total: v.doubles + v.triples,
+        total: v.singles + v.doubles + v.triples,
       };
     })
     .filter((b) => b.total > 0 && b.date)
@@ -409,12 +416,13 @@ function QuarterChart({ data }: { data: QuarterBin[] }) {
   );
 }
 
-/* ---------- Puntos por fecha (stacked dobles + triples) ---------- */
+/* ---------- Puntos por fecha (stacked libres + dobles + triples) ---------- */
 
 function PuntosPorFechaChart({ data }: { data: MatchBreakdown[] }) {
   const max = Math.max(1, ...data.map((d) => d.total));
   const totalDobles = data.reduce((s, d) => s + d.doublesPts, 0);
   const totalTriples = data.reduce((s, d) => s + d.triplesPts, 0);
+  const totalLibres = data.reduce((s, d) => s + d.singlesPts, 0);
   return (
     <section className="block">
       <div className="block__head">
@@ -426,6 +434,11 @@ function PuntosPorFechaChart({ data }: { data: MatchBreakdown[] }) {
           <span className="legend__item">
             <i className="legend__dot legend__dot--triple" /> Triples ({totalTriples})
           </span>
+          {totalLibres > 0 && (
+            <span className="legend__item">
+              <i className="legend__dot legend__dot--single" /> Libres ({totalLibres})
+            </span>
+          )}
         </div>
       </div>
       <div className="bar-chart">
@@ -433,6 +446,7 @@ function PuntosPorFechaChart({ data }: { data: MatchBreakdown[] }) {
           const heightPct = (d.total / max) * 100;
           const doblePart = d.total > 0 ? (d.doublesPts / d.total) * 100 : 0;
           const triplePart = d.total > 0 ? (d.triplesPts / d.total) * 100 : 0;
+          const singlePart = d.total > 0 ? (d.singlesPts / d.total) * 100 : 0;
           return (
             <div key={d.matchId} className="bar-col">
               <div className="bar-col__total">{d.total}</div>
@@ -453,6 +467,13 @@ function PuntosPorFechaChart({ data }: { data: MatchBreakdown[] }) {
                       className="bar-col__seg bar-col__seg--double"
                       style={{ height: `${doblePart}%` }}
                       title={`Dobles: ${d.doublesPts}`}
+                    />
+                  )}
+                  {d.singlesPts > 0 && (
+                    <div
+                      className="bar-col__seg bar-col__seg--single"
+                      style={{ height: `${singlePart}%` }}
+                      title={`Libres: ${d.singlesPts}`}
                     />
                   )}
                 </div>

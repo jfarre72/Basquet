@@ -52,6 +52,7 @@ export async function saveGameToSupabase(state: GameState): Promise<string> {
         team: teamId,
         outcome,
         points: st?.totalPoints ?? 0,
+        singles: st?.singles ?? 0,
         doubles: st?.doubles ?? 0,
         triples: st?.triples ?? 0,
       };

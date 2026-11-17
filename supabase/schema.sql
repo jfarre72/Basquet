@@ -43,6 +43,7 @@ create table if not exists public.match_players (
     team      text    check (team in ('A','B')),
     outcome   text    check (outcome in ('Gana','Pierde','Empate')),
     points    integer,
+    singles   integer,
     doubles   integer,
     triples   integer,
     primary key (match_id, player_id)
@@ -52,6 +53,7 @@ alter table public.match_players alter column team drop not null;
 alter table public.match_players
     add column if not exists outcome text check (outcome in ('Gana','Pierde','Empate')),
     add column if not exists points integer,
+    add column if not exists singles integer,
     add column if not exists doubles integer,
     add column if not exists triples integer;
 
@@ -63,9 +65,16 @@ create table if not exists public.plays (
     minute     integer not null default 0,
     team       text not null check (team in ('A','B')),
     player_id  integer not null references public.players(id),
-    shot_type  text not null check (shot_type in ('double','triple')),
-    points     integer not null check (points in (2,3))
+    shot_type  text not null check (shot_type in ('single','double','triple')),
+    points     integer not null check (points in (1,2,3))
 );
+-- Compat: bases creadas antes de los libres (1 punto).
+alter table public.plays drop constraint if exists plays_shot_type_check;
+alter table public.plays add constraint plays_shot_type_check
+    check (shot_type in ('single','double','triple'));
+alter table public.plays drop constraint if exists plays_points_check;
+alter table public.plays add constraint plays_points_check
+    check (points in (1,2,3));
 create index if not exists idx_plays_match on public.plays(match_id);
 create index if not exists idx_plays_player on public.plays(player_id);
 

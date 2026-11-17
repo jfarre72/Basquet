@@ -1,6 +1,7 @@
 export type TeamId = 'A' | 'B';
 
-export type ShotType = 'double' | 'triple';
+/** single = libre / 1 punto, double = 2 puntos, triple = 3 puntos. */
+export type ShotType = 'single' | 'double' | 'triple';
 
 export type Stage = 'selection' | 'teams' | 'game' | 'finished';
 
@@ -32,7 +33,7 @@ export interface Play {
   team: TeamId;
   playerId: number;
   shotType: ShotType;
-  points: 2 | 3;
+  points: 1 | 2 | 3;
 }
 
 export interface TeamData {

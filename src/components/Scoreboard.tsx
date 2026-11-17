@@ -106,6 +106,16 @@ function TeamPanel({
       <div className="scoreboard__buttons">
         <button
           type="button"
+          className="score-btn score-btn--1"
+          onClick={() => onPick(team, 'single')}
+          disabled={disabled}
+          aria-label="Libre, 1 punto"
+        >
+          <span className="score-btn__sign">+</span>
+          <span className="score-btn__num">1</span>
+        </button>
+        <button
+          type="button"
           className="score-btn score-btn--2"
           onClick={() => onPick(team, 'double')}
           disabled={disabled}

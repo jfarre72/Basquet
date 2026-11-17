@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { PlayerAvatar } from './PlayerAvatar';
 import { PLAYERS_BY_ID } from '../data/players';
 import { useGame } from '../state/GameContext';
-import { formatTime } from '../utils/format';
+import { formatTime, shotLabel } from '../utils/format';
 import type { Play, ShotType } from '../types';
 
 export function PlaysList() {
@@ -14,7 +14,7 @@ export function PlaysList() {
   if (sorted.length === 0) {
     return (
       <div className="empty-state">
-        Todavía no hay jugadas registradas. Tocá +2 o +3 para sumar la primera.
+        Todavía no hay jugadas registradas. Tocá +1, +2 o +3 para sumar la primera.
       </div>
     );
   }
@@ -35,12 +35,16 @@ export function PlaysList() {
                 </span>
                 <span className="play-row__meta">
                   {teamName} · {formatTime(play.timestamp)} ·{' '}
-                  {play.shotType === 'triple' ? 'Triple' : 'Doble'}
+                  {shotLabel(play.shotType)}
                 </span>
               </div>
               <span
                 className={`play-row__pts${
-                  play.shotType === 'triple' ? ' play-row__pts--3' : ''
+                  play.shotType === 'triple'
+                    ? ' play-row__pts--3'
+                    : play.shotType === 'single'
+                      ? ' play-row__pts--1'
+                      : ''
                 }`}
               >
                 +{play.points}
@@ -139,6 +143,13 @@ function EditPlayModal({ play, onClose, onSave }: EditModalProps) {
           <div className="modal__field">
             <label>Tipo de tiro</label>
             <div className="shot-toggle">
+              <button
+                type="button"
+                className={shotType === 'single' ? 'is-active' : ''}
+                onClick={() => setShotType('single')}
+              >
+                Libre (+1)
+              </button>
               <button
                 type="button"
                 className={shotType === 'double' ? 'is-active' : ''}

@@ -64,8 +64,8 @@ function makeId(): string {
   return `${Date.now()}-${Math.random().toString(36).slice(2, 10)}`;
 }
 
-function pointsFor(shot: ShotType): 2 | 3 {
-  return shot === 'triple' ? 3 : 2;
+function pointsFor(shot: ShotType): 1 | 2 | 3 {
+  return shot === 'triple' ? 3 : shot === 'single' ? 1 : 2;
 }
 
 function minuteAt(startTime: number | null, timestamp: number): number {

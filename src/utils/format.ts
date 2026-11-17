@@ -1,3 +1,10 @@
+export type ShotLabel = 'Libre' | 'Doble' | 'Triple';
+
+/** Nombre del tiro: single = Libre (1), double = Doble (2), triple = Triple (3). */
+export function shotLabel(shot: string): ShotLabel {
+  return shot === 'triple' ? 'Triple' : shot === 'single' ? 'Libre' : 'Doble';
+}
+
 export function formatClock(elapsedMs: number): string {
   const total = Math.max(0, Math.floor(elapsedMs / 1000));
   const minutes = Math.floor(total / 60);

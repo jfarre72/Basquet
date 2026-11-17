@@ -1,7 +1,7 @@
 import * as XLSX from 'xlsx';
 import { PLAYERS_BY_ID } from '../data/players';
 import type { GameState } from '../types';
-import { formatDate, formatTime } from './format';
+import { formatDate, formatTime, shotLabel } from './format';
 import { getPlayerStats, getTeamOutcome } from './stats';
 
 function fileTimestamp(ts: number | null): string {
@@ -24,7 +24,7 @@ export function exportGameToExcel(state: GameState): void {
       Equipo: state.teams[p.team].name,
       'ID Jugador': p.playerId,
       Jugador: PLAYERS_BY_ID[p.playerId]?.name ?? `#${p.playerId}`,
-      'Tipo de tiro': p.shotType === 'triple' ? 'Triple' : 'Doble',
+      'Tipo de tiro': shotLabel(p.shotType),
       Puntos: p.points,
     }));
 
@@ -52,6 +52,7 @@ export function exportGameToExcel(state: GameState): void {
     Jugador: s.playerName,
     Equipo: s.teamName,
     'Puntos totales': s.totalPoints,
+    'Libres convertidos': s.singles,
     'Dobles convertidos': s.doubles,
     'Triples convertidos': s.triples,
     Resultado: getTeamOutcome(state, s.team),
@@ -65,13 +66,14 @@ export function exportGameToExcel(state: GameState): void {
             Jugador: '',
             Equipo: '',
             'Puntos totales': '',
+            'Libres convertidos': '',
             'Dobles convertidos': '',
             'Triples convertidos': '',
             Resultado: '',
           },
         ],
   );
-  applyColumnWidths(statsSheet, [12, 18, 16, 16, 20, 20, 12]);
+  applyColumnWidths(statsSheet, [12, 18, 16, 16, 20, 20, 20, 12]);
   XLSX.utils.book_append_sheet(wb, statsSheet, 'Resumen por jugador');
 
   XLSX.writeFile(wb, `basquet-${fileTimestamp(state.startTime)}.xlsx`);

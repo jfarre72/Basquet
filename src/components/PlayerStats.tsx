@@ -29,6 +29,7 @@ export function PlayerStats() {
             </div>
             <div className="stats-head">
               <span>Jugador</span>
+              <span>1pt</span>
               <span>2pt</span>
               <span>3pt</span>
               <span>Tot.</span>
@@ -36,6 +37,7 @@ export function PlayerStats() {
             {teamStats.map((s) => (
               <div className="stats-row" key={s.playerId}>
                 <span className="stats-row__name">{s.playerName}</span>
+                <span className="stats-row__cell">{s.singles}</span>
                 <span className="stats-row__cell">{s.doubles}</span>
                 <span className="stats-row__cell">{s.triples}</span>
                 <span className="stats-row__cell stats-row__cell--total">
