@@ -7,6 +7,7 @@ export interface PlayerStat {
   team: TeamId;
   teamName: string;
   totalPoints: number;
+  singles: number;
   doubles: number;
   triples: number;
 }
@@ -25,6 +26,7 @@ export function getPlayerStats(state: GameState): PlayerStat[] {
       const plays = state.plays.filter(
         (p) => p.team === teamId && p.playerId === playerId,
       );
+      const singles = plays.filter((p) => p.shotType === 'single').length;
       const doubles = plays.filter((p) => p.shotType === 'double').length;
       const triples = plays.filter((p) => p.shotType === 'triple').length;
       out.push({
@@ -32,7 +34,8 @@ export function getPlayerStats(state: GameState): PlayerStat[] {
         playerName: PLAYERS_BY_ID[playerId]?.name ?? `Jugador #${playerId}`,
         team: teamId,
         teamName: team.name,
-        totalPoints: doubles * 2 + triples * 3,
+        totalPoints: singles + doubles * 2 + triples * 3,
+        singles,
         doubles,
         triples,
       });

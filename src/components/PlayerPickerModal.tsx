@@ -12,7 +12,7 @@ interface Props {
 export function PlayerPickerModal({ team, shot, onClose }: Props) {
   const { state, dispatch } = useGame();
   const teamData = state.teams[team];
-  const points = shot === 'triple' ? 3 : 2;
+  const points = shot === 'triple' ? 3 : shot === 'single' ? 1 : 2;
 
   const select = (playerId: number) => {
     dispatch({ type: 'ADD_PLAY', team, playerId, shotType: shot });

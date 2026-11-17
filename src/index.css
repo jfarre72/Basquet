@@ -1116,7 +1116,7 @@ main.app__main {
 }
 .scoreboard__buttons {
   display: grid;
-  grid-template-columns: 1fr 1fr;
+  grid-template-columns: 0.8fr 1fr 1fr;
   gap: 6px;
 }
 .score-btn {
@@ -1148,6 +1148,25 @@ main.app__main {
   font-size: 1.5rem;
   font-weight: 900;
   font-family: 'SF Mono', 'JetBrains Mono', ui-monospace, 'Courier New', monospace;
+}
+
+.scoreboard__team--A .score-btn--1 {
+  background: transparent;
+  border-color: #27272a;
+  border-style: dashed;
+  color: #d4d4d8;
+}
+.scoreboard__team--A .score-btn--1:hover {
+  background: #18181b;
+}
+.scoreboard__team--B .score-btn--1 {
+  background: transparent;
+  border-color: #d4d4d8;
+  border-style: dashed;
+  color: #3f3f46;
+}
+.scoreboard__team--B .score-btn--1:hover {
+  background: #f4f4f5;
 }
 
 .scoreboard__team--A .score-btn--2 {
@@ -1298,6 +1317,9 @@ main.app__main {
   padding: 6px 10px;
   font-family: 'SF Mono', 'JetBrains Mono', ui-monospace, 'Courier New', monospace;
 }
+.play-row__pts--1 {
+  color: var(--text-muted);
+}
 .play-row__pts--3 {
   color: var(--accent);
   background: var(--accent-dim);
@@ -1343,7 +1365,7 @@ main.app__main {
 }
 .stats-row {
   display: grid;
-  grid-template-columns: 1fr auto auto auto;
+  grid-template-columns: 1fr auto auto auto auto;
   gap: 10px;
   align-items: center;
   background: var(--surface-2);
@@ -1369,7 +1391,7 @@ main.app__main {
 }
 .stats-head {
   display: grid;
-  grid-template-columns: 1fr auto auto auto;
+  grid-template-columns: 1fr auto auto auto auto;
   gap: 10px;
   padding: 0 14px;
   font-size: 0.66rem;
@@ -2219,6 +2241,14 @@ html.home-locked .app__header {
 .kpis--2 {
   grid-template-columns: repeat(2, 1fr);
 }
+.kpis--4 {
+  grid-template-columns: repeat(2, 1fr);
+}
+@media (min-width: 560px) {
+  .kpis--4 {
+    grid-template-columns: repeat(4, 1fr);
+  }
+}
 .kpi {
   background: var(--surface);
   border: 1px solid var(--border);
@@ -2416,6 +2446,9 @@ html.home-locked .app__header {
 }
 .legend__dot--triple {
   background: #fbbf24;
+}
+.legend__dot--single {
+  background: #a1a1aa;
 }
 
 .month-chart {
@@ -3837,6 +3870,9 @@ html.home-locked .app__header {
 }
 .bar-col__seg--triple {
   background: #fbbf24;
+}
+.bar-col__seg--single {
+  background: #a1a1aa;
 }
 .bar-col__label {
   font-size: 0.62rem;

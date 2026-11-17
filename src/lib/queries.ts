@@ -27,6 +27,25 @@ async function fetchAllRows<T>(
   }
 }
 
+/** Trae match_players con dobles/triples/libres. Si la base todavía no tiene
+ *  la columna `singles` (falta correr supabase/singles.sql), reintenta sin ella
+ *  para que la app siga funcionando. */
+async function fetchMatchPlayers(baseColumns: string): Promise<DbMatchPlayer[]> {
+  try {
+    return await fetchAllRows<DbMatchPlayer>(
+      'match_players',
+      `${baseColumns}, singles, doubles, triples`,
+    );
+  } catch (err) {
+    const code = (err as { code?: string } | null)?.code;
+    if (code !== '42703' && code !== 'PGRST204') throw err;
+    return fetchAllRows<DbMatchPlayer>(
+      'match_players',
+      `${baseColumns}, doubles, triples`,
+    );
+  }
+}
+
 export interface DbMatch {
   id: string;
   played_at: string;
@@ -44,6 +63,8 @@ export interface DbMatchPlayer {
   team?: 'A' | 'B' | null;
   outcome: 'Gana' | 'Pierde' | 'Empate' | null;
   points: number | null;
+  /** Libres (1 punto). null en filas viejas / si la columna no existe. */
+  singles?: number | null;
   doubles: number | null;
   triples: number | null;
 }
@@ -54,7 +75,7 @@ export interface DbPlay {
   minute: number;
   team: 'A' | 'B';
   player_id: number;
-  shot_type: 'double' | 'triple';
+  shot_type: 'single' | 'double' | 'triple';
   points: number;
 }
 
@@ -67,10 +88,7 @@ export async function fetchSeasonData(): Promise<{
   }
   const [matchesRes, mpRes] = await Promise.all([
     supabase.from('matches').select('id, played_at'),
-    fetchAllRows<DbMatchPlayer>(
-      'match_players',
-      'match_id, player_id, outcome, points, doubles, triples',
-    ),
+    fetchMatchPlayers('match_id, player_id, outcome, points'),
   ]);
   if (matchesRes.error) throw matchesRes.error;
   return {
@@ -187,10 +205,7 @@ export async function fetchResultados(): Promise<{
         'id, played_at, finished_at, team_a_name, team_b_name, score_a, score_b, winner, partial',
       )
       .order('played_at', { ascending: false }),
-    fetchAllRows<DbMatchPlayer>(
-      'match_players',
-      'match_id, player_id, team, outcome, points, doubles, triples',
-    ),
+    fetchMatchPlayers('match_id, player_id, team, outcome, points'),
   ]);
   if (mRes.error) throw mRes.error;
   return {
@@ -299,10 +314,7 @@ export async function fetchIndicadoresData(): Promise<{
     supabase
       .from('matches')
       .select('id, played_at, team_a_name, team_b_name, score_a, score_b, winner, partial'),
-    fetchAllRows<DbMatchPlayer>(
-      'match_players',
-      'match_id, player_id, team, outcome, points, doubles, triples',
-    ),
+    fetchMatchPlayers('match_id, player_id, team, outcome, points'),
     fetchAllRows<DbPlay>(
       'plays',
       'match_id, ts, minute, team, player_id, shot_type, points',

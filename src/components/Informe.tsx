@@ -43,6 +43,7 @@ const COLUMNS: ColumnDef[] = [
   { key: 'puntaje', label: 'Pje', title: 'Puntaje', hl: true },
   { key: 'presentismo', label: '%P', title: 'Presentismo' },
   { key: 'puntos', label: 'Pts', title: 'Puntos totales' },
+  { key: 'simples', label: '1pt', title: 'Libres convertidos (1 punto)' },
   { key: 'dobles', label: '2pt', title: 'Dobles convertidos' },
   { key: 'triples', label: '3pt', title: 'Triples convertidos' },
   { key: 'ptosPorPJ', label: 'P/PJ', title: 'Puntos por partido jugado' },
@@ -124,10 +125,11 @@ export function Informe() {
     [baseStats],
   );
 
-  // Dobles/triples salen de match_players (igual que la tabla), no de la
+  // Libres/dobles/triples salen de match_players (igual que la tabla), no de la
   // tabla plays: los partidos históricos no tienen jugada por jugada.
   const topTriples = useMemo(() => topShots(baseStats, 'triples'), [baseStats]);
   const topDobles = useMemo(() => topShots(baseStats, 'dobles'), [baseStats]);
+  const topLibres = useMemo(() => topShots(baseStats, 'simples'), [baseStats]);
 
   const totals = useMemo(() => {
     if (year == null) return { jugados: 0, faltantes: 0 };
@@ -219,11 +221,13 @@ export function Informe() {
 
           {(pointsRanking.length > 0 ||
             topTriples.length > 0 ||
-            topDobles.length > 0) && (
-            <div className="podio-grid podio-grid--3">
+            topDobles.length > 0 ||
+            topLibres.length > 0) && (
+            <div className="podio-grid">
               <PointsTableBlock data={pointsRanking} />
-              <ShotPodiumBlock title="🏀 Podio de Dobles" data={topDobles} />
               <ShotPodiumBlock title="🎯 Podio de Triples" data={topTriples} />
+              <ShotPodiumBlock title="🏀 Podio de Dobles" data={topDobles} />
+              <ShotPodiumBlock title="☝️ Podio de Libres" data={topLibres} />
             </div>
           )}
 
@@ -335,7 +339,7 @@ interface ShotPodiumItem {
 
 function topShots(
   stats: PlayerSeasonStat[],
-  shot: 'dobles' | 'triples',
+  shot: 'simples' | 'dobles' | 'triples',
 ): ShotPodiumItem[] {
   return stats
     .filter((s) => s[shot] > 0)
@@ -562,6 +566,7 @@ function StatsTable({
                         {Math.round(s.presentismo * 100)}%
                       </td>
                       <td>{s.puntos}</td>
+                      <td>{s.simples}</td>
                       <td>{s.dobles}</td>
                       <td className="stats-grid__hl">{s.triples}</td>
                       <td className="stats-grid__muted">
@@ -649,6 +654,7 @@ function PlayerMatchesDetail({
             <span className="pmatch__outcome">{d.outcome ?? '—'}</span>
             <span className="pmatch__stats">
               {d.points != null && <span>{d.points} pts</span>}
+              {d.simples > 0 && <span>{d.simples}× 1pt</span>}
               <span>{d.dobles}× 2pt</span>
               <span>{d.triples}× 3pt</span>
             </span>

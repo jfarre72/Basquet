@@ -14,6 +14,7 @@ export interface PlayerSeasonStat {
   puntaje: number;
   presentismo: number;
   puntos: number;
+  simples: number;
   dobles: number;
   triples: number;
   ptosPorPJ: number | null;
@@ -57,6 +58,7 @@ export type SortKey =
   | 'tp'
   | 'presentismo'
   | 'puntos'
+  | 'simples'
   | 'dobles'
   | 'triples'
   | 'ptosPorPJ';
@@ -132,6 +134,7 @@ export function computeSeasonStats(
     const puntaje = WIN_PTS * PG + TIE_PTS * PE + LOSS_PTS * PP;
     const presentismo = TP > 0 ? PJ / TP : 0;
     const puntos = mps.reduce((sum, mp) => sum + (mp.points ?? 0), 0);
+    const simples = mps.reduce((sum, mp) => sum + (mp.singles ?? 0), 0);
     const dobles = mps.reduce((sum, mp) => sum + (mp.doubles ?? 0), 0);
     const triples = mps.reduce((sum, mp) => sum + (mp.triples ?? 0), 0);
     const matchesWithPoints = mps.filter((mp) => mp.points != null).length;
@@ -154,6 +157,7 @@ export function computeSeasonStats(
       puntaje,
       presentismo,
       puntos,
+      simples,
       dobles,
       triples,
       ptosPorPJ,
@@ -169,6 +173,7 @@ export interface PlayerMatchDetail {
   date: string;
   outcome: Outcome | null;
   points: number | null;
+  simples: number;
   dobles: number;
   triples: number;
 }
@@ -195,6 +200,7 @@ export function computePlayerMatches(
       date: dateById.get(mp.match_id) ?? '',
       outcome: mp.outcome,
       points: mp.points,
+      simples: mp.singles ?? 0,
       dobles: mp.doubles ?? 0,
       triples: mp.triples ?? 0,
     }))
@@ -238,6 +244,8 @@ function sortValue(s: PlayerSeasonStat, key: SortKey): number {
       return s.presentismo;
     case 'puntos':
       return s.puntos;
+    case 'simples':
+      return s.simples;
     case 'dobles':
       return s.dobles;
     case 'triples':

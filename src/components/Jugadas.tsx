@@ -5,6 +5,7 @@ import {
   exportJugadasToExcel,
   type JugadaRow,
 } from '../utils/exportJugadasExcel';
+import { shotLabel } from '../utils/format';
 
 export function Jugadas() {
   const [plays, setPlays] = useState<DbPlay[]>([]);
@@ -80,7 +81,7 @@ export function Jugadas() {
               : (m?.team_b_name ?? 'B'),
           playerId: p.player_id,
           jugador: PLAYERS_BY_ID[p.player_id]?.name ?? `#${p.player_id}`,
-          tipo: p.shot_type === 'triple' ? 'Triple' : 'Doble',
+          tipo: shotLabel(p.shot_type),
           puntos: p.points,
         };
       });
@@ -88,14 +89,16 @@ export function Jugadas() {
 
   const totals = useMemo(() => {
     let puntos = 0;
+    let libres = 0;
     let dobles = 0;
     let triples = 0;
     for (const r of rows) {
       puntos += r.puntos;
       if (r.tipo === 'Triple') triples += 1;
+      else if (r.tipo === 'Libre') libres += 1;
       else dobles += 1;
     }
-    return { puntos, dobles, triples };
+    return { puntos, libres, dobles, triples };
   }, [rows]);
 
   return (
@@ -164,12 +167,16 @@ export function Jugadas() {
             </select>
           </div>
 
-          <div className="kpis">
+          <div className="kpis kpis--4">
             <div className="kpi">
               <span className="kpi__label">Puntos</span>
               <span className="kpi__value kpi__value--accent">
                 {totals.puntos}
               </span>
+            </div>
+            <div className="kpi">
+              <span className="kpi__label">Libres</span>
+              <span className="kpi__value">{totals.libres}</span>
             </div>
             <div className="kpi">
               <span className="kpi__label">Dobles</span>

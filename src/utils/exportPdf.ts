@@ -2,7 +2,7 @@ import { jsPDF } from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import { PLAYERS_BY_ID } from '../data/players';
 import type { GameState } from '../types';
-import { formatDate, formatTime } from './format';
+import { formatDate, formatTime, shotLabel } from './format';
 import { getPlayerStats, getPodium, getWinner } from './stats';
 
 function fileTimestamp(ts: number | null): string {
@@ -117,10 +117,11 @@ export function exportGameToPdf(state: GameState): void {
   y += 6;
   autoTable(doc, {
     startY: y,
-    head: [['Jugador', 'Equipo', '2pt', '3pt', 'Total']],
+    head: [['Jugador', 'Equipo', '1pt', '2pt', '3pt', 'Total']],
     body: stats.map((s) => [
       s.playerName,
       s.teamName,
+      `${s.singles}`,
       `${s.doubles}`,
       `${s.triples}`,
       `${s.totalPoints}`,
@@ -151,7 +152,7 @@ export function exportGameToPdf(state: GameState): void {
           formatTime(p.timestamp),
           state.teams[p.team].name,
           PLAYERS_BY_ID[p.playerId]?.name ?? `#${p.playerId}`,
-          p.shotType === 'triple' ? 'Triple' : 'Doble',
+          shotLabel(p.shotType),
           `${p.points}`,
         ]),
       theme: 'grid',

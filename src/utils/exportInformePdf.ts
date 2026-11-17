@@ -122,7 +122,7 @@ export function exportInformeToPdf(data: InformePdfInput): void {
     y += 6;
     autoTable(doc, {
       startY: y,
-      head: [['#', 'Jugador', 'TP', 'PJ', 'PG', 'PE', 'PP', 'Pje', '%P', 'Pts', 'P/PJ']],
+      head: [['#', 'Jugador', 'TP', 'PJ', 'PG', 'PE', 'PP', 'Pje', '%P', 'Pts', '1pt', '2pt', '3pt', 'P/PJ']],
       body: data.stats.map((s, idx) => [
         `${idx + 1}`,
         s.playerName,
@@ -134,6 +134,9 @@ export function exportInformeToPdf(data: InformePdfInput): void {
         `${s.puntaje}`,
         `${Math.round(s.presentismo * 100)}%`,
         `${s.puntos}`,
+        `${s.simples}`,
+        `${s.dobles}`,
+        `${s.triples}`,
         s.ptosPorPJ == null ? '—' : s.ptosPorPJ.toFixed(1),
       ]),
       theme: 'striped',

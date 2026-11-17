@@ -16,13 +16,13 @@ compartir.
 3. **Reloj automático**: al tocar "Empezar partido" arranca el reloj
    interno y cada jugada se sella con el minuto transcurrido (sin input
    manual).
-4. **Marcador en vivo** estilo scoreboard, con botones grandes **+2** y
-   **+3**. Al tocarlos se abre un selector de jugador que registra la
+4. **Marcador en vivo** estilo scoreboard, con botones grandes **+1** (libre),
+   **+2** y **+3**. Al tocarlos se abre un selector de jugador que registra la
    jugada al instante (sin botón "Guardar").
 5. **Listado de jugadas** con edición y borrado: cualquier cambio
    recalcula marcador y estadísticas en el momento.
-6. **Estadísticas por jugador**, agrupadas por equipo: dobles, triples y
-   total.
+6. **Estadísticas por jugador**, agrupadas por equipo: libres, dobles,
+   triples y total.
 7. **Finalizar partido**: congela el reloj y muestra el podio de
    goleadores.
 8. **Reset** que limpia jugadas/marcador/estado finalizado, pero mantiene
@@ -35,6 +35,11 @@ compartir.
 
 Todo el estado vive **en memoria del navegador** — no hay backend, ni
 base de datos, ni almacenamiento persistente.
+
+> **Libres (1 punto):** para poder guardar partidos con tiros de 1 punto
+> hay que correr una vez `supabase/singles.sql` en el SQL Editor de
+> Supabase (agrega la columna `match_players.singles` y habilita
+> `shot_type = 'single'` / `points = 1` en `plays`).
 
 ## 🧱 Stack
 

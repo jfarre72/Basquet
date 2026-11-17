@@ -6,7 +6,7 @@ export interface JugadaRow {
   equipo: string;
   playerId: number;
   jugador: string;
-  tipo: 'Doble' | 'Triple';
+  tipo: 'Libre' | 'Doble' | 'Triple';
   puntos: number;
 }
 

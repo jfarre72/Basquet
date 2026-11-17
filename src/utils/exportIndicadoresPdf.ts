@@ -24,7 +24,13 @@ export interface IndicadoresPdfInput {
   };
   triples: ShotPodiumRow[];
   dobles: ShotPodiumRow[];
-  topScorers: { playerName: string; points: number; doubles: number; triples: number }[];
+  topScorers: {
+    playerName: string;
+    points: number;
+    singles?: number;
+    doubles: number;
+    triples: number;
+  }[];
   minuteSeries: MinuteRow[];
   playerFilterLabel: string;
 }
@@ -156,10 +162,11 @@ export function exportIndicadoresToPdf(data: IndicadoresPdfInput): void {
     y += 6;
     autoTable(doc, {
       startY: y,
-      head: [['#', 'Jugador', 'Dobles', 'Triples', 'Puntos']],
+      head: [['#', 'Jugador', 'Libres', 'Dobles', 'Triples', 'Puntos']],
       body: data.topScorers.map((r, idx) => [
         `${idx + 1}`,
         r.playerName,
+        `${r.singles ?? 0}`,
         `${r.doubles}`,
         `${r.triples}`,
         `${r.points}`,
